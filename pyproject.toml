@@ -1,0 +1,95 @@
+[tool.ruff]
+# Ruff configuration for ATP/AGP project
+line-length = 100
+target-version = "py311"
+
+# Enable all rules, then selectively disable
+select = ["ALL"]
+ignore = [
+    "D",      # pydocstyle - we'll add gradually
+    "ANN",    # flake8-annotations - we'll add gradually
+    "COM812", # trailing-comma - conflicts with formatter
+    "ISC001", # implicit-str-concat - conflicts with formatter
+]
+
+# Exclude generated files and vendored code
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    "*.egg-info",
+    "*_pb2.py",
+    "*_pb2_grpc.py",
+]
+
+[tool.ruff.format]
+# Use ruff's formatter (faster than black)
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "PLR2004", "S105", "S106"]  # Allow assert, magic values, hardcoded passwords in tests
+"tools/*" = ["T201", "S101"]  # Allow print statements in tools
+
+[tool.ruff.lint.isort]
+known-first-party = ["router_service", "atp_sdk"]
+force-single-line = false
+lines-after-imports = 2
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = '''
+/(
+  | .*_pb2\.py
+  | .*_pb2_grpc\.py
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+known_first_party = ["router_service", "atp_sdk"]
+skip_glob = ["*_pb2.py", "*_pb2_grpc.py"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Enable gradually
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra -q --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+]
+
+[tool.coverage.run]
+source = ["router_service", "memory-gateway"]
+omit = [
+    "*/tests/*",
+    "*_pb2.py",
+    "*_pb2_grpc.py",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

@@ -38,10 +38,7 @@ async def health_check() -> HealthResponse:
 
     Returns 200 if application is running.
     """
-    return HealthResponse(
-        status=HealthStatus.HEALTHY,
-        checks={"basic": {"status": "ok"}}
-    )
+    return HealthResponse(status=HealthStatus.HEALTHY, checks={"basic": {"status": "ok"}})
 
 
 @router.get("/livez", response_model=HealthResponse)
@@ -58,24 +55,18 @@ async def liveness_check(request: Request) -> HealthResponse:
     """
     # Check if lifecycle is initialized
     if not hasattr(request.app.state, "lifecycle"):
-        raise HTTPException(
-            status_code=503,
-            detail="Application not initialized"
-        )
+        raise HTTPException(status_code=503, detail="Application not initialized")
 
     # Check if startup is complete
     if not request.app.state.lifecycle.startup_complete.is_set():
-        raise HTTPException(
-            status_code=503,
-            detail="Application still starting"
-        )
+        raise HTTPException(status_code=503, detail="Application still starting")
 
     return HealthResponse(
         status=HealthStatus.HEALTHY,
         checks={
             "application": {"status": "alive"},
             "startup": {"status": "complete"},
-        }
+        },
     )
 
 
@@ -94,10 +85,7 @@ async def readiness_check(request: Request) -> HealthResponse:
     # Check if shutting down
     if hasattr(request.app.state, "shutdown_coordinator"):
         if request.app.state.shutdown_coordinator.shutdown_event.is_set():
-            raise HTTPException(
-                status_code=503,
-                detail="Application shutting down"
-            )
+            raise HTTPException(status_code=503, detail="Application shutting down")
 
     # TODO: Add dependency checks once implemented
     # - Database connection pool
@@ -109,7 +97,7 @@ async def readiness_check(request: Request) -> HealthResponse:
         checks={
             "application": {"status": "ready"},
             "shutdown": {"status": "not_initiated"},
-        }
+        },
     )
 
 
@@ -121,20 +109,9 @@ async def startup_check(request: Request) -> HealthResponse:
     Kubernetes will wait for this before checking liveness/readiness.
     """
     if not hasattr(request.app.state, "lifecycle"):
-        raise HTTPException(
-            status_code=503,
-            detail="Application not initialized"
-        )
+        raise HTTPException(status_code=503, detail="Application not initialized")
 
     if not request.app.state.lifecycle.startup_complete.is_set():
-        raise HTTPException(
-            status_code=503,
-            detail="Application startup in progress"
-        )
+        raise HTTPException(status_code=503, detail="Application startup in progress")
 
-    return HealthResponse(
-        status=HealthStatus.HEALTHY,
-        checks={
-            "startup": {"status": "complete"}
-        }
-    )
+    return HealthResponse(status=HealthStatus.HEALTHY, checks={"startup": {"status": "complete"}})

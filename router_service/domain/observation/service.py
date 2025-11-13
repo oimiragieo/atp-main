@@ -41,17 +41,14 @@ class ObservationService:
             # Prevent unbounded growth
             if len(self._buffer) > self._buffer_size:
                 # Remove oldest observations
-                self._buffer = self._buffer[-self._buffer_size:]
-                logger.warning(
-                    "Observation buffer exceeded limit, trimming",
-                    limit=self._buffer_size
-                )
+                self._buffer = self._buffer[-self._buffer_size :]
+                logger.warning("Observation buffer exceeded limit, trimming", limit=self._buffer_size)
 
         logger.debug(
             "Observation added",
             request_id=observation.request_id,
             model=observation.model,
-            latency_ms=observation.latency_ms
+            latency_ms=observation.latency_ms,
         )
 
     async def get_all(self) -> list[Observation]:
@@ -74,10 +71,7 @@ class ObservationService:
             observations = self._buffer.copy()
             self._buffer.clear()
 
-            logger.info(
-                "Observation buffer flushed",
-                count=len(observations)
-            )
+            logger.info("Observation buffer flushed", count=len(observations))
 
             return observations
 

@@ -40,18 +40,12 @@ class ShutdownCoordinator:
     def add_connection(self, websocket: WebSocket) -> None:
         """Track an active WebSocket connection."""
         self.active_connections.add(websocket)
-        logger.debug(
-            "WebSocket connection added",
-            total_connections=len(self.active_connections)
-        )
+        logger.debug("WebSocket connection added", total_connections=len(self.active_connections))
 
     def remove_connection(self, websocket: WebSocket) -> None:
         """Remove a tracked WebSocket connection."""
         self.active_connections.discard(websocket)
-        logger.debug(
-            "WebSocket connection removed",
-            total_connections=len(self.active_connections)
-        )
+        logger.debug("WebSocket connection removed", total_connections=len(self.active_connections))
 
     def add_background_task(self, task: asyncio.Task) -> None:
         """Track a background task."""
@@ -81,7 +75,7 @@ class ShutdownCoordinator:
             "Initiating graceful shutdown",
             timeout=timeout,
             active_connections=len(self.active_connections),
-            background_tasks=len(self.background_tasks)
+            background_tasks=len(self.background_tasks),
         )
 
         start_time = time.time()
@@ -91,26 +85,17 @@ class ShutdownCoordinator:
 
         # Step 2: Close WebSocket connections
         if self.active_connections:
-            logger.info(
-                "Closing WebSocket connections",
-                count=len(self.active_connections)
-            )
+            logger.info("Closing WebSocket connections", count=len(self.active_connections))
             await self._close_websockets(timeout=timeout * 0.4)
 
         # Step 3: Cancel background tasks
         if self.background_tasks:
-            logger.info(
-                "Canceling background tasks",
-                count=len(self.background_tasks)
-            )
+            logger.info("Canceling background tasks", count=len(self.background_tasks))
             await self._cancel_tasks(timeout=timeout * 0.3)
 
         # Step 4: Run custom shutdown handlers
         if self._shutdown_handlers:
-            logger.info(
-                "Running shutdown handlers",
-                count=len(self._shutdown_handlers)
-            )
+            logger.info("Running shutdown handlers", count=len(self._shutdown_handlers))
             await self._run_shutdown_handlers(timeout=timeout * 0.3)
 
         elapsed = time.time() - start_time
@@ -118,7 +103,7 @@ class ShutdownCoordinator:
             "Graceful shutdown complete",
             elapsed_seconds=elapsed,
             connections_closed=len(self.active_connections) == 0,
-            tasks_canceled=len(self.background_tasks) == 0
+            tasks_canceled=len(self.background_tasks) == 0,
         )
 
     async def _close_websockets(self, timeout: float) -> None:
@@ -132,24 +117,15 @@ class ShutdownCoordinator:
         ]
 
         try:
-            await asyncio.wait_for(
-                asyncio.gather(*close_tasks, return_exceptions=True),
-                timeout=timeout
-            )
+            await asyncio.wait_for(asyncio.gather(*close_tasks, return_exceptions=True), timeout=timeout)
         except asyncio.TimeoutError:
-            logger.warning(
-                "WebSocket close timeout exceeded",
-                remaining=len(self.active_connections)
-            )
+            logger.warning("WebSocket close timeout exceeded", remaining=len(self.active_connections))
 
     async def _close_websocket(self, websocket: WebSocket) -> None:
         """Close a single WebSocket connection."""
         try:
             # Send close frame
-            await asyncio.wait_for(
-                websocket.close(code=1001, reason="Server shutdown"),
-                timeout=5.0
-            )
+            await asyncio.wait_for(websocket.close(code=1001, reason="Server shutdown"), timeout=5.0)
         except asyncio.TimeoutError:
             logger.warning("WebSocket close timeout for connection")
         except Exception as e:
@@ -169,14 +145,10 @@ class ShutdownCoordinator:
 
         # Wait for cancellation
         try:
-            await asyncio.wait_for(
-                asyncio.gather(*self.background_tasks, return_exceptions=True),
-                timeout=timeout
-            )
+            await asyncio.wait_for(asyncio.gather(*self.background_tasks, return_exceptions=True), timeout=timeout)
         except asyncio.TimeoutError:
             logger.warning(
-                "Task cancellation timeout exceeded",
-                remaining=sum(1 for t in self.background_tasks if not t.done())
+                "Task cancellation timeout exceeded", remaining=sum(1 for t in self.background_tasks if not t.done())
             )
 
     async def _run_shutdown_handlers(self, timeout: float) -> None:

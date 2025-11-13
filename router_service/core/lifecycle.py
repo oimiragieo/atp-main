@@ -9,7 +9,7 @@ import asyncio
 import logging
 import signal
 import time
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +31,12 @@ class LifecycleManager:
         self.shutdown_handlers: list[Callable[[], Awaitable[None]]] = []
         self.startup_handlers: list[Callable[[], Awaitable[None]]] = []
 
-    def register_startup_handler(
-        self,
-        handler: Callable[[], Awaitable[None]]
-    ) -> None:
+    def register_startup_handler(self, handler: Callable[[], Awaitable[None]]) -> None:
         """Register a handler to run on startup."""
         self.startup_handlers.append(handler)
         logger.debug(f"Registered startup handler: {handler.__name__}")
 
-    def register_shutdown_handler(
-        self,
-        handler: Callable[[], Awaitable[None]]
-    ) -> None:
+    def register_shutdown_handler(self, handler: Callable[[], Awaitable[None]]) -> None:
         """Register a handler to run on shutdown."""
         self.shutdown_handlers.append(handler)
         logger.debug(f"Registered shutdown handler: {handler.__name__}")
@@ -58,20 +52,13 @@ class LifecycleManager:
                 logger.debug(f"Running startup handler: {handler.__name__}")
                 await handler()
             except Exception as e:
-                logger.error(
-                    f"Startup handler failed: {handler.__name__}",
-                    exc_info=e
-                )
+                logger.error(f"Startup handler failed: {handler.__name__}", exc_info=e)
                 raise
 
         elapsed = time.time() - start_time
         self.startup_complete.set()
 
-        logger.info(
-            "Application startup complete",
-            elapsed_seconds=elapsed,
-            handlers_run=len(self.startup_handlers)
-        )
+        logger.info("Application startup complete", elapsed_seconds=elapsed, handlers_run=len(self.startup_handlers))
 
     async def shutdown(self, timeout: float = 30.0) -> None:
         """
@@ -84,11 +71,7 @@ class LifecycleManager:
             logger.warning("Shutdown already initiated")
             return
 
-        logger.info(
-            "Initiating graceful shutdown",
-            timeout=timeout,
-            handlers=len(self.shutdown_handlers)
-        )
+        logger.info("Initiating graceful shutdown", timeout=timeout, handlers=len(self.shutdown_handlers))
 
         # Set shutdown event (signals all services to stop)
         self.shutdown_event.set()
@@ -100,35 +83,21 @@ class LifecycleManager:
             try:
                 remaining_timeout = timeout - (time.time() - start_time)
                 if remaining_timeout <= 0:
-                    logger.warning(
-                        f"Shutdown timeout exceeded, skipping handler: {handler.__name__}"
-                    )
+                    logger.warning(f"Shutdown timeout exceeded, skipping handler: {handler.__name__}")
                     continue
 
-                logger.debug(
-                    f"Running shutdown handler: {handler.__name__}",
-                    remaining_timeout=remaining_timeout
-                )
+                logger.debug(f"Running shutdown handler: {handler.__name__}", remaining_timeout=remaining_timeout)
 
                 await asyncio.wait_for(handler(), timeout=remaining_timeout)
 
             except asyncio.TimeoutError:
-                logger.warning(
-                    f"Shutdown handler timed out: {handler.__name__}"
-                )
+                logger.warning(f"Shutdown handler timed out: {handler.__name__}")
             except Exception as e:
-                logger.error(
-                    f"Shutdown handler failed: {handler.__name__}",
-                    exc_info=e
-                )
+                logger.error(f"Shutdown handler failed: {handler.__name__}", exc_info=e)
 
         elapsed = time.time() - start_time
 
-        logger.info(
-            "Graceful shutdown complete",
-            elapsed_seconds=elapsed,
-            handlers_run=len(self.shutdown_handlers)
-        )
+        logger.info("Graceful shutdown complete", elapsed_seconds=elapsed, handlers_run=len(self.shutdown_handlers))
 
     def install_signal_handlers(self) -> None:
         """Install signal handlers for graceful shutdown."""

@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Callable, TypeVar, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class Container:
         interface: type[T],
         implementation: T | None = None,
         factory: Callable[..., T] | None = None,
-        singleton: bool = True
+        singleton: bool = True,
     ) -> None:
         """
         Register a service in the container.

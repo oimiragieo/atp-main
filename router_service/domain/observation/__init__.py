@@ -3,7 +3,7 @@
 
 """Observation domain - logging and analytics for LLM requests."""
 
-from .service import ObservationService
 from .models import Observation
+from .service import ObservationService
 
 __all__ = ["ObservationService", "Observation"]
