@@ -35,6 +35,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
 
+import aiofiles
 import boto3
 import redis.asyncio as redis
 from cryptography.fernet import Fernet
@@ -366,8 +367,8 @@ class StorageManager:
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
 
         # Write data to file
-        with open(full_path, "wb") as f:
-            f.write(data)
+        async with aiofiles.open(full_path, "wb") as f:
+            await f.write(data)
 
         return full_path
 
@@ -377,8 +378,8 @@ class StorageManager:
         base_path = config.get("base_path", "/var/backups/atp")
         full_path = os.path.join(base_path, path)
 
-        with open(full_path, "rb") as f:
-            return f.read()
+        async with aiofiles.open(full_path, "rb") as f:
+            return await f.read()
 
     async def _delete_local(self, config: dict[str, Any], path: str) -> bool:
         """Delete backup from local filesystem."""
@@ -739,8 +740,8 @@ class DatabaseBackupManager:
 
             # Write to temporary file
             temp_file = f"/tmp/restore_{restore_request.id}.sql"
-            with open(temp_file, "wb") as f:
-                f.write(data)
+            async with aiofiles.open(temp_file, "wb") as f:
+                await f.write(data)
 
             # Execute pg_restore
             cmd = f"pg_restore --dbname={restore_request.target_location} --clean --if-exists {temp_file}"

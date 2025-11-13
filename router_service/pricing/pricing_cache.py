@@ -268,8 +268,8 @@ class PricingCache:
                         if current_time - timestamp > self.ttl_seconds:
                             stale_count += 1
 
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to get statistics for cache key {key}: {e}")
 
             return {
                 "total_cached_models": len(current_keys),

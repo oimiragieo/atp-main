@@ -209,8 +209,8 @@ class AdapterCreate(BaseModel):
     def validate_version(self, v):
         try:
             semver.VersionInfo.parse(v)
-        except ValueError:
-            raise ValueError("Invalid semantic version")
+        except ValueError as e:
+            raise ValueError("Invalid semantic version") from e
         return v
 
 
@@ -552,7 +552,7 @@ async def upload_adapter_package(
         return {"message": "Package uploaded successfully", "package_url": package_url, "checksum": checksum}
 
     except ClientError as e:
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}") from e
 
 
 @app.post("/adapters/{adapter_id}/download")

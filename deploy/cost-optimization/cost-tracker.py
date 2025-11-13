@@ -314,7 +314,7 @@ class CostForecaster:
 
             # Prepare features and target
             features = ["day_of_week", "day_of_month", "month", "days_since_start"]
-            X = df[features]
+            feature_matrix = df[features]
             y = df["cost"]
 
             # Train multiple models and select best
@@ -327,8 +327,8 @@ class CostForecaster:
             best_score = -float("inf")
 
             for _name, model in models.items():
-                model.fit(X, y)
-                score = model.score(X, y)
+                model.fit(feature_matrix, y)
+                score = model.score(feature_matrix, y)
 
                 if score > best_score:
                     best_score = score

@@ -76,9 +76,9 @@ class StreamingClient:
                             continue
 
         except httpx.RequestError as e:
-            raise StreamingError(f"Streaming request failed: {e}")
+            raise StreamingError(f"Streaming request failed: {e}") from e
         except Exception as e:
-            raise StreamingError(f"Unexpected streaming error: {e}")
+            raise StreamingError(f"Unexpected streaming error: {e}") from e
 
     async def stream_chat_completion_async(self, request: ChatRequest) -> AsyncIterator[StreamingResponse]:
         """Stream chat completion responses asynchronously."""
@@ -116,9 +116,9 @@ class StreamingClient:
                                 continue
 
         except httpx.RequestError as e:
-            raise StreamingError(f"Streaming request failed: {e}")
+            raise StreamingError(f"Streaming request failed: {e}") from e
         except Exception as e:
-            raise StreamingError(f"Unexpected streaming error: {e}")
+            raise StreamingError(f"Unexpected streaming error: {e}") from e
 
     def _get_headers(self) -> dict:
         """Get headers for streaming requests."""

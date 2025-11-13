@@ -85,7 +85,7 @@ def list_nodes(
 
     except Exception as e:
         rprint(f"[red]Error listing nodes: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("describe")
@@ -130,7 +130,7 @@ def describe_node(ctx: typer.Context, node_name: str = typer.Argument(..., help=
 
     except Exception as e:
         rprint(f"[red]Error describing node: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("scale")
@@ -157,7 +157,7 @@ def scale_cluster(
 
     except Exception as e:
         rprint(f"[red]Error scaling cluster: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("drain")
@@ -187,7 +187,7 @@ def drain_node(
 
     except Exception as e:
         rprint(f"[red]Error draining node: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("cordon")
@@ -201,7 +201,7 @@ def cordon_node(ctx: typer.Context, node_name: str = typer.Argument(..., help="N
 
     except Exception as e:
         rprint(f"[red]Error cordoning node: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("uncordon")
@@ -215,7 +215,7 @@ def uncordon_node(ctx: typer.Context, node_name: str = typer.Argument(..., help=
 
     except Exception as e:
         rprint(f"[red]Error uncordoning node: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("logs")
@@ -263,7 +263,7 @@ def get_logs(
 
     except Exception as e:
         rprint(f"[red]Error getting logs: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("backup")
@@ -293,7 +293,7 @@ def backup_cluster(
 
     except Exception as e:
         rprint(f"[red]Error creating backup: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("restore")
@@ -324,7 +324,7 @@ def restore_cluster(
 
     except Exception as e:
         rprint(f"[red]Error restoring cluster: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 def wait_for_operation(ctx: typer.Context, operation_id: str):

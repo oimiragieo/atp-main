@@ -21,8 +21,6 @@ import pytest
 
 # Testcontainers imports
 try:
-    from testcontainers.compose import DockerCompose
-    from testcontainers.postgres import PostgresContainer
     from testcontainers.redis import RedisContainer
 
     TESTCONTAINERS_AVAILABLE = True

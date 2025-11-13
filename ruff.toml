@@ -9,3 +9,8 @@ ignore = ["E203","E266","E501","S101","S311","N802","S603","S607","S108","E902"]
 "tools/adapter_pb2_grpc.py" = ["N802"]
 "tests/test_adapter_certification.py" = ["E902"]
 "memory-gateway/__init__.py" = ["N999"]
+# B008: FastAPI patterns (Query, Depends, etc.) are intentional function calls in defaults
+"router_service/*_api.py" = ["B008"]
+"router_service/auth_endpoints.py" = ["B008"]
+"services/*/main.py" = ["B008"]
+"ui/*/backend/main.py" = ["B008"]

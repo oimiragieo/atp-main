@@ -331,7 +331,8 @@ class FileClassifier:
                     risk_score = max(risk_score, 6)
 
         except Exception:
-            pass  # Ignore files that can't be read
+            # Expected - some files may not be readable or may have encoding issues
+            pass
 
         return risk_score
 
@@ -351,6 +352,7 @@ class FileClassifier:
                         dependencies.append(module.split(".")[0])
 
         except Exception:
+            # Expected - some files may not be readable or may have encoding issues
             pass
 
         return list(set(dependencies))

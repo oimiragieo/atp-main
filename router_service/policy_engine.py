@@ -335,8 +335,8 @@ class EnhancedPolicyEngine:
                     span.set_attribute("abac.action", ctx.action or "")
                     span.set_attribute("abac.user_id", ctx.user_id or "")
                     span.set_attribute("abac.tenant_id", ctx.tenant_id or "")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to set span attributes for ABAC evaluation: {e}")
                 span_cm.__exit__(None, None, None)
 
     def evaluate(self, ctx: Context) -> Decision:
@@ -430,8 +430,8 @@ class EscalationPolicy:
                     span.set_attribute("policy.escalate", escalate)
                     if reason:
                         span.set_attribute("policy.reason", reason)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"Failed to set span attributes for escalation evaluation: {e}")
                 span_cm.__exit__(None, None, None)
 
 

@@ -85,7 +85,7 @@ def list_providers(
 
     except Exception as e:
         rprint(f"[red]Error listing providers: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("describe")
@@ -152,7 +152,7 @@ def describe_provider(
 
     except Exception as e:
         rprint(f"[red]Error describing provider: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("add")
@@ -213,7 +213,7 @@ def add_provider(
 
     except Exception as e:
         rprint(f"[red]Error adding provider: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("update")
@@ -272,7 +272,7 @@ def update_provider(
 
     except Exception as e:
         rprint(f"[red]Error updating provider: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("remove")
@@ -294,7 +294,7 @@ def remove_provider(
 
     except Exception as e:
         rprint(f"[red]Error removing provider: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("enable")
@@ -308,7 +308,7 @@ def enable_provider(ctx: typer.Context, provider_name: str = typer.Argument(...,
 
     except Exception as e:
         rprint(f"[red]Error enabling provider: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("disable")
@@ -322,7 +322,7 @@ def disable_provider(ctx: typer.Context, provider_name: str = typer.Argument(...
 
     except Exception as e:
         rprint(f"[red]Error disabling provider: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("test")
@@ -358,7 +358,7 @@ def test_provider(
 
     except Exception as e:
         rprint(f"[red]Error testing provider: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("health")
@@ -409,7 +409,7 @@ def check_health(
 
     except Exception as e:
         rprint(f"[red]Error checking provider health: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command("models")
@@ -461,4 +461,4 @@ def list_models(
 
     except Exception as e:
         rprint(f"[red]Error listing models: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e

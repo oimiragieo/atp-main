@@ -109,7 +109,7 @@ def _parse_json_dict(value: str | None, value_type=float) -> dict[str, any] | No
         import json
 
         data = json.loads(value)
-        if value_type != str:
+        if value_type is not str:
             # Convert values to specified type
             return {k: value_type(v) for k, v in data.items()}
         return data

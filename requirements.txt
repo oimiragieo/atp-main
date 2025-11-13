@@ -17,6 +17,7 @@ protobuf==5.27.2
 # Performance & Async (uvloop not available on Windows)
 # uvloop==0.20.0
 httptools==0.6.4
+aiofiles==24.1.0
 
 # JSON Processing
 orjson==3.11.2

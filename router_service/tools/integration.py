@@ -197,7 +197,7 @@ class ATPToolManager:
             if connected:
                 client = self.mcp_connector.get_client(server_name)
                 if client:
-                    for tool_name, tool_def in client.tools.items():
+                    for tool_name, _tool_def in client.tools.items():
                         # Convert MCP tool to our format and register
                         # (implementation would go here)
                         logger.info(f"Registered MCP tool: {tool_name}")

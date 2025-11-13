@@ -22,9 +22,8 @@ from typing import Any
 
 try:
     from autogen import GroupChat, GroupChatManager
-    from autogen.agentchat.conversable_agent import ConversableAgent
 except ImportError:
-    raise ImportError("AutoGen is required for ATP AutoGen integration. Install it with: pip install pyautogen")
+    raise ImportError("AutoGen is required for ATP AutoGen integration. Install it with: pip install pyautogen") from None
 
 from .atp_agent import ATPAutoGenAgent
 

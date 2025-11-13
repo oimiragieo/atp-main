@@ -67,7 +67,7 @@ class ToolRegistry:
             del self._mcp_tools[tool_name]
 
         # Remove from categories
-        for category, tools in self._categories.items():
+        for _category, tools in self._categories.items():
             if tool_name in tools:
                 tools.remove(tool_name)
 

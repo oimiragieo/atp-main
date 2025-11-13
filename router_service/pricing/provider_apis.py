@@ -71,14 +71,14 @@ class BasePricingAPI(ABC):
                         response.raise_for_status()
                         return await response.json()
 
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as e:
                 if attempt == self.retry_attempts - 1:
-                    raise PricingAPITimeoutError(f"Request timed out after {self.timeout}s")
+                    raise PricingAPITimeoutError(f"Request timed out after {self.timeout}s") from e
                 await asyncio.sleep(self.retry_delay * (2**attempt))
 
             except aiohttp.ClientError as e:
                 if attempt == self.retry_attempts - 1:
-                    raise PricingAPIError(f"Request failed: {e}")
+                    raise PricingAPIError(f"Request failed: {e}") from e
                 await asyncio.sleep(self.retry_delay * (2**attempt))
 
         raise PricingAPIError("Max retry attempts exceeded")

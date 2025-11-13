@@ -235,7 +235,7 @@ class CostAnomalyDetector:
 
         # Group by hour of day
         hourly_costs = {}
-        for timestamp, cost, metadata in data:
+        for timestamp, cost, _metadata in data:
             hour = datetime.fromtimestamp(timestamp).hour
             if hour not in hourly_costs:
                 hourly_costs[hour] = []

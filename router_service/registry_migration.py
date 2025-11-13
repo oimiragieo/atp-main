@@ -5,6 +5,8 @@ import logging
 import os
 from typing import Any
 
+import aiofiles
+
 from .data_service import get_data_service
 from .repository_manager import get_repository_manager
 
@@ -19,8 +21,9 @@ async def migrate_registry_to_database(registry_file_path: str) -> bool:
             logger.warning(f"Registry file not found: {registry_file_path}")
             return False
 
-        with open(registry_file_path) as f:
-            registry_data = json.load(f)
+        async with aiofiles.open(registry_file_path) as f:
+            content = await f.read()
+            registry_data = json.loads(content)
 
         if not isinstance(registry_data, dict):
             logger.error("Registry data is not a dictionary")
@@ -107,8 +110,8 @@ async def export_database_to_registry(output_file_path: str) -> bool:
         registry_data = await data_service.get_model_registry()
 
         # Write to file
-        with open(output_file_path, "w") as f:
-            json.dump(registry_data, f, indent=2, default=str)
+        async with aiofiles.open(output_file_path, "w") as f:
+            await f.write(json.dumps(registry_data, indent=2, default=str))
 
         logger.info(f"Exported {len(registry_data)} models to {output_file_path}")
         return True
@@ -122,8 +125,9 @@ async def validate_migration(registry_file_path: str) -> dict[str, Any]:
     """Validate that migration was successful by comparing file and database."""
     try:
         # Load file data
-        with open(registry_file_path) as f:
-            file_data = json.load(f)
+        async with aiofiles.open(registry_file_path) as f:
+            content = await f.read()
+            file_data = json.loads(content)
 
         # Get database data
         data_service = get_data_service()

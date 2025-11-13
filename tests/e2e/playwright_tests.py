@@ -24,7 +24,7 @@ from typing import Any
 import pytest
 
 try:
-    from playwright.async_api import Browser, BrowserContext, Page, async_playwright
+    from playwright.async_api import Page, async_playwright
 
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
@@ -474,7 +474,7 @@ class TestPerformanceE2E:
         """Test behavior with multiple concurrent users."""
         # Create multiple pages to simulate concurrent users
         pages = []
-        for i in range(3):
+        for _ in range(3):
             page = await browser_context.new_page()
             pages.append(page)
 
@@ -830,7 +830,7 @@ class TestAPIContractTesting:
         )
 
         # Send multiple rapid requests
-        for i in range(10):
+        for _ in range(10):
             await page.click("button[data-testid='send-request']")
             await page.wait_for_timeout(100)  # Small delay
 
@@ -842,8 +842,9 @@ class TestAPIContractTesting:
                 status_text = await status_element.inner_text()
                 if "429" in status_text:
                     rate_limit_responses.append(i)
-            except:
-                pass
+            except Exception:
+                # Expected - not all responses may be visible yet
+                continue
 
         # Should have some rate limited responses
         assert len(rate_limit_responses) > 0, "Should encounter rate limiting"
@@ -867,7 +868,7 @@ class TestAccessibilityCompliance:
         await page.keyboard.press("Tab")
 
         # Navigate through focusable elements
-        for i in range(20):  # Test first 20 tab stops
+        for _ in range(20):  # Test first 20 tab stops
             focused_element = await page.evaluate(
                 "document.activeElement.tagName + (document.activeElement.id ? '#' + document.activeElement.id : '') + (document.activeElement.className ? '.' + document.activeElement.className.split(' ')[0] : '')"
             )
@@ -984,8 +985,9 @@ class TestAccessibilityCompliance:
                                 "issue": "Same foreground and background color",
                             }
                         )
-            except:
-                pass
+            except Exception:
+                # Expected - some elements may not have computed styles
+                continue
 
         # Report contrast issues (if any)
         if contrast_issues:

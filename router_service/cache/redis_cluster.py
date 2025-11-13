@@ -31,7 +31,6 @@ class RedisClusterManager:
             return
 
         try:
-            import redis.asyncio as redis
             from redis.asyncio.cluster import RedisCluster
         except ImportError:
             logger.error("Redis cluster support requires redis-py with cluster support")

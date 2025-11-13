@@ -163,9 +163,9 @@ class PerformanceAnalyzer:
         analysis["by_provider"] = provider_analysis
 
         # Latency distribution
-        fast_requests = sum(1 for l in latencies if l < 1000)  # < 1s
-        medium_requests = sum(1 for l in latencies if 1000 <= l < 5000)  # 1-5s
-        slow_requests = sum(1 for l in latencies if l >= 5000)  # >= 5s
+        fast_requests = sum(1 for latency in latencies if latency < 1000)  # < 1s
+        medium_requests = sum(1 for latency in latencies if 1000 <= latency < 5000)  # 1-5s
+        slow_requests = sum(1 for latency in latencies if latency >= 5000)  # >= 5s
 
         analysis["distribution"] = {
             "fast_requests_lt_1s": fast_requests,
@@ -176,7 +176,7 @@ class PerformanceAnalyzer:
         }
 
         # SLA violations
-        sla_violations = sum(1 for l in latencies if l > self._sla_thresholds["latency_p95_ms"])
+        sla_violations = sum(1 for latency in latencies if latency > self._sla_thresholds["latency_p95_ms"])
         analysis["sla_violations"] = {
             "count": sla_violations,
             "percentage": (sla_violations / len(latencies)) * 100,
@@ -422,7 +422,7 @@ class PerformanceAnalyzer:
         latencies = [m.get("response_time_ms", 0) for m in metrics if m.get("response_time_ms")]
         if latencies:
             p95_latency = np.percentile(latencies, 95)
-            latency_violations = sum(1 for l in latencies if l > self._sla_thresholds["latency_p95_ms"])
+            latency_violations = sum(1 for latency in latencies if latency > self._sla_thresholds["latency_p95_ms"])
 
             sla_analysis["compliance_summary"]["latency"] = {
                 "meets_sla": p95_latency <= self._sla_thresholds["latency_p95_ms"],
@@ -673,8 +673,8 @@ class PerformanceAnalyzer:
         latencies = [(m.get("response_time_ms", 0), m) for m in metrics if m.get("response_time_ms")]
         if latencies:
             # Find requests with high latency
-            p95_latency = np.percentile([l[0] for l in latencies], 95)
-            high_latency_requests = [m for l, m in latencies if l > p95_latency * 1.5]
+            p95_latency = np.percentile([lat_val[0] for lat_val in latencies], 95)
+            high_latency_requests = [metric for lat_val, metric in latencies if lat_val > p95_latency * 1.5]
 
             if high_latency_requests:
                 # Analyze patterns in high latency requests

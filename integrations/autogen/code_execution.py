@@ -159,12 +159,12 @@ class ATPCodeExecutor:
                     error_text = await response.text()
                     raise Exception(f"ATP Sandbox API error {response.status}: {error_text}")
 
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as e:
                 if attempt < self.max_retries - 1:
                     logger.warning(f"Request timeout, retrying (attempt {attempt + 1})")
                     await asyncio.sleep(1.0 * (attempt + 1))
                     continue
-                raise Exception("Request timeout after all retries")
+                raise Exception("Request timeout after all retries") from e
             except Exception as e:
                 if attempt < self.max_retries - 1:
                     logger.warning(f"Request failed: {e}, retrying (attempt {attempt + 1})")
@@ -287,7 +287,7 @@ class ATPCodeExecutor:
         except Exception as e:
             error_msg = f"Failed to load code from {filepath}: {e}"
             logger.error(error_msg)
-            raise Exception(error_msg)
+            raise Exception(error_msg) from e
 
     def list_files(self) -> list[str]:
         """List files in the work directory."""
@@ -361,8 +361,8 @@ class ATPCodeExecutor:
                     loop.create_task(self._close_session())
                 else:
                     loop.run_until_complete(self._close_session())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Session cleanup failed during code executor deletion: {e}")
 
 
 # Integration with AutoGen's code execution system

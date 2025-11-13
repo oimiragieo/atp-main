@@ -2923,16 +2923,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         cleanup_task.cancel()
         await cleanup_task
-    except BaseException:
+    except BaseException as e:
         # Swallow cancellation and any teardown-time exceptions
-        pass
+        logger.debug(f"Cleanup task cancellation error during shutdown: {e}")
     # Shutdown: hot-reload task
     if hot_reload_task:
         try:
             hot_reload_task.cancel()
             await hot_reload_task
-        except BaseException:
-            pass
+        except BaseException as e:
+            logger.debug(f"Hot-reload task cancellation error during shutdown: {e}")
     logger.info("service.shutdown", version=settings.service_version)
 
 

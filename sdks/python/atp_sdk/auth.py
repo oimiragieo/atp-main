@@ -123,7 +123,7 @@ class AuthManager:
             return self._token_cache
 
         except jwt.InvalidTokenError as e:
-            raise AuthenticationError(f"Invalid JWT token: {e}")
+            raise AuthenticationError(f"Invalid JWT token: {e}") from e
 
     async def _refresh_token_async(self) -> str:
         """Refresh the authentication token (async version)."""
@@ -175,7 +175,7 @@ class AuthManager:
                     "scopes": decoded.get("scopes", []),
                 }
             except jwt.InvalidTokenError as e:
-                raise AuthenticationError(f"Invalid JWT token: {e}")
+                raise AuthenticationError(f"Invalid JWT token: {e}") from e
         else:
             return {
                 "type": "api_key",
@@ -268,4 +268,4 @@ class ServiceAccountAuth:
             return token
 
         except Exception as e:
-            raise AuthenticationError(f"Failed to generate service account token: {e}")
+            raise AuthenticationError(f"Failed to generate service account token: {e}") from e

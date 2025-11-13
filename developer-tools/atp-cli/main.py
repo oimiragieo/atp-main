@@ -126,10 +126,10 @@ def config():
     pass
 
 
-@config.command()
+@config.command("set")
 @click.argument("key")
 @click.argument("value")
-def set(key: str, value: str):
+def set_config(key: str, value: str):
     """Set a configuration value."""
     config_data = load_config()
 
@@ -383,8 +383,8 @@ def models():
     pass
 
 
-@models.command()
-def list():
+@models.command("list")
+def list_models():
     """List available models."""
     config_data = load_config()
 
@@ -470,8 +470,8 @@ def providers():
     pass
 
 
-@providers.command()
-def list():
+@providers.command("list")
+def list_providers():
     """List available providers."""
     config_data = load_config()
 

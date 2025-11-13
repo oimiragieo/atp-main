@@ -98,7 +98,7 @@ async def log_audit_event(request: AuditRequest):
         return result
     except Exception as e:
         logger.error(f"Audit logging failed: {e}")
-        raise HTTPException(status_code=500, detail="Audit logging failed")
+        raise HTTPException(status_code=500, detail="Audit logging failed") from e
 
 
 @app.post("/pii/detect")
@@ -109,7 +109,7 @@ async def detect_pii(request: PIIRequest):
         return result
     except Exception as e:
         logger.error(f"PII detection failed: {e}")
-        raise HTTPException(status_code=500, detail="PII detection failed")
+        raise HTTPException(status_code=500, detail="PII detection failed") from e
 
 
 @app.post("/memory/store")
@@ -120,7 +120,7 @@ async def store_memory(request: MemoryRequest):
         return result
     except Exception as e:
         logger.error(f"Memory storage failed: {e}")
-        raise HTTPException(status_code=500, detail="Memory storage failed")
+        raise HTTPException(status_code=500, detail="Memory storage failed") from e
 
 
 @app.post("/memory/retrieve")
@@ -131,7 +131,7 @@ async def retrieve_memory(request: MemoryRetrievalRequest):
         return result
     except Exception as e:
         logger.error(f"Memory retrieval failed: {e}")
-        raise HTTPException(status_code=500, detail="Memory retrieval failed")
+        raise HTTPException(status_code=500, detail="Memory retrieval failed") from e
 
 
 @app.get("/audit/search")
@@ -142,7 +142,7 @@ async def search_audit_logs(tenant_id: str, event_type: str = None, limit: int =
         return {"logs": [], "count": 0}
     except Exception as e:
         logger.error(f"Audit search failed: {e}")
-        raise HTTPException(status_code=500, detail="Audit search failed")
+        raise HTTPException(status_code=500, detail="Audit search failed") from e
 
 
 async def main():
