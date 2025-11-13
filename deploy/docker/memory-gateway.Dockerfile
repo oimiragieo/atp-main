@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy requirements first for better caching
-COPY memory-gateway/requirements.txt memory-gateway/requirements-pii.txt ./
+COPY services/memory-gateway/requirements.txt services/memory-gateway/requirements-pii.txt ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -53,8 +53,8 @@ COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code
-COPY memory-gateway/ ./
-COPY metrics/ ./metrics/
+COPY services/memory-gateway/ ./
+COPY observability/metrics/ ./metrics/
 
 # Copy startup script
 COPY deploy/docker/memory-gateway-entrypoint.sh ./entrypoint.sh

@@ -10,7 +10,7 @@ import asyncio
 import logging
 from typing import Any
 
-from metrics.registry import REGISTRY
+from observability.metrics.registry import REGISTRY
 
 from .error_budget_tail_sampler import record_error_budget_for_sampling
 
@@ -22,7 +22,7 @@ class ErrorBudgetTailSamplerIntegration:
 
     def __init__(
         self,
-        error_budget_config_file: str = "tools/error_budget_config.json",
+        error_budget_config_file: str = "configs/observability/error_budget_config.json",
         check_interval_seconds: int = 60,  # Check every minute
         enabled: bool = True,
     ):
@@ -146,7 +146,7 @@ def get_error_budget_integration() -> ErrorBudgetTailSamplerIntegration:
 
 
 def init_error_budget_integration(
-    config_file: str = "tools/error_budget_config.json",
+    config_file: str = "configs/observability/error_budget_config.json",
     check_interval_seconds: int = 60,
     enabled: bool = True,
 ) -> ErrorBudgetTailSamplerIntegration:

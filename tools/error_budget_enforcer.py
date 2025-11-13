@@ -106,7 +106,7 @@ class ErrorBudgetEnforcer:
     """Enforces error budget policies in CI/CD pipeline."""
 
     def __init__(self, config_file: str | None = None):
-        self.config_file = config_file or "error_budget_config.json"
+        self.config_file = config_file or "configs/observability/error_budget_config.json"
         self.slos: dict[str, SLODefinition] = {}
         self.states: dict[str, ErrorBudgetState] = {}
         self.load_config()

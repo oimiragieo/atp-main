@@ -3,7 +3,7 @@ from typing import Any
 import httpx
 from fastapi.testclient import TestClient
 
-from admin_aggregator.app import app
+from ui.admin_aggregator.app import app
 
 
 class MockRouter:

@@ -40,7 +40,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f memory-gateway/requirements.txt ]; then pip install -r memory-gateway/requirements.txt; fi
+          if [ -f services/memory-gateway/requirements.txt ]; then pip install -r services/memory-gateway/requirements.txt; fi
           if [ -f adapters/python/persona_adapter/requirements.txt ]; then pip install -r adapters/python/persona_adapter/requirements.txt; fi
           if [ -f adapters/python/ollama_adapter/requirements.txt ]; then pip install -r adapters/python/ollama_adapter/requirements.txt; fi
           pip install mypy ruff pytest pytest-cov
