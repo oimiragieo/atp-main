@@ -31,6 +31,7 @@ from metrics.registry import (
     PRIOR_UPDATE_LATENCY_SECONDS,
     PRIOR_UPDATES_APPLIED_TOTAL,
 )
+
 from router_service.federated_rewards import FederatedRewardSignal
 from router_service.multi_objective_scorer import MultiObjectiveScorer, ObjectiveVector
 

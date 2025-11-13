@@ -6,6 +6,7 @@ import tempfile
 from unittest.mock import patch
 
 from metrics.registry import REGISTRY
+
 from router_service.service import _DATA_DIR, _persist_lifecycle
 
 

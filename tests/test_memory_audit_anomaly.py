@@ -11,7 +11,6 @@ from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
-
 from metrics import MEMORY_ACCESS_ANOMALIES_TOTAL
 
 # Set up environment variables before importing modules

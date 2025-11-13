@@ -72,7 +72,10 @@ class AuthManager:
             # Try to decode without verification (just to check format)
             jwt.decode(token, options={"verify_signature": False})
             return True
-        except:
+        except (jwt.InvalidTokenError, ValueError, AttributeError, KeyError) as e:
+            # Log debug info for troubleshooting
+            import logging
+            logging.getLogger(__name__).debug(f"Token validation failed: {e}")
             return False
 
     def _get_or_refresh_token(self) -> str:
@@ -146,7 +149,10 @@ class AuthManager:
 
             return True
 
-        except:
+        except (jwt.InvalidTokenError, ValueError, AttributeError, KeyError) as e:
+            # Log debug info for troubleshooting
+            import logging
+            logging.getLogger(__name__).debug(f"Token validation failed: {e}")
             return False
 
     def get_token_info(self) -> dict:

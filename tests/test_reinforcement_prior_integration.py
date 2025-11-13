@@ -20,6 +20,7 @@ from metrics.registry import (
     ACTIVE_PRIORS,
     PRIOR_UPDATES_APPLIED_TOTAL,
 )
+
 from router_service.federated_rewards import FederatedRewardSignal
 from router_service.multi_objective_scorer import ObjectiveVector
 from router_service.reinforcement_prior_integration import (

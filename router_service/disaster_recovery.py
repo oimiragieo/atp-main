@@ -32,7 +32,6 @@ from enum import Enum
 from typing import Any
 
 import aiohttp
-
 from metrics.registry import REGISTRY
 
 # Import failover components

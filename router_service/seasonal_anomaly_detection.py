@@ -3,9 +3,8 @@
 import threading
 import time
 
-from tools.anomaly_poc import SeasonalAnomalyDetector
-
 from metrics.registry import REGISTRY
+from tools.anomaly_poc import SeasonalAnomalyDetector
 
 
 class SeasonalAnomalyDetectionService:

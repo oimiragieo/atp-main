@@ -18,7 +18,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives.asymmetric.padding import MGF1, PSS
-
 from metrics.registry import REGISTRY
 
 logger = logging.getLogger(__name__)

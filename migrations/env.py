@@ -49,7 +49,11 @@ def get_database_url() -> str:
     port = os.getenv("DB_PORT", "5432")
     database = os.getenv("DB_NAME", "atp_router")
     username = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD", "password")
+    password = os.getenv("DB_PASSWORD")
+
+    # Require password to be set via environment variable for security
+    if not password:
+        raise ValueError("DB_PASSWORD environment variable must be set")
 
     return f"postgresql+asyncpg://{username}:{password}@{host}:{port}/{database}"
 

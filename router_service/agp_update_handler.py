@@ -20,8 +20,8 @@ from typing import Any
 # Add memory-gateway to path for audit_log import
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "memory-gateway")))
 import audit_log as audit_log_module  # renamed for lint N812 compliance
-
 from metrics.registry import REGISTRY, Histogram
+
 from router_service.adaptive_reconciliation import (
     SwitchingContext,
     get_adaptive_reconciliation_strategy,

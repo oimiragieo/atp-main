@@ -45,7 +45,6 @@ import pii as PII  # noqa: N812 (external memory-gateway module alias)
 import psutil
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Path, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, PlainTextResponse, Response, StreamingResponse
-
 from metrics.registry import EXPERIMENT_FRAMES_TOTAL, REGISTRY
 
 # Import PII redaction module for GAP-218

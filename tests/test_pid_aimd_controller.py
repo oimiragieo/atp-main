@@ -3,8 +3,8 @@
 import time
 
 import pytest
-
 from metrics.registry import REGISTRY
+
 from router_service.window_update import AIMDController, PIDController
 
 

@@ -16,9 +16,9 @@ import pytest
 from router_service.tools.agents.subagent import AgentDefinition, AgentModel, get_agent_registry
 from router_service.tools.core.executor import ToolExecutor
 from router_service.tools.core.registry import ToolRegistry
-from router_service.tools.core.schema import ToolDefinition, ToolResult, ToolUse
+from router_service.tools.core.schema import ToolDefinition, ToolUse
 from router_service.tools.guardrails.permissions import PermissionMode, PermissionPolicy
-from router_service.tools.integration import ATPToolManager, get_tool_manager
+from router_service.tools.integration import ATPToolManager
 from router_service.tools.tracking.cost import CostTracker, Usage
 
 

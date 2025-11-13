@@ -15,6 +15,7 @@
 """Tests for Secure Aggregation Protocol for Federated Reward Signals (GAP-372)."""
 
 from metrics import SECURE_AGG_FAILURES_TOTAL
+
 from router_service.federated_rewards import FederatedRewardSignal
 from router_service.secure_reward_aggregation import (
     SecureRewardAggregatorCoordinator,

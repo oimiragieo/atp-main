@@ -8,6 +8,7 @@ import tempfile
 from unittest.mock import patch
 
 from metrics.registry import REGISTRY
+
 from router_service.service import _record_observation, _rotate_observation_file
 
 

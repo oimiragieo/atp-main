@@ -315,7 +315,8 @@ async def get_database_stats(user: UserInfo = Depends(require_admin())) -> dict[
                     from sqlalchemy import text
 
                     # Get table row counts
-                    tables = [
+                    # Define allowed tables (whitelist to prevent SQL injection)
+                    ALLOWED_TABLES = {
                         "requests",
                         "responses",
                         "providers",
@@ -324,10 +325,14 @@ async def get_database_stats(user: UserInfo = Depends(require_admin())) -> dict[
                         "audit_logs",
                         "compliance_violations",
                         "model_stats",
-                    ]
+                    }
 
-                    for table in tables:
+                    for table in ALLOWED_TABLES:
                         try:
+                            # Validate table name is in whitelist (already validated above, but explicit check)
+                            if table not in ALLOWED_TABLES:
+                                raise ValueError(f"Invalid table name: {table}")
+                            # Safe to use f-string here since table is from validated whitelist
                             result = await session.execute(text(f"SELECT COUNT(*) FROM {table}"))
                             count = result.scalar()
                             stats["tables"][table] = {"row_count": count}

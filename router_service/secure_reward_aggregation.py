@@ -26,9 +26,9 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+from metrics import FEDERATED_ROUNDS_COMPLETED, SECURE_AGG_FAILURES_TOTAL
 from tools.secure_aggregation_poc import SimpleHomomorphicEncryption
 
-from metrics import FEDERATED_ROUNDS_COMPLETED, SECURE_AGG_FAILURES_TOTAL
 from router_service.federated_rewards import FederatedRewardSignal
 
 

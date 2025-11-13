@@ -15,7 +15,6 @@ from enum import Enum
 from typing import Any
 
 import httpx
-
 from metrics.registry import REGISTRY
 
 logger = logging.getLogger(__name__)

@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 import aiohttp
-
 from metrics.registry import CARBON_API_ERRORS_TOTAL, CARBON_API_REQUESTS_TOTAL
 
 logger = logging.getLogger(__name__)
