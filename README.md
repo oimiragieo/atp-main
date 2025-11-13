@@ -118,7 +118,7 @@ docker compose up -d --scale persona_adapter=2
 - `docs/` — specs & guides (ATP, AGP, Personas, State Diagrams, Security, MCP, SMF, Docker POC).
 - `atp-router/` — Rust workspace (router scaffold + adapter protos + schema).
 - `atp-router/adapters/python/` — example persona/ollama adapters (toy stubs).
-- `memory-gateway/` — POC FastAPI KV store with simple search.
+- `services/memory-gateway/` — POC FastAPI KV store with simple search.
 - `observability/` — Prometheus scrape config.
 - `docker-compose.yml` — spins router + adapters + memory + prometheus.
 - `router_service/` — Python router PoC with:

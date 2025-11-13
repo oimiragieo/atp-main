@@ -14,7 +14,7 @@ mkdir -p "$STG"
 tar -xzf "$REPO_TGZ" -C /tmp
 REPO_DIR=$(tar -tzf "$REPO_TGZ" | head -1 | cut -f1 -d"/")
 cp -a /tmp/$REPO_DIR/router_service "$STG/"
-cp -a /tmp/$REPO_DIR/memory-gateway "$STG/" || true
-cp -a /tmp/$REPO_DIR/admin_aggregator "$STG/" || true
+cp -a /tmp/$REPO_DIR/services/memory-gateway "$STG/" || true
+cp -a /tmp/$REPO_DIR/ui/admin-aggregator "$STG/" || true
 
 echo "APPLIANCE: copied repo to $STG"

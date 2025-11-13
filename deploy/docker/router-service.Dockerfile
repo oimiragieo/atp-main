@@ -54,7 +54,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY router_service/ ./router_service/
 COPY adapters/ ./adapters/
-COPY metrics/ ./metrics/
+COPY observability/metrics/ ./metrics/
 COPY alembic.ini ./
 COPY migrations/ ./migrations/
 

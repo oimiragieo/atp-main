@@ -19,7 +19,7 @@ from typing import Any
 
 # Optional imports for metrics integration
 try:
-    from metrics import SLO_BREACH_EVENTS_TOTAL
+    from observability.metrics import SLO_BREACH_EVENTS_TOTAL
 except ImportError:
     SLO_BREACH_EVENTS_TOTAL = None
 

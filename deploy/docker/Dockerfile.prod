@@ -50,7 +50,7 @@ WORKDIR /app
 # Copy only production code
 COPY services/ /app/services/
 COPY adapters/ /app/adapters/
-COPY metrics/ /app/metrics/
+COPY observability/metrics/ /app/observability/metrics/
 COPY configs/ /app/configs/
 
 # Copy configuration files

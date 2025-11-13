@@ -105,9 +105,9 @@ data:
                 - path: "deploy/docker/memory-gateway.Dockerfile"
                   image: "atp/memory-gateway"
                   context: "."
-                - path: "admin-dashboard/Dockerfile"
+                - path: "ui/admin-dashboard/Dockerfile"
                   image: "atp/admin-dashboard"
-                  context: "admin-dashboard"
+                  context: "ui/admin-dashboard"
               registry: "${CONTAINER_REGISTRY}"
               tag: "${BUILD_NUMBER}"
           
