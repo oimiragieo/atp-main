@@ -16,7 +16,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 from .artifact_metrics import artifact_storage_metrics_callback
 
@@ -34,8 +34,8 @@ class ArtifactMetadata:
     size_bytes: int
     checksum_sha256: str
     signature: str
-    created_at: Optional[float] = None
-    expires_at: Optional[float] = None
+    created_at: float | None = None
+    expires_at: float | None = None
     metadata: dict[str, Any] = None
 
     def __post_init__(self):
@@ -63,18 +63,18 @@ class ArtifactUploadResult:
     metadata: ArtifactMetadata
     upload_duration_ms: float
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
 class ArtifactDownloadResult:
     """Result of artifact download operation."""
 
-    data: Optional[bytes]
-    metadata: Optional[ArtifactMetadata]
+    data: bytes | None
+    metadata: ArtifactMetadata | None
     download_duration_ms: float
     success: bool
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class ArtifactStorageBackend(Protocol):
@@ -101,12 +101,12 @@ class ArtifactStorageBackend(Protocol):
         pass
 
     @abc.abstractmethod
-    async def list_artifacts(self, prefix: Optional[str] = None, limit: int = 100) -> list[ArtifactMetadata]:
+    async def list_artifacts(self, prefix: str | None = None, limit: int = 100) -> list[ArtifactMetadata]:
         """List artifacts with optional prefix filter."""
         pass
 
     @abc.abstractmethod
-    async def get_artifact_metadata(self, artifact_id: str) -> Optional[ArtifactMetadata]:
+    async def get_artifact_metadata(self, artifact_id: str) -> ArtifactMetadata | None:
         """Get artifact metadata without downloading data."""
         pass
 
@@ -317,7 +317,7 @@ class LocalArtifactStorageBackend:
             logger.error(f"Delete failed for {artifact_id}: {e}")
             return False
 
-    async def list_artifacts(self, prefix: Optional[str] = None, limit: int = 100) -> list[ArtifactMetadata]:
+    async def list_artifacts(self, prefix: str | None = None, limit: int = 100) -> list[ArtifactMetadata]:
         """List artifacts with optional prefix filter."""
         try:
             artifacts = []
@@ -343,7 +343,7 @@ class LocalArtifactStorageBackend:
             logger.error(f"List artifacts failed: {e}")
             return []
 
-    async def get_artifact_metadata(self, artifact_id: str) -> Optional[ArtifactMetadata]:
+    async def get_artifact_metadata(self, artifact_id: str) -> ArtifactMetadata | None:
         """Get artifact metadata without downloading data."""
         try:
             metadata_file = self.metadata_path / f"{artifact_id}.json"
@@ -572,7 +572,7 @@ class S3ArtifactStorageBackend:
             logger.error(f"S3 delete failed for {artifact_id}: {e}")
             return False
 
-    async def list_artifacts(self, prefix: Optional[str] = None, limit: int = 100) -> list[ArtifactMetadata]:
+    async def list_artifacts(self, prefix: str | None = None, limit: int = 100) -> list[ArtifactMetadata]:
         """List artifacts in S3 with optional prefix filter."""
         if not self.s3_client:
             return []
@@ -614,7 +614,7 @@ class S3ArtifactStorageBackend:
             logger.error(f"S3 list artifacts failed: {e}")
             return []
 
-    async def get_artifact_metadata(self, artifact_id: str) -> Optional[ArtifactMetadata]:
+    async def get_artifact_metadata(self, artifact_id: str) -> ArtifactMetadata | None:
         """Get artifact metadata from S3 without downloading data."""
         if not self.s3_client:
             return None
@@ -646,7 +646,7 @@ class ArtifactStorageFactory:
     """Factory for creating artifact storage backends."""
 
     @staticmethod
-    def create_local_backend(config: Optional[dict[str, Any]] = None) -> ArtifactStorageBackend:
+    def create_local_backend(config: dict[str, Any] | None = None) -> ArtifactStorageBackend:
         """Create a local filesystem backend."""
         if config is None:
             config = {}
@@ -683,9 +683,7 @@ class ArtifactStorageContext:
         pass
 
 
-def get_artifact_storage(
-    backend_type: str = "local", config: Optional[dict[str, Any]] = None
-) -> ArtifactStorageContext:
+def get_artifact_storage(backend_type: str = "local", config: dict[str, Any] | None = None) -> ArtifactStorageContext:
     """Context manager for artifact storage connections."""
     if config is None:
         config = {}

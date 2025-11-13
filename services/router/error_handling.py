@@ -30,7 +30,7 @@ from .errors import ErrorCode
 
 _logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ErrorHandler:
@@ -38,10 +38,7 @@ class ErrorHandler:
 
     @staticmethod
     def handle_with_fallback(
-        operation: callable,
-        fallback_value: Any = None,
-        log_level: int = logging.WARNING,
-        context: str = ""
+        operation: callable, fallback_value: Any = None, log_level: int = logging.WARNING, context: str = ""
     ) -> Any:
         """Execute operation with fallback on failure."""
         try:
@@ -53,10 +50,7 @@ class ErrorHandler:
 
     @staticmethod
     async def handle_async_with_fallback(
-        operation: callable,
-        fallback_value: Any = None,
-        log_level: int = logging.WARNING,
-        context: str = ""
+        operation: callable, fallback_value: Any = None, log_level: int = logging.WARNING, context: str = ""
     ) -> Any:
         """Execute async operation with fallback on failure."""
         try:
@@ -67,12 +61,9 @@ class ErrorHandler:
             return fallback_value
 
     @staticmethod
-    def wrap_exceptions(
-        exc_type: type[Exception] = Exception,
-        message: str = "",
-        error_code: ErrorCode | None = None
-    ):
+    def wrap_exceptions(exc_type: type[Exception] = Exception, message: str = "", error_code: ErrorCode | None = None):
         """Decorator to wrap exceptions with ATPError types."""
+
         def decorator(func):
             def wrapper(*args, **kwargs):
                 try:
@@ -83,16 +74,17 @@ class ErrorHandler:
                         raise error_class(f"{message}: {e}" if message else str(e)) from e
                     else:
                         raise InternalError(f"{message}: {e}" if message else str(e)) from e
+
             return wrapper
+
         return decorator
 
     @staticmethod
     def wrap_async_exceptions(
-        exc_type: type[Exception] = Exception,
-        message: str = "",
-        error_code: ErrorCode | None = None
+        exc_type: type[Exception] = Exception, message: str = "", error_code: ErrorCode | None = None
     ):
         """Decorator to wrap async exceptions with ATPError types."""
+
         def decorator(func):
             async def wrapper(*args, **kwargs):
                 try:
@@ -103,7 +95,9 @@ class ErrorHandler:
                         raise error_class(f"{message}: {e}" if message else str(e)) from e
                     else:
                         raise InternalError(f"{message}: {e}" if message else str(e)) from e
+
             return wrapper
+
         return decorator
 
 
@@ -123,11 +117,7 @@ def _get_error_class(error_code: ErrorCode) -> type[ATPError]:
 
 
 @contextmanager
-def error_context(
-    context: str = "",
-    log_level: int = logging.ERROR,
-    reraise: bool = True
-) -> Iterator[None]:
+def error_context(context: str = "", log_level: int = logging.ERROR, reraise: bool = True) -> Iterator[None]:
     """Context manager for consistent error handling."""
     try:
         yield
@@ -143,9 +133,7 @@ def error_context(
 
 @asynccontextmanager
 async def async_error_context(
-    context: str = "",
-    log_level: int = logging.ERROR,
-    reraise: bool = True
+    context: str = "", log_level: int = logging.ERROR, reraise: bool = True
 ) -> AsyncIterator[None]:
     """Async context manager for consistent error handling."""
     try:
@@ -165,9 +153,10 @@ def retry_with_backoff(
     base_delay: float = 1.0,
     max_delay: float = 60.0,
     backoff_factor: float = 2.0,
-    exceptions: tuple[type[Exception], ...] = (Exception,)
+    exceptions: tuple[type[Exception], ...] = (Exception,),
 ) -> callable:
     """Decorator for retry logic with exponential backoff."""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             delay = base_delay
@@ -181,11 +170,10 @@ def retry_with_backoff(
                     if attempt == max_attempts - 1:
                         break
 
-                    _logger.warning(
-                        f"Attempt {attempt + 1}/{max_attempts} failed for {func.__name__}: {e}"
-                    )
+                    _logger.warning(f"Attempt {attempt + 1}/{max_attempts} failed for {func.__name__}: {e}")
                     # Note: In sync context, we can't await, so we use time.sleep as fallback
                     import time
+
                     time.sleep(min(delay, 1.0))  # Cap at 1 second for sync context
                     delay = min(delay * backoff_factor, max_delay)
 
@@ -201,9 +189,10 @@ def retry_async_with_backoff(
     base_delay: float = 1.0,
     max_delay: float = 60.0,
     backoff_factor: float = 2.0,
-    exceptions: tuple[type[Exception], ...] = (Exception,)
+    exceptions: tuple[type[Exception], ...] = (Exception,),
 ) -> callable:
     """Decorator for async retry logic with exponential backoff."""
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             delay = base_delay
@@ -217,15 +206,14 @@ def retry_async_with_backoff(
                     if attempt == max_attempts - 1:
                         break
 
-                    _logger.warning(
-                        f"Attempt {attempt + 1}/{max_attempts} failed for {func.__name__}: {e}"
-                    )
+                    _logger.warning(f"Attempt {attempt + 1}/{max_attempts} failed for {func.__name__}: {e}")
                     await asyncio.sleep(delay)
                     delay = min(delay * backoff_factor, max_delay)
 
             raise last_exception or InternalError(f"All {max_attempts} attempts failed")
 
         return wrapper
+
     return decorator
 
 
@@ -240,10 +228,7 @@ def validate_required(value: Any, field_name: str) -> None:
 
 
 def validate_range(
-    value: int | float,
-    field_name: str,
-    min_val: int | float | None = None,
-    max_val: int | float | None = None
+    value: int | float, field_name: str, min_val: int | float | None = None, max_val: int | float | None = None
 ) -> None:
     """Validate that a numeric value is within acceptable range."""
     if min_val is not None and value < min_val:

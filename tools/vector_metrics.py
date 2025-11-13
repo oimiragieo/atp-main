@@ -4,24 +4,42 @@ from typing import Optional
 
 try:
     from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
+
     # Create dummy classes for when prometheus is not available
     class Counter:
-        def __init__(self, *args, **kwargs): pass
-        def labels(self, *args, **kwargs): return self
-        def inc(self, *args, **kwargs): pass
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def labels(self, *args, **kwargs):
+            return self
+
+        def inc(self, *args, **kwargs):
+            pass
 
     class Gauge:
-        def __init__(self, *args, **kwargs): pass
-        def labels(self, *args, **kwargs): return self
-        def set(self, *args, **kwargs): pass
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def labels(self, *args, **kwargs):
+            return self
+
+        def set(self, *args, **kwargs):
+            pass
 
     class Histogram:
-        def __init__(self, *args, **kwargs): pass
-        def labels(self, *args, **kwargs): return self
-        def observe(self, *args, **kwargs): pass
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def labels(self, *args, **kwargs):
+            return self
+
+        def observe(self, *args, **kwargs):
+            pass
+
 
 from tools.vector_backend import VectorQueryMetrics
 
@@ -43,8 +61,10 @@ class VectorMetricsCollector:
 
             # Query count counter
             self.vector_query_total = Counter(
-                "vector_query_total", "Total number of vector queries", ["operation", "namespace", "backend_type"]
-                , registry=self._registry
+                "vector_query_total",
+                "Total number of vector queries",
+                ["operation", "namespace", "backend_type"],
+                registry=self._registry,
             )
 
             # Query errors counter
@@ -57,20 +77,26 @@ class VectorMetricsCollector:
 
             # Active connections gauge
             self.vector_backend_connections_active = Gauge(
-                "vector_backend_connections_active", "Number of active connections to vector backend", ["backend_type"]
-                , registry=self._registry
+                "vector_backend_connections_active",
+                "Number of active connections to vector backend",
+                ["backend_type"],
+                registry=self._registry,
             )
 
             # Namespace count gauge
             self.vector_namespaces_total = Gauge(
-                "vector_namespaces_total", "Total number of namespaces in vector backend", ["backend_type"]
-                , registry=self._registry
+                "vector_namespaces_total",
+                "Total number of namespaces in vector backend",
+                ["backend_type"],
+                registry=self._registry,
             )
 
             # Vectors per namespace gauge
             self.vector_count_per_namespace = Gauge(
-                "vector_count_per_namespace", "Number of vectors in a namespace", ["namespace", "backend_type"]
-                , registry=self._registry
+                "vector_count_per_namespace",
+                "Number of vectors in a namespace",
+                ["namespace", "backend_type"],
+                registry=self._registry,
             )
         else:
             # Create dummy attributes when prometheus is not available
@@ -124,7 +150,7 @@ class VectorMetricsCollector:
 
 
 # Global metrics collector instance
-_metrics_collector: Optional[VectorMetricsCollector] = None
+_metrics_collector: VectorMetricsCollector | None = None
 
 
 def get_metrics_collector(*, fresh: bool = False) -> VectorMetricsCollector:
@@ -153,7 +179,7 @@ def update_backend_stats(
     backend_type: str,
     active_connections: int = 0,
     namespace_count: int = 0,
-    namespace_stats: Optional[dict[str, int]] = None,
+    namespace_stats: dict[str, int] | None = None,
 ) -> None:
     """Update backend statistics."""
     collector = get_metrics_collector()

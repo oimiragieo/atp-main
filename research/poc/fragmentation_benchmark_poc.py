@@ -14,6 +14,7 @@ from dataclasses import dataclass
 try:
     from router_service.fragmentation import fragment_frame
     from router_service.frame import Frame, Meta, Payload, Window
+
     ROUTER_AVAILABLE = True
 except ImportError:
     ROUTER_AVAILABLE = False
@@ -56,7 +57,7 @@ except ImportError:
         # Simple mock fragmentation
         fragments = []
         for i in range(0, len(text), max_fragment_size):
-            chunk = text[i:i + max_fragment_size]
+            chunk = text[i : i + max_fragment_size]
             frag = Frame(
                 v=frame.v,
                 session_id=frame.session_id,
@@ -68,7 +69,7 @@ except ImportError:
                 ttl=frame.ttl,
                 window=frame.window,
                 meta=frame.meta,
-                payload=Payload(type=frame.payload.type, content={"text": chunk})
+                payload=Payload(type=frame.payload.type, content={"text": chunk}),
             )
             fragments.append(frag)
         return fragments

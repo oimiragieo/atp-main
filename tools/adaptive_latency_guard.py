@@ -3,9 +3,9 @@
 
 import threading
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Optional
 
 from tools.gpu_batch_scheduler import BatchConfig, GPUBatchScheduler, get_batch_scheduler
 
@@ -76,7 +76,7 @@ class AdaptiveLatencyGuard:
         # Control state
         self.monitoring_active = False
         self.last_adjustment_time = 0
-        self.monitoring_thread: Optional[threading.Thread] = None
+        self.monitoring_thread: threading.Thread | None = None
         self._lock = threading.Lock()
 
         # Callbacks
@@ -307,7 +307,7 @@ class AdaptiveLatencyGuard:
 
 
 # Global guard instance
-_guard_instance: Optional[AdaptiveLatencyGuard] = None
+_guard_instance: AdaptiveLatencyGuard | None = None
 
 
 def get_latency_guard(scheduler: GPUBatchScheduler = None, config: GuardConfig = None) -> AdaptiveLatencyGuard:

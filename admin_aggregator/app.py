@@ -23,10 +23,10 @@ from __future__ import annotations
 import asyncio
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 
@@ -44,7 +44,7 @@ class AggregatorConfig:
     request_timeout: float
 
     @staticmethod
-    def from_env() -> "AggregatorConfig":
+    def from_env() -> AggregatorConfig:
         routers = tuple(_parse_env_list("ROUTERS"))
         if not routers:
             raise ValueError("ROUTERS environment variable must be set (comma-separated base URLs)")
@@ -72,11 +72,7 @@ app = FastAPI(title="ATP Admin Aggregator", version="0.1.0")
 
 _origins = _parse_env_list("CORS_ORIGINS") or ["*"]
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    CORSMiddleware, allow_origins=_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
 )
 
 
@@ -85,7 +81,9 @@ def _get_cfg() -> AggregatorConfig:
     return AggregatorConfig.from_env()
 
 
-async def _fetch_json(client: httpx.AsyncClient, base: str, path: str, headers: dict[str, str]) -> tuple[str, Any, Optional[str]]:
+async def _fetch_json(
+    client: httpx.AsyncClient, base: str, path: str, headers: dict[str, str]
+) -> tuple[str, Any, str | None]:
     url = base.rstrip("/") + path
     try:
         res = await client.get(url, headers=headers)
@@ -107,7 +105,7 @@ async def summary() -> dict[str, Any]:
     headers = _headers(cfg.admin_key)
     async with _build_client(cfg.request_timeout) as client:
         # parallel fetch version and state health
-        tasks: list[asyncio.Task[tuple[str, Any, Optional[str]]]] = []
+        tasks: list[asyncio.Task[tuple[str, Any, str | None]]] = []
         for base in cfg.routers:
             tasks.append(asyncio.create_task(_fetch_json(client, base, "/admin/version", headers)))
             tasks.append(asyncio.create_task(_fetch_json(client, base, "/admin/state_health", headers)))
@@ -134,7 +132,9 @@ async def aggregate_cluster_stats() -> dict[str, Any]:
     cfg = _get_cfg()
     headers = _headers(cfg.admin_key)
     async with _build_client(cfg.request_timeout) as client:
-        tasks = [asyncio.create_task(_fetch_json(client, base, "/admin/cluster_stats", headers)) for base in cfg.routers]
+        tasks = [
+            asyncio.create_task(_fetch_json(client, base, "/admin/cluster_stats", headers)) for base in cfg.routers
+        ]
         results = await asyncio.gather(*tasks)
 
     merged: list[dict[str, Any]] = []

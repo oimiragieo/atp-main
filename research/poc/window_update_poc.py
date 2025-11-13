@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -16,7 +15,7 @@ class Usage:
     usd: int
 
 
-def compute_window_update(prev: Usage, curr: Usage, base: Window, delta_pct: int = 20) -> Optional[Window]:
+def compute_window_update(prev: Usage, curr: Usage, base: Window, delta_pct: int = 20) -> Window | None:
     """If usage changed more than delta_pct of capacity, adjust window down or up (AIMD-ish)."""
 
     def pct(cap, used):

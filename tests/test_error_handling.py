@@ -29,6 +29,7 @@ class TestErrorHandler:
 
     def test_handle_with_fallback_success(self):
         """Test successful operation with fallback."""
+
         def operation():
             return "success"
 
@@ -37,14 +38,13 @@ class TestErrorHandler:
 
     def test_handle_with_fallback_failure(self):
         """Test failed operation with fallback."""
+
         def failing_operation():
             raise ValueError("test error")
 
-        with patch('router_service.error_handling._logger') as mock_logger:
+        with patch("router_service.error_handling._logger") as mock_logger:
             result = ErrorHandler.handle_with_fallback(
-                failing_operation,
-                fallback_value="fallback",
-                context="test context"
+                failing_operation, fallback_value="fallback", context="test context"
             )
 
         assert result == "fallback"
@@ -53,6 +53,7 @@ class TestErrorHandler:
 
     def test_wrap_exceptions(self):
         """Test exception wrapping decorator."""
+
         @ErrorHandler.wrap_exceptions(ValueError, "wrapped error", ErrorCode.INVALID_REQUEST)
         def failing_function():
             raise ValueError("original error")
@@ -65,6 +66,7 @@ class TestErrorHandler:
 
     def test_wrap_exceptions_default(self):
         """Test exception wrapping with default error type."""
+
         @ErrorHandler.wrap_exceptions(ValueError, "test error")
         def failing_function():
             raise ValueError("original error")
@@ -91,7 +93,7 @@ class TestErrorContext:
 
     def test_error_context_generic_error(self):
         """Test error context wraps generic errors."""
-        with patch('router_service.error_handling._logger') as mock_logger:
+        with patch("router_service.error_handling._logger") as mock_logger:
             with pytest.raises(InternalError):
                 with error_context("test context", reraise=True):
                     raise ValueError("generic error")
@@ -117,7 +119,7 @@ class TestAsyncErrorContext:
 
     async def test_async_error_context_generic_error(self):
         """Test async error context wraps generic errors."""
-        with patch('router_service.error_handling._logger') as mock_logger:
+        with patch("router_service.error_handling._logger") as mock_logger:
             with pytest.raises(InternalError):
                 async with async_error_context("test context", reraise=True):
                     raise ValueError("generic error")
@@ -147,6 +149,7 @@ class TestRetryDecorators:
 
     def test_retry_with_backoff_exhaustion(self):
         """Test retry decorator exhausts attempts."""
+
         @retry_with_backoff(max_attempts=2)
         def failing_operation():
             raise ValueError("persistent failure")
@@ -167,6 +170,7 @@ class TestRetryDecorators:
             return "success"
 
         import asyncio
+
         result = asyncio.run(async_operation())
         assert result == "success"
         assert call_count == 2

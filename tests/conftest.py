@@ -25,4 +25,3 @@ def pytest_ignore_collect(path, config):  # type: ignore[override]
     # Normalize to basename to avoid path separator issues on Windows
     name = os.path.basename(p)
     return name == "test_adapter_certification.py"
-

@@ -25,7 +25,7 @@ class TestAdapterCapability:
             cost_per_token_micros=100,
             health_endpoint="http://localhost:8080/health",
             version="1.0.0",
-            metadata={"region": "us-west-2"}
+            metadata={"region": "us-west-2"},
         )
 
         assert capability.adapter_id == "test_adapter_1"
@@ -44,10 +44,7 @@ class TestAdapterCapability:
     def test_update_last_seen(self):
         """Test updating last seen timestamp."""
         capability = AdapterCapability(
-            adapter_id="test_adapter",
-            adapter_type="ollama",
-            capabilities=["text-generation"],
-            models=["llama2:7b"]
+            adapter_id="test_adapter", adapter_type="ollama", capabilities=["text-generation"], models=["llama2:7b"]
         )
 
         original_last_seen = capability.last_seen
@@ -59,10 +56,7 @@ class TestAdapterCapability:
     def test_is_healthy(self):
         """Test health check functionality."""
         capability = AdapterCapability(
-            adapter_id="test_adapter",
-            adapter_type="ollama",
-            capabilities=["text-generation"],
-            models=["llama2:7b"]
+            adapter_id="test_adapter", adapter_type="ollama", capabilities=["text-generation"], models=["llama2:7b"]
         )
 
         # Should be healthy initially
@@ -88,7 +82,7 @@ class TestAdapterRegistry:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation", "embedding"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
 
         success = self.registry.register_capability(capability_data)
@@ -104,11 +98,7 @@ class TestAdapterRegistry:
     def test_register_capability_missing_fields(self):
         """Test registration with missing required fields."""
         # Missing adapter_id
-        capability_data = {
-            "adapter_type": "ollama",
-            "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
-        }
+        capability_data = {"adapter_type": "ollama", "capabilities": ["text-generation"], "models": ["llama2:7b"]}
 
         success = self.registry.register_capability(capability_data)
         assert not success
@@ -120,7 +110,7 @@ class TestAdapterRegistry:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
 
         self.registry.register_capability(capability_data)
@@ -130,7 +120,7 @@ class TestAdapterRegistry:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation", "embedding", "vision"],
-            "models": ["llama2:7b", "codellama:13b"]
+            "models": ["llama2:7b", "codellama:13b"],
         }
 
         success = self.registry.register_capability(updated_data)
@@ -147,7 +137,7 @@ class TestAdapterRegistry:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
 
         self.registry.register_capability(capability_data)
@@ -175,20 +165,20 @@ class TestAdapterRegistry:
                 "adapter_id": "ollama_1",
                 "adapter_type": "ollama",
                 "capabilities": ["text-generation"],
-                "models": ["llama2:7b"]
+                "models": ["llama2:7b"],
             },
             {
                 "adapter_id": "ollama_2",
                 "adapter_type": "ollama",
                 "capabilities": ["embedding"],
-                "models": ["embeddings:7b"]
+                "models": ["embeddings:7b"],
             },
             {
                 "adapter_id": "openai_1",
                 "adapter_type": "openai",
                 "capabilities": ["text-generation"],
-                "models": ["gpt-4"]
-            }
+                "models": ["gpt-4"],
+            },
         ]
 
         for data in adapters_data:
@@ -218,20 +208,20 @@ class TestAdapterRegistry:
                 "adapter_id": "ollama_1",
                 "adapter_type": "ollama",
                 "capabilities": ["text-generation"],
-                "models": ["llama2:7b"]
+                "models": ["llama2:7b"],
             },
             {
                 "adapter_id": "openai_1",
                 "adapter_type": "openai",
                 "capabilities": ["text-generation"],
-                "models": ["gpt-4"]
+                "models": ["gpt-4"],
             },
             {
                 "adapter_id": "anthropic_1",
                 "adapter_type": "anthropic",
                 "capabilities": ["text-generation"],
-                "models": ["claude-3"]
-            }
+                "models": ["claude-3"],
+            },
         ]
 
         for data in adapters_data:
@@ -250,7 +240,7 @@ class TestAdapterRegistry:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
 
         self.registry.register_capability(capability_data)
@@ -278,7 +268,7 @@ class TestAdapterRegistry:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
 
         self.registry.register_capability(capability_data)
@@ -304,7 +294,7 @@ class TestAdapterRegistry:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
 
         self.registry.register_capability(capability_data)
@@ -315,7 +305,7 @@ class TestAdapterRegistry:
             "p50_latency_ms": 120.3,
             "error_rate": 0.05,
             "requests_per_second": 15.2,
-            "memory_usage_mb": 756.4
+            "memory_usage_mb": 756.4,
         }
 
         success = self.registry.update_health_telemetry("test_adapter_1", health_data)
@@ -332,10 +322,7 @@ class TestAdapterRegistry:
 
     def test_update_health_telemetry_unknown_adapter(self):
         """Test health telemetry update for unknown adapter."""
-        health_data = {
-            "p95_latency_ms": 100.0,
-            "error_rate": 0.01
-        }
+        health_data = {"p95_latency_ms": 100.0, "error_rate": 0.01}
 
         success = self.registry.update_health_telemetry("unknown_adapter", health_data)
         assert not success
@@ -349,16 +336,13 @@ class TestAdapterRegistry:
             "capabilities": ["text-generation"],
             "models": ["llama2:7b"],
             "p95_latency_ms": 150.0,
-            "error_rate": 0.02
+            "error_rate": 0.02,
         }
 
         self.registry.register_capability(capability_data)
 
         # Update only some fields
-        health_data = {
-            "p95_latency_ms": 180.0,
-            "cpu_usage_percent": 55.5
-        }
+        health_data = {"p95_latency_ms": 180.0, "cpu_usage_percent": 55.5}
 
         success = self.registry.update_health_telemetry("test_adapter_1", health_data)
         assert success
@@ -366,7 +350,7 @@ class TestAdapterRegistry:
         # Verify partial update
         adapter = self.registry.get_adapter("test_adapter_1")
         assert adapter.p95_latency_ms == 180.0  # Updated
-        assert adapter.error_rate == 0.02      # Unchanged
+        assert adapter.error_rate == 0.02  # Unchanged
         assert adapter.cpu_usage_percent == 55.5  # Added
 
 
@@ -377,6 +361,7 @@ class TestCapabilityAdvertisementHandler:
         """Set up test fixtures."""
         # Create a fresh registry for each test to avoid interference
         from router_service.adapter_registry import AdapterRegistry
+
         self.registry = AdapterRegistry()
         self.handler = CapabilityAdvertisementHandler()
         self.handler.registry = self.registry  # Override the global registry
@@ -392,13 +377,10 @@ class TestCapabilityAdvertisementHandler:
             "models": ["llama2:7b", "codellama:13b"],
             "max_tokens": 4096,
             "supported_languages": ["en", "es"],
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
-        payload = Payload(
-            type="adapter.capability",
-            content=capability_data
-        )
+        payload = Payload(type="adapter.capability", content=capability_data)
 
         frame = Frame(
             v=1,
@@ -411,7 +393,7 @@ class TestCapabilityAdvertisementHandler:
             ttl=30,
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_capability_frame(frame)
@@ -437,7 +419,7 @@ class TestCapabilityAdvertisementHandler:
             ttl=30,
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_capability_frame(frame)
@@ -454,7 +436,7 @@ class TestCapabilityAdvertisementHandler:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
         self.handler.registry.register_capability(capability_data)
 
@@ -472,7 +454,7 @@ class TestCapabilityAdvertisementHandler:
             ttl=8,
             window=Window(max_parallel=1, max_tokens=100, max_usd_micros=1000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_heartbeat_frame(frame)
@@ -495,7 +477,7 @@ class TestCapabilityAdvertisementHandler:
             ttl=8,
             window=Window(max_parallel=1, max_tokens=100, max_usd_micros=1000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_heartbeat_frame(frame)
@@ -518,7 +500,7 @@ class TestCapabilityAdvertisementHandler:
             ttl=8,
             window=Window(max_parallel=1, max_tokens=100, max_usd_micros=1000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_heartbeat_frame(frame)
@@ -535,15 +517,15 @@ class TestCapabilityAdvertisementHandler:
                 "adapter_type": "ollama",
                 "capabilities": ["text-generation"],
                 "models": ["llama2:7b"],
-                "version": "1.0.0"
+                "version": "1.0.0",
             },
             {
                 "adapter_id": "openai_1",
                 "adapter_type": "openai",
                 "capabilities": ["text-generation", "embedding"],
                 "models": ["gpt-4"],
-                "version": "2.0.0"
-            }
+                "version": "2.0.0",
+            },
         ]
 
         for data in adapters_data:
@@ -576,7 +558,7 @@ class TestCapabilityAdvertisementHandler:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
 
         self.handler.registry.register_capability(capability_data)
@@ -600,6 +582,7 @@ class TestHealthFrameProcessing:
         """Set up test fixtures."""
         # Create a fresh registry for each test to avoid interference
         from router_service.adapter_registry import AdapterRegistry
+
         self.registry = AdapterRegistry()
         self.handler = CapabilityAdvertisementHandler()
         self.handler.registry = self.registry
@@ -611,7 +594,7 @@ class TestHealthFrameProcessing:
             "adapter_id": "test_adapter_1",
             "adapter_type": "ollama",
             "capabilities": ["text-generation"],
-            "models": ["llama2:7b"]
+            "models": ["llama2:7b"],
         }
         self.handler.registry.register_capability(capability_data)
 
@@ -627,7 +610,7 @@ class TestHealthFrameProcessing:
             "queue_depth": 3,
             "memory_usage_mb": 512.8,
             "cpu_usage_percent": 45.2,
-            "uptime_seconds": 3600
+            "uptime_seconds": 3600,
         }
 
         payload = Payload(type="adapter.health", content=health_data)
@@ -643,7 +626,7 @@ class TestHealthFrameProcessing:
             ttl=60,
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_health_frame(frame)
@@ -666,7 +649,7 @@ class TestHealthFrameProcessing:
             "type": "adapter.health",
             "adapter_id": "unknown_adapter",
             "status": "healthy",
-            "p95_latency_ms": 100.0
+            "p95_latency_ms": 100.0,
         }
 
         payload = Payload(type="adapter.health", content=health_data)
@@ -682,7 +665,7 @@ class TestHealthFrameProcessing:
             ttl=60,
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_health_frame(frame)
@@ -692,11 +675,7 @@ class TestHealthFrameProcessing:
 
     def test_process_health_frame_missing_adapter_id(self):
         """Test health frame without adapter_id."""
-        health_data = {
-            "type": "adapter.health",
-            "status": "healthy",
-            "p95_latency_ms": 100.0
-        }
+        health_data = {"type": "adapter.health", "status": "healthy", "p95_latency_ms": 100.0}
 
         payload = Payload(type="adapter.health", content=health_data)
 
@@ -711,7 +690,7 @@ class TestHealthFrameProcessing:
             ttl=60,
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_health_frame(frame)
@@ -734,7 +713,7 @@ class TestHealthFrameProcessing:
             ttl=60,
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
         result = self.handler.process_health_frame(frame)

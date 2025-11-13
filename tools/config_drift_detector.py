@@ -18,7 +18,6 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 try:
     from metrics import CONFIG_DRIFT_ALERTS_TOTAL
@@ -30,6 +29,7 @@ except ImportError:
 @dataclass
 class ConfigFile:
     """Represents a configuration file with its baseline hash."""
+
     path: str
     hash_value: str
     last_modified: float
@@ -40,6 +40,7 @@ class ConfigFile:
 @dataclass
 class DriftAlert:
     """Represents a configuration drift alert."""
+
     file_path: str
     baseline_hash: str
     current_hash: str
@@ -53,22 +54,49 @@ class ConfigDriftDetector:
 
     # Configuration file extensions to monitor
     CONFIG_EXTENSIONS = {
-        ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf",
-        ".env", ".properties", ".xml", ".config"
+        ".json",
+        ".yaml",
+        ".yml",
+        ".toml",
+        ".ini",
+        ".cfg",
+        ".conf",
+        ".env",
+        ".properties",
+        ".xml",
+        ".config",
     }
 
     # Critical security configuration files
     SECURITY_CONFIGS = {
-        "requirements.txt", "package.json", "Cargo.toml", "go.mod",
-        "Dockerfile", "docker-compose.yml", ".env", "config.json",
-        "security.json", "policies.json", "access.json"
+        "requirements.txt",
+        "package.json",
+        "Cargo.toml",
+        "go.mod",
+        "Dockerfile",
+        "docker-compose.yml",
+        ".env",
+        "config.json",
+        "security.json",
+        "policies.json",
+        "access.json",
     }
 
     # Files/directories to exclude
     EXCLUDE_PATTERNS = {
-        ".git", "__pycache__", "node_modules", ".venv", "venv", "env",
-        "build", "dist", "target", ".pytest_cache", ".mypy_cache",
-        ".terraform", "terraform.tfstate"
+        ".git",
+        "__pycache__",
+        "node_modules",
+        ".venv",
+        "venv",
+        "env",
+        "build",
+        "dist",
+        "target",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".terraform",
+        "terraform.tfstate",
     }
 
     def __init__(self, baseline_store: Path = None):
@@ -97,17 +125,17 @@ class ConfigDriftDetector:
                 "hash_value": config_file.hash_value,
                 "last_modified": config_file.last_modified,
                 "file_size": config_file.file_size,
-                "security_level": config_file.security_level
+                "security_level": config_file.security_level,
             }
 
-        with open(self.baseline_store, 'w') as f:
+        with open(self.baseline_store, "w") as f:
             json.dump(data, f, indent=2)
 
     def _calculate_hash(self, file_path: Path) -> str:
         """Calculate SHA256 hash of a file."""
         hash_sha256 = hashlib.sha256()
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 for chunk in iter(lambda: f.read(4096), b""):
                     hash_sha256.update(chunk)
             return hash_sha256.hexdigest()
@@ -140,12 +168,12 @@ class ConfigDriftDetector:
             return True
 
         # Exclude hidden files/directories (but not the baseline store)
-        if any(part.startswith('.') for part in path.parts) and path != self.baseline_store:
+        if any(part.startswith(".") for part in path.parts) and path != self.baseline_store:
             return True
 
         return False
 
-    def establish_baseline(self, scan_path: Path, exclude_patterns: Optional[list[str]] = None) -> int:
+    def establish_baseline(self, scan_path: Path, exclude_patterns: list[str] | None = None) -> int:
         """Establish baseline hashes for configuration files."""
         custom_excludes = set(self.EXCLUDE_PATTERNS)
         if exclude_patterns:
@@ -176,7 +204,7 @@ class ConfigDriftDetector:
                         hash_value=hash_value,
                         last_modified=stat.st_mtime,
                         file_size=stat.st_size,
-                        security_level=security_level
+                        security_level=security_level,
                     )
                     self.baselines[str(config_file)] = baseline
                     established += 1
@@ -186,9 +214,10 @@ class ConfigDriftDetector:
         self._save_baselines()
         return established
 
-    def scan_for_drift(self, scan_path: Path, exclude_patterns: Optional[list[str]] = None) -> list[DriftAlert]:
+    def scan_for_drift(self, scan_path: Path, exclude_patterns: list[str] | None = None) -> list[DriftAlert]:
         """Scan for configuration drift and return alerts."""
         import time
+
         custom_excludes = set(self.EXCLUDE_PATTERNS)
         if exclude_patterns:
             custom_excludes.update(exclude_patterns)
@@ -216,7 +245,7 @@ class ConfigDriftDetector:
                     current_hash="",
                     change_type="deleted",
                     security_level=baseline.security_level,
-                    timestamp=time.time()
+                    timestamp=time.time(),
                 )
                 alerts.append(alert)
 
@@ -234,7 +263,7 @@ class ConfigDriftDetector:
                             current_hash=current_hash,
                             change_type="modified",
                             security_level=baseline.security_level,
-                            timestamp=time.time()
+                            timestamp=time.time(),
                         )
                         alerts.append(alert)
 
@@ -270,7 +299,7 @@ class ConfigDriftDetector:
                             current_hash=current_hash,
                             change_type="new",
                             security_level=security_level,
-                            timestamp=time.time()
+                            timestamp=time.time(),
                         )
                         alerts.append(alert)
 
@@ -324,8 +353,7 @@ def main():
         if alerts:
             print(f"Found {len(alerts)} configuration drift(s):")
             for alert in alerts:
-                print(f"  {alert.change_type.upper()}: {alert.file_path} "
-                      f"(security: {alert.security_level})")
+                print(f"  {alert.change_type.upper()}: {alert.file_path} (security: {alert.security_level})")
 
                 if CONFIG_DRIFT_ALERTS_TOTAL:
                     CONFIG_DRIFT_ALERTS_TOTAL.inc()
@@ -333,16 +361,18 @@ def main():
             if args.report:
                 report_data = []
                 for alert in alerts:
-                    report_data.append({
-                        "file_path": alert.file_path,
-                        "baseline_hash": alert.baseline_hash,
-                        "current_hash": alert.current_hash,
-                        "change_type": alert.change_type,
-                        "security_level": alert.security_level,
-                        "timestamp": alert.timestamp
-                    })
+                    report_data.append(
+                        {
+                            "file_path": alert.file_path,
+                            "baseline_hash": alert.baseline_hash,
+                            "current_hash": alert.current_hash,
+                            "change_type": alert.change_type,
+                            "security_level": alert.security_level,
+                            "timestamp": alert.timestamp,
+                        }
+                    )
 
-                with open(args.report, 'w') as f:
+                with open(args.report, "w") as f:
                     json.dump(report_data, f, indent=2)
                 print(f"Drift report saved to {args.report}")
 

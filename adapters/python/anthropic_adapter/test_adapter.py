@@ -5,7 +5,6 @@ import asyncio
 import json
 import os
 import sys
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -33,10 +32,9 @@ class TestAnthropicAdapter:
     def test_parse_prompt_json(self):
         """Test prompt JSON parsing."""
         # Test valid JSON
-        prompt_json = json.dumps({
-            "model": "claude-3-haiku-20240307",
-            "messages": [{"role": "user", "content": "Hello"}]
-        })
+        prompt_json = json.dumps(
+            {"model": "claude-3-haiku-20240307", "messages": [{"role": "user", "content": "Hello"}]}
+        )
         result = self.adapter._parse_prompt_json(prompt_json)
         assert result["model"] == "claude-3-haiku-20240307"
         assert len(result["messages"]) == 1
@@ -54,11 +52,11 @@ class TestAnthropicAdapter:
             {"role": "system", "content": "You are helpful"},
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there!"},
-            {"role": "user", "content": "How are you?"}
+            {"role": "user", "content": "How are you?"},
         ]
-        
+
         system_prompt, anthropic_messages = self.adapter._convert_messages_to_anthropic_format(messages)
-        
+
         assert system_prompt == "You are helpful"
         assert len(anthropic_messages) == 3
         assert anthropic_messages[0]["role"] == "user"
@@ -71,7 +69,7 @@ class TestAnthropicAdapter:
         tokens_opus = self.adapter._estimate_output_tokens(1000, "claude-3-opus-20240229")
         tokens_sonnet = self.adapter._estimate_output_tokens(1000, "claude-3-sonnet-20240229")
         tokens_haiku = self.adapter._estimate_output_tokens(1000, "claude-3-haiku-20240307")
-        
+
         assert tokens_opus <= 4096
         assert tokens_sonnet <= 4096
         assert tokens_haiku <= 4096
@@ -92,6 +90,7 @@ class TestAnthropicAdapter:
     @pytest.mark.asyncio
     async def test_estimate_basic(self):
         """Test basic estimation functionality."""
+
         # Create a mock request
         class MockRequest:
             def __init__(self, prompt_json):
@@ -99,12 +98,12 @@ class TestAnthropicAdapter:
 
         prompt_data = {
             "model": "claude-3-haiku-20240307",
-            "messages": [{"role": "user", "content": "Hello, how are you?"}]
+            "messages": [{"role": "user", "content": "Hello, how are you?"}],
         }
-        
+
         request = MockRequest(json.dumps(prompt_data))
         response = await self.adapter.Estimate(request, None)
-        
+
         assert response.in_tokens > 0
         assert response.out_tokens > 0
         assert response.usd_micros > 0
@@ -113,6 +112,7 @@ class TestAnthropicAdapter:
     @pytest.mark.asyncio
     async def test_estimate_with_tools(self):
         """Test estimation with tool use."""
+
         class MockRequest:
             def __init__(self, prompt_json):
                 self.prompt_json = prompt_json
@@ -124,23 +124,18 @@ class TestAnthropicAdapter:
                 {
                     "name": "get_weather",
                     "description": "Get weather information",
-                    "input_schema": {
-                        "type": "object",
-                        "properties": {
-                            "location": {"type": "string"}
-                        }
-                    }
+                    "input_schema": {"type": "object", "properties": {"location": {"type": "string"}}},
                 }
-            ]
+            ],
         }
-        
+
         request = MockRequest(json.dumps(prompt_data))
         response = await self.adapter.Estimate(request, None)
-        
+
         assert response.in_tokens > 0
         assert response.out_tokens > 0
         assert response.usd_micros > 0
-        
+
         # Check tool cost breakdown
         tool_breakdown = json.loads(response.tool_cost_breakdown_json)
         assert "tool_definitions_cost" in tool_breakdown
@@ -148,37 +143,36 @@ class TestAnthropicAdapter:
     @pytest.mark.asyncio
     async def test_health_check_no_api_key(self):
         """Test health check without API key."""
+
         class MockRequest:
             pass
-        
+
         response = await self.adapter.Health(MockRequest(), None)
         assert response.error_rate > 0  # Should indicate error
 
     @pytest.mark.asyncio
     async def test_stream_no_api_key(self):
         """Test streaming without API key."""
+
         class MockRequest:
             def __init__(self, prompt_json):
                 self.prompt_json = prompt_json
 
-        prompt_data = {
-            "model": "claude-3-haiku-20240307",
-            "messages": [{"role": "user", "content": "Hello"}]
-        }
-        
+        prompt_data = {"model": "claude-3-haiku-20240307", "messages": [{"role": "user", "content": "Hello"}]}
+
         request = MockRequest(json.dumps(prompt_data))
-        
+
         chunks = []
         async for chunk in self.adapter.Stream(request, None):
             chunks.append(chunk)
-        
+
         assert len(chunks) == 1  # Should have one error chunk
-        
+
         # Check error chunk
         error_chunk = chunks[0]
         assert error_chunk.type == "agent.result.error"
         assert not error_chunk.more
-        
+
         content = json.loads(error_chunk.content_json)
         assert "error" in content
         assert "Anthropic API key not configured" in content["error"]
@@ -193,37 +187,39 @@ def run_integration_tests():
     async def test_real_api():
         """Test with real Anthropic API."""
         adapter = AnthropicAdapter()
-        
+
         # Test health check
         class MockRequest:
             pass
-        
+
         health_response = await adapter.Health(MockRequest(), None)
         print(f"Health check - P95: {health_response.p95_ms}ms, Error rate: {health_response.error_rate}")
-        
+
         # Test estimation
         class MockEstimateRequest:
             def __init__(self, prompt_json):
                 self.prompt_json = prompt_json
-        
+
         prompt_data = {
             "model": "claude-3-haiku-20240307",
             "messages": [{"role": "user", "content": "Say hello in one word"}],
-            "max_tokens": 10
+            "max_tokens": 10,
         }
-        
+
         estimate_request = MockEstimateRequest(json.dumps(prompt_data))
         estimate_response = await adapter.Estimate(estimate_request, None)
-        
-        print(f"Estimation - Input: {estimate_response.in_tokens}, Output: {estimate_response.out_tokens}, Cost: ${estimate_response.usd_micros/1000000:.6f}")
-        
+
+        print(
+            f"Estimation - Input: {estimate_response.in_tokens}, Output: {estimate_response.out_tokens}, Cost: ${estimate_response.usd_micros / 1000000:.6f}"
+        )
+
         # Test streaming (with a very short response to minimize cost)
         class MockStreamRequest:
             def __init__(self, prompt_json):
                 self.prompt_json = prompt_json
-        
+
         stream_request = MockStreamRequest(json.dumps(prompt_data))
-        
+
         print("Streaming response:")
         async for chunk in adapter.Stream(stream_request, None):
             content = json.loads(chunk.content_json)
@@ -233,15 +229,15 @@ def run_integration_tests():
                 print(f"  Final: {content.get('content', 'N/A')}")
                 print(f"  Usage: {content.get('usage', {})}")
                 break
-    
+
     asyncio.run(test_real_api())
 
 
 if __name__ == "__main__":
     # Run unit tests
     pytest.main([__file__, "-v"])
-    
+
     # Run integration tests if API key is available
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("Running integration tests...")
     run_integration_tests()

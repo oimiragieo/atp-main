@@ -1741,6 +1741,10 @@ async def mcp_websocket(websocket: WebSocket) -> None:
     """
     await websocket.accept()
 
+    # Register with shutdown coordinator for graceful shutdown
+    if hasattr(app.state, "shutdown_coordinator"):
+        app.state.shutdown_coordinator.add_connection(websocket)
+
     # MCP session state
     mcp_session_active = REGISTRY.gauge("mcp_sessions_active")
     mcp_heartbeats_tx = REGISTRY.counter("mcp_heartbeats_tx")
@@ -1965,6 +1969,9 @@ async def mcp_websocket(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         pass
     finally:
+        # Unregister from shutdown coordinator
+        if hasattr(app.state, "shutdown_coordinator"):
+            app.state.shutdown_coordinator.remove_connection(websocket)
         mcp_session_active.dec(1)
 
 

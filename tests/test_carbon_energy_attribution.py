@@ -1,6 +1,5 @@
 """Tests for GAP-349: Carbon & energy savings attribution."""
 
-
 from router_service.carbon_energy_attribution import CarbonEnergyAttribution
 
 

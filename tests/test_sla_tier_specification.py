@@ -97,7 +97,7 @@ class TestSLATierSpecification(unittest.TestCase):
             "latency_p99_ms": 80,
             "error_rate_pct": 0.005,
             "availability_pct": 99.995,
-            "throughput_qps": 15000
+            "throughput_qps": 15000,
         }
 
         result = self.spec.evaluate_slo_compliance(ServiceTier.PLATINUM, metrics)
@@ -115,7 +115,7 @@ class TestSLATierSpecification(unittest.TestCase):
             "latency_p99_ms": 250,  # Above 200ms threshold
             "error_rate_pct": 0.02,  # Above 0.01% threshold
             "availability_pct": 99.98,  # Below 99.99% threshold
-            "throughput_qps": 8000  # Below 10000 QPS threshold
+            "throughput_qps": 8000,  # Below 10000 QPS threshold
         }
 
         result = self.spec.evaluate_slo_compliance(ServiceTier.PLATINUM, metrics)
@@ -132,7 +132,7 @@ class TestSLATierSpecification(unittest.TestCase):
 
     def test_export_sla_catalog(self):
         """Test SLA catalog export functionality."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = f.name
 
         try:
@@ -200,7 +200,7 @@ class TestAlertConfiguration(unittest.TestCase):
             # Check for error rate and availability alerts
             elif "Error_Rate" in alert.alert_name or "Availability" in alert.alert_name:
                 self.assertIn("http_requests_total", alert.condition)
-            self.assertIn("tier=\"platinum\"", alert.condition)
+            self.assertIn('tier="platinum"', alert.condition)
 
 
 class TestSLIEvaluation(unittest.TestCase):
@@ -266,12 +266,12 @@ class TestCLIFunctionality(unittest.TestCase):
         """Set up test fixtures."""
         self.spec = SLATierSpecification()
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_show_tiers_output(self, mock_print):
         """Test --show-tiers command output."""
         from tools.sla_tier_specification import main
 
-        with patch('sys.argv', ['sla_tier_specification.py', '--show-tiers']):
+        with patch("sys.argv", ["sla_tier_specification.py", "--show-tiers"]):
             main()
 
         # Verify that print was called (basic check)
@@ -279,13 +279,13 @@ class TestCLIFunctionality(unittest.TestCase):
 
     def test_export_catalog_creates_file(self):
         """Test --export-catalog command creates output file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = f.name
 
         try:
             from tools.sla_tier_specification import main
 
-            with patch('sys.argv', ['sla_tier_specification.py', '--export-catalog', temp_path]):
+            with patch("sys.argv", ["sla_tier_specification.py", "--export-catalog", temp_path]):
                 main()
 
             # Verify file was created
@@ -299,12 +299,12 @@ class TestCLIFunctionality(unittest.TestCase):
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_generate_alerts_output(self, mock_print):
         """Test --generate-alerts command output."""
         from tools.sla_tier_specification import main
 
-        with patch('sys.argv', ['sla_tier_specification.py', '--generate-alerts', 'gold']):
+        with patch("sys.argv", ["sla_tier_specification.py", "--generate-alerts", "gold"]):
             main()
 
         # Verify that print was called
@@ -318,7 +318,7 @@ class TestMetricsIntegration(unittest.TestCase):
         """Set up test fixtures."""
         self.spec = SLATierSpecification()
 
-    @patch('tools.sla_tier_specification.SLO_BREACH_EVENTS_TOTAL')
+    @patch("tools.sla_tier_specification.SLO_BREACH_EVENTS_TOTAL")
     def test_slo_breach_metrics_incremented(self, mock_metric):
         """Test that SLO breach metrics are incremented on breaches."""
         # Mock the metric to track calls
@@ -353,5 +353,5 @@ class TestMetricsIntegration(unittest.TestCase):
         self.assertIn("compliance_status", result)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

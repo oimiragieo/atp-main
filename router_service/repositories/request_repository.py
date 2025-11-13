@@ -8,6 +8,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import and_, desc, func, select
+from sqlalchemy.orm import selectinload
 
 from ..models.database import Request
 from .base import BaseRepository
@@ -216,7 +217,10 @@ class RequestRepository(BaseRepository[Request]):
     ) -> list[Request]:
         """Search requests by prompt content."""
         async with self.db_manager.get_session() as session:
-            stmt = select(Request).where(Request.prompt.ilike(f"%{search_term}%")).where(not Request.is_deleted)
+            # Escape wildcards to prevent SQL injection
+            safe_search = search_term.replace("%", "\\%").replace("_", "\\_")
+            search_pattern = f"%{safe_search}%"
+            stmt = select(Request).where(Request.prompt.ilike(search_pattern)).where(not Request.is_deleted)
 
             if tenant_id:
                 stmt = stmt.where(Request.tenant_id == tenant_id)

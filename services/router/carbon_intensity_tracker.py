@@ -8,7 +8,6 @@ import logging
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Optional
 
 import aiohttp
 
@@ -31,7 +30,7 @@ class CarbonIntensityData:
 class CarbonIntensityTracker:
     """Tracks carbon intensity by region and provides routing influence."""
 
-    def __init__(self, api_key: Optional[str] = None, cache_ttl_seconds: int = 3600):
+    def __init__(self, api_key: str | None = None, cache_ttl_seconds: int = 3600):
         """Initialize carbon intensity tracker.
 
         Args:
@@ -41,7 +40,7 @@ class CarbonIntensityTracker:
         self.api_key = api_key or "demo"  # Use demo key if none provided
         self.cache_ttl = cache_ttl_seconds
         self._cache: dict[str, CarbonIntensityData] = {}
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: aiohttp.ClientSession | None = None
 
         # Demo data for regions (fallback when API unavailable)
         self._demo_data = {
@@ -59,7 +58,7 @@ class CarbonIntensityTracker:
             self._session = aiohttp.ClientSession()
         return self._session
 
-    async def _fetch_carbon_intensity(self, region: str) -> Optional[CarbonIntensityData]:
+    async def _fetch_carbon_intensity(self, region: str) -> CarbonIntensityData | None:
         """Fetch carbon intensity data from external API.
 
         Uses Electricity Maps API or similar service.
@@ -102,7 +101,7 @@ class CarbonIntensityTracker:
 
         return None
 
-    async def get_carbon_intensity(self, region: str) -> Optional[CarbonIntensityData]:
+    async def get_carbon_intensity(self, region: str) -> CarbonIntensityData | None:
         """Get carbon intensity for a region, with caching."""
         # Check cache first
         if region in self._cache:
@@ -168,7 +167,7 @@ class CarbonIntensityTracker:
 
 
 # Global instance for use across the application
-_carbon_tracker: Optional[CarbonIntensityTracker] = None
+_carbon_tracker: CarbonIntensityTracker | None = None
 
 
 def get_carbon_tracker() -> CarbonIntensityTracker:

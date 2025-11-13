@@ -67,7 +67,7 @@ async def test_boost_decay_over_time():
     assert abs(effective - 2.0) < 0.01
 
     # Mock time passage for decay
-    with patch('time.time', return_value=time.time() + 1.0):  # 1 second later
+    with patch("time.time", return_value=time.time() + 1.0):  # 1 second later
         effective = FAIR_SCHED._get_effective_weight(session)
         # Should be decayed: 2.0 * (0.9^1) = 1.8
         assert 1.7 < effective < 1.9
@@ -84,7 +84,7 @@ async def test_boost_expiration():
     assert session in FAIR_SCHED._boosted_sessions
 
     # Fast-forward time to expire boost
-    with patch('time.time', return_value=time.time() + 100.0):  # Long time later
+    with patch("time.time", return_value=time.time() + 100.0):  # Long time later
         effective = FAIR_SCHED._get_effective_weight(session)
         # Should be back to base weight
         assert effective == 1.0
@@ -101,11 +101,12 @@ async def test_starvation_boost_application():
 
     # Create a queued entry that will be starved
     from router_service.service import _FairQueueEntry
+
     starved_entry = _FairQueueEntry(
         priority=0.0,
         session="starved_session",
         weight=1.0,
-        enqueued_at=time.time() - 0.1  # 100ms ago
+        enqueued_at=time.time() - 0.1,  # 100ms ago
     )
 
     async with FAIR_SCHED._lock:
@@ -113,7 +114,7 @@ async def test_starvation_boost_application():
         FAIR_SCHED._active["starved_session"] = 0  # Allow granting
 
     # Mock AIMD to allow granting
-    with patch('router_service.service.GLOBAL_AIMD') as mock_aimd:
+    with patch("router_service.service.GLOBAL_AIMD") as mock_aimd:
         mock_aimd.get.return_value = 10  # High window
 
         # Trigger selection
@@ -180,13 +181,13 @@ async def test_starvation_events_metric():
 @pytest.mark.asyncio
 async def test_configuration_via_environment():
     """Test that configuration can be set via environment variables."""
-    with patch.dict('os.environ', {
-        'FAIR_SCHED_STARVATION_QUANTILE': '0.90',
-        'FAIR_SCHED_BOOST_FACTOR': '3.0',
-        'FAIR_SCHED_BOOST_DECAY': '0.8'
-    }):
+    with patch.dict(
+        "os.environ",
+        {"FAIR_SCHED_STARVATION_QUANTILE": "0.90", "FAIR_SCHED_BOOST_FACTOR": "3.0", "FAIR_SCHED_BOOST_DECAY": "0.8"},
+    ):
         # Create new scheduler to pick up env vars
         from router_service.service import FairScheduler
+
         test_sched = FairScheduler()
 
         assert test_sched._starvation_quantile == 0.90
@@ -214,7 +215,7 @@ async def test_induced_starvation_resolution():
         priority=0.0,
         session="victim",
         weight=0.1,
-        enqueued_at=time.time() - 0.2  # 200ms ago - should trigger starvation
+        enqueued_at=time.time() - 0.2,  # 200ms ago - should trigger starvation
     )
 
     async with FAIR_SCHED._lock:
@@ -222,7 +223,7 @@ async def test_induced_starvation_resolution():
         FAIR_SCHED._active["victim"] = 0  # Allow granting
 
     # Mock AIMD to allow granting
-    with patch('router_service.service.GLOBAL_AIMD') as mock_aimd:
+    with patch("router_service.service.GLOBAL_AIMD") as mock_aimd:
         mock_aimd.get.return_value = 10  # High window
 
         # Trigger selection which should detect starvation and apply boost

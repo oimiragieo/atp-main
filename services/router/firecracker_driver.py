@@ -12,7 +12,7 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .cost_caps import check_tool_cost_cap, get_cost_cap_registry
 from .sandbox import SandboxConfig, SandboxDriver, SandboxError, SandboxResult, SandboxState
@@ -21,10 +21,13 @@ from .sandbox import SandboxConfig, SandboxDriver, SandboxError, SandboxResult, 
 class FirecrackerSandboxDriver(SandboxDriver):
     """Firecracker-based sandbox driver for isolated tool execution."""
 
-    def __init__(self, firecracker_path: str = "/usr/local/bin/firecracker",
-                 jailer_path: str = "/usr/local/bin/jailer",
-                 kernel_path: str = "/var/lib/firecracker/kernel/vmlinux",
-                 rootfs_path: str = "/var/lib/firecracker/rootfs/rootfs.ext4"):
+    def __init__(
+        self,
+        firecracker_path: str = "/usr/local/bin/firecracker",
+        jailer_path: str = "/usr/local/bin/jailer",
+        kernel_path: str = "/var/lib/firecracker/kernel/vmlinux",
+        rootfs_path: str = "/var/lib/firecracker/rootfs/rootfs.ext4",
+    ):
         super().__init__()
         self.firecracker_path = firecracker_path
         self.jailer_path = jailer_path
@@ -41,11 +44,14 @@ class FirecrackerSandboxDriver(SandboxDriver):
         audit_dir = Path(self.audit_log_path).parent
         audit_dir.mkdir(parents=True, exist_ok=True)
 
-    def _log_tool_invocation(self, tool_id: str, command: list[str], cost_usd_micros: int, cost_tokens: int, success: bool) -> None:
+    def _log_tool_invocation(
+        self, tool_id: str, command: list[str], cost_usd_micros: int, cost_tokens: int, success: bool
+    ) -> None:
         """Log tool invocation with cost cap information to audit log."""
         try:
             # Import audit_log here to avoid circular imports
             import sys
+
             sys.path.append(str(Path(__file__).parent.parent / "memory-gateway"))
             import audit_log
 
@@ -61,7 +67,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
                 "cost_tokens": cost_tokens,
                 "success": success,
                 "timestamp": time.time(),
-                "remaining_budget": remaining_budget or {}
+                "remaining_budget": remaining_budget or {},
             }
 
             # Get the last hash from the audit log if it exists
@@ -112,11 +118,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
 
     def _setup_filesystem_confinement(self, config: SandboxConfig, vm_path: Path) -> dict[str, Any]:
         """Set up filesystem confinement with overlay mounts and ACLs."""
-        confinement_config = {
-            "overlay_mounts": [],
-            "temp_dirs": [],
-            "fs_violations": 0
-        }
+        confinement_config = {"overlay_mounts": [], "temp_dirs": [], "fs_violations": 0}
 
         # Create overlay mounts for read-only paths
         for read_only_path in config.read_only_paths or []:
@@ -130,23 +132,17 @@ class FirecrackerSandboxDriver(SandboxDriver):
                 upper_dir.mkdir(exist_ok=True)
                 work_dir.mkdir(exist_ok=True)
 
-                confinement_config["overlay_mounts"].append({
-                    "lower": read_only_path,
-                    "upper": str(upper_dir),
-                    "work": str(work_dir),
-                    "target": read_only_path
-                })
+                confinement_config["overlay_mounts"].append(
+                    {"lower": read_only_path, "upper": str(upper_dir), "work": str(work_dir), "target": read_only_path}
+                )
 
         # Create temp directories for writable paths
         for temp_path in config.temp_paths or []:
             # Create a safe directory name from the temp path
-            safe_name = temp_path.replace('/', '_').replace('\\', '_').lstrip('_')
+            safe_name = temp_path.replace("/", "_").replace("\\", "_").lstrip("_")
             temp_dir = vm_path / f"temp_{safe_name}"
             temp_dir.mkdir(parents=True, exist_ok=True)
-            confinement_config["temp_dirs"].append({
-                "host_path": str(temp_dir),
-                "guest_path": temp_path
-            })
+            confinement_config["temp_dirs"].append({"host_path": str(temp_dir), "guest_path": temp_path})
 
         return confinement_config
 
@@ -154,11 +150,12 @@ class FirecrackerSandboxDriver(SandboxDriver):
         """Enforce filesystem ACL by wrapping command with path restrictions."""
         # Create a wrapper script that enforces filesystem ACLs
         wrapper_cmd = [
-            "/bin/bash", "-c",
+            "/bin/bash",
+            "-c",
             f"""
             # Set up filesystem ACL enforcement
-            export SANDBOX_READ_ONLY_PATHS="{':'.join(config.read_only_paths or [])}"
-            export SANDBOX_TEMP_PATHS="{':'.join(config.temp_paths or [])}"
+            export SANDBOX_READ_ONLY_PATHS="{":".join(config.read_only_paths or [])}"
+            export SANDBOX_TEMP_PATHS="{":".join(config.temp_paths or [])}"
 
             # Function to check if path is allowed for writing
             check_write_permission() {{
@@ -201,7 +198,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
 
             # Execute the original command
             exec {" ".join(command)}
-            """
+            """,
         ]
 
         return wrapper_cmd
@@ -237,7 +234,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
             "confinement": confinement_config,
             "state": SandboxState.CREATED,
             "process": None,
-            "created_at": time.time()
+            "created_at": time.time(),
         }
 
         self._sandboxes[sandbox_id] = vm_config
@@ -265,13 +262,17 @@ class FirecrackerSandboxDriver(SandboxDriver):
             # Start Firecracker process
             cmd = [
                 self.firecracker_path,
-                "--api-sock", socket_path,
-                "--id", sandbox_id,
-                "--config-file", str(Path(vm_path) / "config.json")
+                "--api-sock",
+                socket_path,
+                "--id",
+                sandbox_id,
+                "--config-file",
+                str(Path(vm_path) / "config.json"),
             ]
 
             # Create config file asynchronously
             import asyncio
+
             firecracker_config = self._create_firecracker_config(config, vm_path)
             config_path = Path(vm_path) / "config.json"
             config_content = json.dumps(firecracker_config, indent=2)
@@ -281,10 +282,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
 
             # Start the process
             process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=vm_path
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=vm_path
             )
 
             vm_config["process"] = process
@@ -304,35 +302,23 @@ class FirecrackerSandboxDriver(SandboxDriver):
         return {
             "boot-source": {
                 "kernel_image_path": self.kernel_path,
-                "boot_args": "console=ttyS0 reboot=k panic=1 pci=off"
+                "boot_args": "console=ttyS0 reboot=k panic=1 pci=off",
             },
-            "drives": [{
-                "drive_id": "rootfs",
-                "path_on_host": self.rootfs_path,
-                "is_root_device": True,
-                "is_read_only": False
-            }],
-            "machine-config": {
-                "vcpu_count": config.cpu_count,
-                "mem_size_mib": config.memory_mb
-            },
-            "network-interfaces": [] if not config.network_enabled else [{
-                "iface_id": "eth0",
-                "guest_mac": "AA:FC:00:00:00:01",
-                "host_dev_name": "tap0"
-            }],
+            "drives": [
+                {"drive_id": "rootfs", "path_on_host": self.rootfs_path, "is_root_device": True, "is_read_only": False}
+            ],
+            "machine-config": {"vcpu_count": config.cpu_count, "mem_size_mib": config.memory_mb},
+            "network-interfaces": []
+            if not config.network_enabled
+            else [{"iface_id": "eth0", "guest_mac": "AA:FC:00:00:00:01", "host_dev_name": "tap0"}],
             "vsock": {
                 "guest_cid": 3,
-                "uds_path": f"/tmp/vsock_{uuid.uuid4()}"  # noqa: S108
-            }
+                "uds_path": f"/tmp/vsock_{uuid.uuid4()}",  # noqa: S108
+            },
         }
 
     async def execute_in_sandbox(
-        self,
-        sandbox_id: str,
-        command: list[str],
-        env: Optional[dict[str, str]] = None,
-        cwd: Optional[str] = None
+        self, sandbox_id: str, command: list[str], env: dict[str, str] | None = None, cwd: str | None = None
     ) -> SandboxResult:
         """Execute a command in the Firecracker sandbox via vsock."""
         if sandbox_id not in self._sandboxes:
@@ -375,7 +361,13 @@ class FirecrackerSandboxDriver(SandboxDriver):
 
             # Log successful invocation
             if config.tool_id:
-                self._log_tool_invocation(config.tool_id, command, estimated_usd_micros if config.tool_id else 0, estimated_tokens if config.tool_id else 0, True)
+                self._log_tool_invocation(
+                    config.tool_id,
+                    command,
+                    estimated_usd_micros if config.tool_id else 0,
+                    estimated_tokens if config.tool_id else 0,
+                    True,
+                )
 
             return result
 
@@ -400,19 +392,25 @@ class FirecrackerSandboxDriver(SandboxDriver):
 
         # Basic allowlist - in production this would be more sophisticated
         allowed_commands = [
-            "python", "python3", "node", "npm", "curl", "wget",
-            "ls", "cat", "grep", "head", "tail", "wc"
+            "python",
+            "python3",
+            "node",
+            "npm",
+            "curl",
+            "wget",
+            "ls",
+            "cat",
+            "grep",
+            "head",
+            "tail",
+            "wc",
         ]
 
-        base_cmd = command[0].split('/')[-1]  # Get basename
+        base_cmd = command[0].split("/")[-1]  # Get basename
         return base_cmd in allowed_commands
 
     async def _simulate_execution(
-        self,
-        command: list[str],
-        env: Optional[dict[str, str]],
-        cwd: Optional[str],
-        config: SandboxConfig
+        self, command: list[str], env: dict[str, str] | None, cwd: str | None, config: SandboxConfig
     ) -> SandboxResult:
         """Simulate command execution for POC purposes."""
         # This is a simulation - in real implementation, use vsock
@@ -424,11 +422,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
             stdout="Command executed successfully\n",
             stderr="",
             duration_seconds=0.1,
-            resource_usage={
-                "cpu_percent": 5.0,
-                "memory_mb": 50,
-                "network_bytes": 0
-            }
+            resource_usage={"cpu_percent": 5.0, "memory_mb": 50, "network_bytes": 0},
         )
 
     async def stop_sandbox(self, sandbox_id: str) -> None:
@@ -472,6 +466,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
             vm_path = Path(vm_config["vm_path"])
             if vm_path.exists():
                 import shutil
+
                 shutil.rmtree(vm_path)
 
             # Remove from tracking
@@ -506,6 +501,7 @@ class FirecrackerSandboxDriver(SandboxDriver):
         # Clean up temp directories
         try:
             import shutil
+
             if self.socket_dir.exists():
                 shutil.rmtree(self.socket_dir)
             if self.vm_dir.exists():

@@ -109,7 +109,7 @@ class TestLifecycleHistory:
 
         # Verify replay correctness
         assert len(replayed_events) == len(events), "Should replay all events"
-        for original, replayed in zip(events, replayed_events):
+        for original, replayed in zip(events, replayed_events, strict=False):
             assert original == replayed, "Replayed event should match original"
 
     def test_lifecycle_history_append_only(self):

@@ -39,7 +39,7 @@ class TestAnchoringConfig:
             publish_interval_seconds=1800,
             max_entries_per_root=500,
             enable_verification=False,
-            verification_interval_seconds=600
+            verification_interval_seconds=600,
         )
         assert config.anchoring_backend == "blockchain"
         assert config.publish_interval_seconds == 1800
@@ -54,11 +54,7 @@ class TestAnchoringResult:
     def test_success_result(self):
         """Test successful anchoring result."""
         result = AnchoringResult(
-            timestamp=1234567890.0,
-            root_hash="abc123",
-            entry_count=100,
-            backend="transparency_log",
-            success=True
+            timestamp=1234567890.0, root_hash="abc123", entry_count=100, backend="transparency_log", success=True
         )
         assert result.timestamp == 1234567890.0
         assert result.root_hash == "abc123"
@@ -76,7 +72,7 @@ class TestAnchoringResult:
             entry_count=0,
             backend="transparency_log",
             success=False,
-            error_message="Backend error"
+            error_message="Backend error",
         )
         assert result.success is False
         assert result.error_message == "Backend error"
@@ -92,10 +88,7 @@ class TestTransparencyLogBackend:
             log_path = Path(temp_dir) / "transparency.log"
             backend = TransparencyLogBackend(str(log_path))
 
-            success = await backend.publish_root(
-                "test_root_hash",
-                {"entry_count": 100, "timestamp": time.time()}
-            )
+            success = await backend.publish_root("test_root_hash", {"entry_count": 100, "timestamp": time.time()})
 
             assert success is True
             assert log_path.exists()
@@ -141,10 +134,7 @@ class TestBlockchainBackend:
         """Test simulated blockchain root publication."""
         backend = BlockchainBackend()
 
-        success = await backend.publish_root(
-            "blockchain_root_hash",
-            {"entry_count": 200, "timestamp": time.time()}
-        )
+        success = await backend.publish_root("blockchain_root_hash", {"entry_count": 200, "timestamp": time.time()})
 
         # Since it's simulated, it should always succeed
         assert success is True
@@ -174,10 +164,7 @@ class TestAuditMerkleAnchoring:
 
     def test_initialization_blockchain(self):
         """Test initialization with blockchain backend."""
-        config = AnchoringConfig(
-            audit_log_path="/tmp/test_audit.log",
-            anchoring_backend="blockchain"
-        )
+        config = AnchoringConfig(audit_log_path="/tmp/test_audit.log", anchoring_backend="blockchain")
         anchoring = AuditMerkleAnchoring(config)
 
         assert "blockchain" in anchoring.backends
@@ -185,10 +172,7 @@ class TestAuditMerkleAnchoring:
 
     def test_initialization_invalid_backend(self):
         """Test initialization with invalid backend."""
-        config = AnchoringConfig(
-            audit_log_path="/tmp/test_audit.log",
-            anchoring_backend="invalid_backend"
-        )
+        config = AnchoringConfig(audit_log_path="/tmp/test_audit.log", anchoring_backend="invalid_backend")
 
         with pytest.raises(ValueError, match="Unsupported anchoring backend"):
             AuditMerkleAnchoring(config)
@@ -341,11 +325,9 @@ class TestCLIIntegration:
         assert parser is not None
 
         # Test parsing basic arguments
-        args = parser.parse_args([
-            "--audit-log", "/tmp/audit.log",
-            "--backend", "transparency_log",
-            "--publish-interval", "1800"
-        ])
+        args = parser.parse_args(
+            ["--audit-log", "/tmp/audit.log", "--backend", "transparency_log", "--publish-interval", "1800"]
+        )
 
         assert args.audit_log == "/tmp/audit.log"
         assert args.backend == "transparency_log"
@@ -359,10 +341,7 @@ class TestCLIIntegration:
         from tools.audit_merkle_anchoring import create_parser
 
         parser = create_parser()
-        args = parser.parse_args([
-            "--audit-log", "/tmp/audit.log",
-            "--publish-once"
-        ])
+        args = parser.parse_args(["--audit-log", "/tmp/audit.log", "--publish-once"])
 
         assert args.publish_once is True
 
@@ -371,10 +350,7 @@ class TestCLIIntegration:
         from tools.audit_merkle_anchoring import create_parser
 
         parser = create_parser()
-        args = parser.parse_args([
-            "--audit-log", "/tmp/audit.log",
-            "--compare-backends"
-        ])
+        args = parser.parse_args(["--audit-log", "/tmp/audit.log", "--compare-backends"])
 
         assert args.compare_backends is True
 
@@ -453,9 +429,10 @@ class TestMetricsIntegration:
     @pytest.mark.asyncio
     async def test_publish_records_metrics(self):
         """Test that publishing records metrics."""
-        with patch("tools.audit_merkle_anchoring.MERKLE_ROOT_PUBLISH_TOTAL") as mock_counter, \
-             patch("tools.audit_merkle_anchoring.MERKLE_ROOT_PUBLISH_LATENCY") as mock_histogram:
-
+        with (
+            patch("tools.audit_merkle_anchoring.MERKLE_ROOT_PUBLISH_TOTAL") as mock_counter,
+            patch("tools.audit_merkle_anchoring.MERKLE_ROOT_PUBLISH_LATENCY") as mock_histogram,
+        ):
             with tempfile.TemporaryDirectory() as temp_dir:
                 audit_path = Path(temp_dir) / "audit.log"
 
@@ -475,9 +452,10 @@ class TestMetricsIntegration:
     @pytest.mark.asyncio
     async def test_verify_records_metrics(self):
         """Test that verification records metrics."""
-        with patch("tools.audit_merkle_anchoring.MERKLE_ROOT_VERIFICATION_TOTAL") as mock_total, \
-             patch("tools.audit_merkle_anchoring.MERKLE_ROOT_VERIFICATION_FAILED_TOTAL") as mock_failed:
-
+        with (
+            patch("tools.audit_merkle_anchoring.MERKLE_ROOT_VERIFICATION_TOTAL") as mock_total,
+            patch("tools.audit_merkle_anchoring.MERKLE_ROOT_VERIFICATION_FAILED_TOTAL") as mock_failed,
+        ):
             config = AnchoringConfig(audit_log_path="/tmp/test.log")
             anchoring = AuditMerkleAnchoring(config)
 

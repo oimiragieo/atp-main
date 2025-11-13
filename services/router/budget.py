@@ -177,8 +177,8 @@ class BudgetAnomalyGuard:
         self,
         ewma_alpha: float = 0.1,  # EWMA smoothing factor
         z_threshold: float = 3.0,  # Z-score threshold for spike detection
-        min_samples: int = 10,     # Minimum samples before detection starts
-        max_samples: int = 100,    # Maximum samples to keep in history
+        min_samples: int = 10,  # Minimum samples before detection starts
+        max_samples: int = 100,  # Maximum samples to keep in history
         spike_cooldown_s: float = 300.0,  # Cooldown between spike alerts
     ):
         self.ewma_alpha = ewma_alpha
@@ -235,7 +235,7 @@ class BudgetAnomalyGuard:
         # Use all samples for calculation
         mean = sum(samples) / len(samples)
         variance = sum((x - mean) ** 2 for x in samples) / len(samples)
-        std = variance ** 0.5 if variance > 0 else 1.0
+        std = variance**0.5 if variance > 0 else 1.0
 
         if std == 0:
             return 0.0
@@ -282,10 +282,10 @@ class BudgetAnomalyGuard:
     def get_session_stats(self, session: str) -> dict[str, float]:
         """Get anomaly detection statistics for a session."""
         return {
-            'ewma': self._ewma.get(session, 0.0),
-            'sample_count': len(self._samples.get(session, [])),
-            'last_spike_time': self._last_spike.get(session, 0.0),
-            'z_threshold': self.z_threshold,
+            "ewma": self._ewma.get(session, 0.0),
+            "sample_count": len(self._samples.get(session, [])),
+            "last_spike_time": self._last_spike.get(session, 0.0),
+            "z_threshold": self.z_threshold,
         }
 
     def reset_session(self, session: str) -> None:

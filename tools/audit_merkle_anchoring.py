@@ -17,7 +17,7 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 import aiofiles
 
@@ -59,8 +59,8 @@ class AnchoringResult:
     entry_count: int
     backend: str
     success: bool
-    error_message: Optional[str] = None
-    verification_status: Optional[str] = None
+    error_message: str | None = None
+    verification_status: str | None = None
 
 
 class AnchoringBackend(Protocol):
@@ -89,7 +89,7 @@ class TransparencyLogBackend:
                 "timestamp": time.time(),
                 "root_hash": root_hash,
                 "metadata": metadata,
-                "backend": "transparency_log"
+                "backend": "transparency_log",
             }
 
             async with aiofiles.open(self.log_path, "a") as f:
@@ -160,15 +160,13 @@ class AuditMerkleAnchoring:
     def _setup_backends(self):
         """Initialize anchoring backends."""
         if self.config.anchoring_backend == "transparency_log":
-            self.backends["transparency_log"] = TransparencyLogBackend(
-                f"{self.config.audit_log_path}.transparency_log"
-            )
+            self.backends["transparency_log"] = TransparencyLogBackend(f"{self.config.audit_log_path}.transparency_log")
         elif self.config.anchoring_backend == "blockchain":
             self.backends["blockchain"] = BlockchainBackend()
         else:
             raise ValueError(f"Unsupported anchoring backend: {self.config.anchoring_backend}")
 
-    async def _read_audit_entries(self, max_entries: Optional[int] = None) -> list[dict[str, Any]]:
+    async def _read_audit_entries(self, max_entries: int | None = None) -> list[dict[str, Any]]:
         """Read audit entries from the log file."""
         entries = []
         try:
@@ -219,7 +217,7 @@ class AuditMerkleAnchoring:
                     entry_count=0,
                     backend=self.config.anchoring_backend,
                     success=False,
-                    error_message="No audit entries found"
+                    error_message="No audit entries found",
                 )
 
             # Compute Merkle root
@@ -229,7 +227,7 @@ class AuditMerkleAnchoring:
             metadata = {
                 "entry_count": len(entries),
                 "timestamp": time.time(),
-                "audit_log_path": self.config.audit_log_path
+                "audit_log_path": self.config.audit_log_path,
             }
 
             # Publish to backend
@@ -241,7 +239,7 @@ class AuditMerkleAnchoring:
                     entry_count=len(entries),
                     backend=self.config.anchoring_backend,
                     success=False,
-                    error_message="Backend not configured"
+                    error_message="Backend not configured",
                 )
 
             success = await backend.publish_root(root_hash, metadata)
@@ -258,7 +256,7 @@ class AuditMerkleAnchoring:
                 root_hash=root_hash,
                 entry_count=len(entries),
                 backend=self.config.anchoring_backend,
-                success=success
+                success=success,
             )
 
             if success:
@@ -282,7 +280,7 @@ class AuditMerkleAnchoring:
                 entry_count=0,
                 backend=self.config.anchoring_backend,
                 success=False,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def verify_root(self, root_hash: str) -> bool:
@@ -334,8 +332,10 @@ class AuditMerkleAnchoring:
                     logging.error(f"Periodic publish failed: {result.error_message}")
 
             # Check if it's time to verify (if enabled)
-            if (self.config.enable_verification and
-                current_time - self.last_verification_time >= self.config.verification_interval_seconds):
+            if (
+                self.config.enable_verification
+                and current_time - self.last_verification_time >= self.config.verification_interval_seconds
+            ):
                 # Verify the last published root
                 entries = await self._read_audit_entries(self.config.max_entries_per_root)
                 if entries:
@@ -362,59 +362,36 @@ Examples:
 
   # Compare anchoring strategies
   python audit_merkle_anchoring.py --audit-log /path/to/audit.log --compare-backends
-        """
+        """,
     )
 
-    parser.add_argument(
-        "--audit-log",
-        required=True,
-        help="Path to the audit log file"
-    )
+    parser.add_argument("--audit-log", required=True, help="Path to the audit log file")
 
     parser.add_argument(
         "--backend",
         choices=["transparency_log", "blockchain"],
         default="transparency_log",
-        help="Anchoring backend to use (default: transparency_log)"
+        help="Anchoring backend to use (default: transparency_log)",
     )
 
     parser.add_argument(
         "--publish-interval",
         type=int,
         default=3600,
-        help="Interval between root publications in seconds (default: 3600)"
+        help="Interval between root publications in seconds (default: 3600)",
     )
 
     parser.add_argument(
-        "--max-entries",
-        type=int,
-        default=1000,
-        help="Maximum audit entries to include in each root (default: 1000)"
+        "--max-entries", type=int, default=1000, help="Maximum audit entries to include in each root (default: 1000)"
     )
 
-    parser.add_argument(
-        "--publish-once",
-        action="store_true",
-        help="Publish a single root and exit"
-    )
+    parser.add_argument("--publish-once", action="store_true", help="Publish a single root and exit")
 
-    parser.add_argument(
-        "--verify",
-        action="store_true",
-        help="Verify the current root after publishing"
-    )
+    parser.add_argument("--verify", action="store_true", help="Verify the current root after publishing")
 
-    parser.add_argument(
-        "--compare-backends",
-        action="store_true",
-        help="Compare different anchoring backends"
-    )
+    parser.add_argument("--compare-backends", action="store_true", help="Compare different anchoring backends")
 
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     return parser
 
@@ -426,16 +403,13 @@ async def main():
 
     # Setup logging
     level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=level, format="%(asctime)s - %(levelname)s - %(message)s")
 
     config = AnchoringConfig(
         audit_log_path=args.audit_log,
         anchoring_backend=args.backend,
         publish_interval_seconds=args.publish_interval,
-        max_entries_per_root=args.max_entries
+        max_entries_per_root=args.max_entries,
     )
 
     anchoring = AuditMerkleAnchoring(config)
@@ -465,11 +439,7 @@ async def compare_anchoring_backends(audit_log_path: str):
 
     for backend in backends:
         print(f"\nTesting {backend} backend:")
-        config = AnchoringConfig(
-            audit_log_path=audit_log_path,
-            anchoring_backend=backend,
-            max_entries_per_root=100
-        )
+        config = AnchoringConfig(audit_log_path=audit_log_path, anchoring_backend=backend, max_entries_per_root=100)
 
         anchoring = AuditMerkleAnchoring(config)
 
@@ -492,7 +462,7 @@ async def compare_anchoring_backends(audit_log_path: str):
             "publish_time": publish_time,
             "verify_time": verify_time,
             "verified": verified,
-            "entry_count": result.entry_count
+            "entry_count": result.entry_count,
         }
 
         print(f"  Success: {result.success}")

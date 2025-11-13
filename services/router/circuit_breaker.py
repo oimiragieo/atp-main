@@ -6,8 +6,8 @@ Implements a simple circuit breaker with trip/reset conditions and a manager.
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from metrics.registry import REGISTRY
 

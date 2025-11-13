@@ -37,9 +37,7 @@ class TestSubRequestOrchestrator:
         session_id = self.orchestrator.create_session("Test prompt")
 
         request_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Analyze this text",
-            adapter_name="analyzer_adapter"
+            session_id=session_id, prompt="Analyze this text", adapter_name="analyzer_adapter"
         )
 
         session = self.orchestrator.sessions[session_id]
@@ -57,17 +55,12 @@ class TestSubRequestOrchestrator:
 
         # Add first request
         req1_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Step 1",
-            adapter_name="step1_adapter"
+            session_id=session_id, prompt="Step 1", adapter_name="step1_adapter"
         )
 
         # Add second request with dependency on first
         req2_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Step 2",
-            adapter_name="step2_adapter",
-            dependencies=[req1_id]
+            session_id=session_id, prompt="Step 2", adapter_name="step2_adapter", dependencies=[req1_id]
         )
 
         session = self.orchestrator.sessions[session_id]
@@ -79,9 +72,7 @@ class TestSubRequestOrchestrator:
 
         # Add a request with no dependencies
         self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Initial analysis",
-            adapter_name="analyzer_adapter"
+            session_id=session_id, prompt="Initial analysis", adapter_name="analyzer_adapter"
         )
 
         self.orchestrator.start_session(session_id)
@@ -96,17 +87,11 @@ class TestSubRequestOrchestrator:
 
         # Add requests with dependencies that can't be satisfied
         self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Step 1",
-            adapter_name="step1_adapter",
-            dependencies=["nonexistent_dep1"]
+            session_id=session_id, prompt="Step 1", adapter_name="step1_adapter", dependencies=["nonexistent_dep1"]
         )
 
         self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Step 2",
-            adapter_name="step2_adapter",
-            dependencies=["nonexistent_dep2"]
+            session_id=session_id, prompt="Step 2", adapter_name="step2_adapter", dependencies=["nonexistent_dep2"]
         )
 
         self.orchestrator.start_session(session_id)
@@ -119,9 +104,7 @@ class TestSubRequestOrchestrator:
         session_id = self.orchestrator.create_session("Test prompt")
 
         request_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Test request",
-            adapter_name="test_adapter"
+            session_id=session_id, prompt="Test request", adapter_name="test_adapter"
         )
 
         result = {"response": "Test result", "confidence": 0.95}
@@ -142,9 +125,7 @@ class TestSubRequestOrchestrator:
         session_id = self.orchestrator.create_session("Test prompt")
 
         request_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Test request",
-            adapter_name="test_adapter"
+            session_id=session_id, prompt="Test request", adapter_name="test_adapter"
         )
 
         error_msg = "Adapter timeout"
@@ -166,9 +147,7 @@ class TestSubRequestOrchestrator:
 
         # Add and complete a single request
         request_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Test request",
-            adapter_name="test_adapter"
+            session_id=session_id, prompt="Test request", adapter_name="test_adapter"
         )
 
         self.orchestrator.complete_sub_request(session_id, request_id, {"result": "success"})
@@ -184,9 +163,7 @@ class TestSubRequestOrchestrator:
 
         # Add and fail a request
         request_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Test request",
-            adapter_name="test_adapter"
+            session_id=session_id, prompt="Test request", adapter_name="test_adapter"
         )
 
         self.orchestrator.fail_sub_request(session_id, request_id, "Request failed")
@@ -202,9 +179,7 @@ class TestSubRequestOrchestrator:
 
         # Step 1: Initial analysis
         step1_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Analyze the input data",
-            adapter_name="analyzer_adapter"
+            session_id=session_id, prompt="Analyze the input data", adapter_name="analyzer_adapter"
         )
 
         # Step 2: Depends on step 1
@@ -212,7 +187,7 @@ class TestSubRequestOrchestrator:
             session_id=session_id,
             prompt="Generate summary based on analysis",
             adapter_name="summarizer_adapter",
-            dependencies=[step1_id]
+            dependencies=[step1_id],
         )
 
         # Step 3: Depends on step 2
@@ -220,7 +195,7 @@ class TestSubRequestOrchestrator:
             session_id=session_id,
             prompt="Validate the summary",
             adapter_name="validator_adapter",
-            dependencies=[step2_id]
+            dependencies=[step2_id],
         )
 
         session = self.orchestrator.sessions[session_id]
@@ -258,21 +233,15 @@ class TestSubRequestOrchestrator:
 
         # Add multiple independent requests
         req1_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Process part 1",
-            adapter_name="processor_adapter"
+            session_id=session_id, prompt="Process part 1", adapter_name="processor_adapter"
         )
 
         req2_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Process part 2",
-            adapter_name="processor_adapter"
+            session_id=session_id, prompt="Process part 2", adapter_name="processor_adapter"
         )
 
         req3_id = self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Process part 3",
-            adapter_name="processor_adapter"
+            session_id=session_id, prompt="Process part 3", adapter_name="processor_adapter"
         )
 
         session = self.orchestrator.sessions[session_id]
@@ -309,11 +278,7 @@ class TestSubRequestOrchestrator:
         """Test cancelling a session."""
         session_id = self.orchestrator.create_session("Cancel test")
 
-        self.orchestrator.add_sub_request(
-            session_id=session_id,
-            prompt="Test request",
-            adapter_name="test_adapter"
-        )
+        self.orchestrator.add_sub_request(session_id=session_id, prompt="Test request", adapter_name="test_adapter")
 
         self.orchestrator.start_session(session_id)
         self.orchestrator.cancel_session(session_id)
@@ -346,11 +311,7 @@ class TestSubRequest:
 
     def test_sub_request_creation(self):
         """Test SubRequest creation and properties."""
-        request = SubRequest(
-            request_id="test_req",
-            prompt="Test prompt",
-            adapter_name="test_adapter"
-        )
+        request = SubRequest(request_id="test_req", prompt="Test prompt", adapter_name="test_adapter")
 
         assert request.request_id == "test_req"
         assert request.prompt == "Test prompt"
@@ -361,11 +322,7 @@ class TestSubRequest:
 
     def test_sub_request_completion(self):
         """Test SubRequest completion."""
-        request = SubRequest(
-            request_id="test_req",
-            prompt="Test prompt",
-            adapter_name="test_adapter"
-        )
+        request = SubRequest(request_id="test_req", prompt="Test prompt", adapter_name="test_adapter")
 
         request.status = "completed"
         request.completed_at = time.time()
@@ -375,11 +332,7 @@ class TestSubRequest:
 
     def test_sub_request_failure(self):
         """Test SubRequest failure."""
-        request = SubRequest(
-            request_id="test_req",
-            prompt="Test prompt",
-            adapter_name="test_adapter"
-        )
+        request = SubRequest(request_id="test_req", prompt="Test prompt", adapter_name="test_adapter")
 
         request.status = "failed"
         request.completed_at = time.time()
@@ -390,11 +343,7 @@ class TestSubRequest:
 
     def test_sub_request_duration(self):
         """Test SubRequest duration calculation."""
-        request = SubRequest(
-            request_id="test_req",
-            prompt="Test prompt",
-            adapter_name="test_adapter"
-        )
+        request = SubRequest(request_id="test_req", prompt="Test prompt", adapter_name="test_adapter")
 
         request.started_at = time.time()
         time.sleep(0.01)  # Small delay
@@ -409,10 +358,7 @@ class TestOrchestrationSession:
 
     def test_session_creation(self):
         """Test OrchestrationSession creation."""
-        session = OrchestrationSession(
-            session_id="test_session",
-            initial_prompt="Test prompt"
-        )
+        session = OrchestrationSession(session_id="test_session", initial_prompt="Test prompt")
 
         assert session.session_id == "test_session"
         assert session.initial_prompt == "Test prompt"
@@ -422,10 +368,7 @@ class TestOrchestrationSession:
 
     def test_session_active_states(self):
         """Test session active state detection."""
-        session = OrchestrationSession(
-            session_id="test_session",
-            initial_prompt="Test prompt"
-        )
+        session = OrchestrationSession(session_id="test_session", initial_prompt="Test prompt")
 
         active_states = [OrchestratorState.INITIALIZING, OrchestratorState.EXECUTING, OrchestratorState.WAITING]
 
@@ -435,10 +378,7 @@ class TestOrchestrationSession:
 
     def test_session_completed_states(self):
         """Test session completed state detection."""
-        session = OrchestrationSession(
-            session_id="test_session",
-            initial_prompt="Test prompt"
-        )
+        session = OrchestrationSession(session_id="test_session", initial_prompt="Test prompt")
 
         completed_states = [OrchestratorState.COMPLETED, OrchestratorState.FAILED, OrchestratorState.CANCELLED]
 
@@ -448,10 +388,7 @@ class TestOrchestrationSession:
 
     def test_get_pending_requests(self):
         """Test getting pending requests."""
-        session = OrchestrationSession(
-            session_id="test_session",
-            initial_prompt="Test prompt"
-        )
+        session = OrchestrationSession(session_id="test_session", initial_prompt="Test prompt")
 
         req1 = SubRequest("req1", "prompt1", "adapter1")
         req2 = SubRequest("req2", "prompt2", "adapter2")
@@ -467,10 +404,7 @@ class TestOrchestrationSession:
 
     def test_get_ready_requests(self):
         """Test getting ready requests (dependencies satisfied)."""
-        session = OrchestrationSession(
-            session_id="test_session",
-            initial_prompt="Test prompt"
-        )
+        session = OrchestrationSession(session_id="test_session", initial_prompt="Test prompt")
 
         req1 = SubRequest("req1", "prompt1", "adapter1")
         req2 = SubRequest("req2", "prompt2", "adapter2", dependencies=["req1"])

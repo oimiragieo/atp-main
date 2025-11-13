@@ -17,9 +17,19 @@ def test_tamper_detection_comprehensive():
         # Create a valid audit log with multiple events
         events = [
             {"action": "user_login", "user": "alice", "timestamp": "2024-01-01T10:00:00Z"},
-            {"action": "data_access", "user": "alice", "resource": "sensitive_data", "timestamp": "2024-01-01T10:05:00Z"},
+            {
+                "action": "data_access",
+                "user": "alice",
+                "resource": "sensitive_data",
+                "timestamp": "2024-01-01T10:05:00Z",
+            },
             {"action": "user_logout", "user": "alice", "timestamp": "2024-01-01T10:30:00Z"},
-            {"action": "admin_action", "user": "admin", "operation": "config_change", "timestamp": "2024-01-01T11:00:00Z"}
+            {
+                "action": "admin_action",
+                "user": "admin",
+                "operation": "config_change",
+                "timestamp": "2024-01-01T11:00:00Z",
+            },
         ]
 
         # Append events to create valid log
@@ -101,7 +111,7 @@ def test_tamper_detection_comprehensive():
                 "event": {"action": "fake_action", "user": "hacker", "timestamp": "2024-01-01T10:02:00Z"},
                 "hash": "fake-hash",
                 "prev": first_record.get("hash"),  # Use the hash from the first record
-                "hmac": "fake-hmac"
+                "hmac": "fake-hmac",
             }
             lines.insert(1, json.dumps(fake_event) + "\n")
             f.seek(0)

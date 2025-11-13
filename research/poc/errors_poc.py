@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -7,7 +6,7 @@ class ErrorInfo:
     code: str
     message: str
     retryable: bool = False
-    backoff_ms: Optional[int] = None
+    backoff_ms: int | None = None
 
 
 ERRORS: dict[str, ErrorInfo] = {
@@ -21,7 +20,7 @@ ERRORS: dict[str, ErrorInfo] = {
 }
 
 
-def error(code: str, detail: Optional[str] = None) -> dict:
+def error(code: str, detail: str | None = None) -> dict:
     info = ERRORS.get(code, ErrorInfo(code, "unknown error", False, None))
     out = {
         "code": info.code,

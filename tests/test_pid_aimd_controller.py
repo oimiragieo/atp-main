@@ -49,8 +49,8 @@ class TestPIDController:
         # Try to update immediately (should not update due to interval)
         self.pid.update_parameters(
             current_latency_ms=2000.0,  # High latency
-            current_throughput=50.0,    # Low throughput
-            current_error_rate=0.05     # High error rate
+            current_throughput=50.0,  # Low throughput
+            current_error_rate=0.05,  # High error rate
         )
 
         # Parameters should not change
@@ -62,19 +62,15 @@ class TestPIDController:
         # Simulate high latency (should decrease mult factor)
         self.pid.update_parameters(
             current_latency_ms=2000.0,  # Above target
-            current_throughput=100.0,   # At target
-            current_error_rate=0.01     # At target
+            current_throughput=100.0,  # At target
+            current_error_rate=0.01,  # At target
         )
 
         # Force update by advancing time
         self.pid._last_update_time = time.time() - 2.0
 
         initial_mult = self.aimd.mult
-        self.pid.update_parameters(
-            current_latency_ms=2000.0,
-            current_throughput=100.0,
-            current_error_rate=0.01
-        )
+        self.pid.update_parameters(current_latency_ms=2000.0, current_throughput=100.0, current_error_rate=0.01)
 
         # Mult factor should decrease due to high latency
         assert self.aimd.mult < initial_mult
@@ -87,8 +83,8 @@ class TestPIDController:
         initial_add = self.aimd.add
         self.pid.update_parameters(
             current_latency_ms=1500.0,  # At target
-            current_throughput=50.0,    # Below target
-            current_error_rate=0.01     # At target
+            current_throughput=50.0,  # Below target
+            current_error_rate=0.01,  # At target
         )
 
         # Add factor should decrease due to low throughput
@@ -102,8 +98,8 @@ class TestPIDController:
         initial_add = self.aimd.add
         self.pid.update_parameters(
             current_latency_ms=1500.0,  # At target
-            current_throughput=100.0,   # At target
-            current_error_rate=0.05     # Above target
+            current_throughput=100.0,  # At target
+            current_error_rate=0.05,  # Above target
         )
 
         # Add factor should decrease due to high error rate
@@ -116,9 +112,9 @@ class TestPIDController:
 
         # Set very extreme conditions to test bounds
         self.pid.update_parameters(
-            current_latency_ms=5000.0,   # Very high latency
-            current_throughput=10.0,     # Very low throughput
-            current_error_rate=0.5       # Very high error rate
+            current_latency_ms=5000.0,  # Very high latency
+            current_throughput=10.0,  # Very low throughput
+            current_error_rate=0.5,  # Very high error rate
         )
 
         # Check bounds are respected
@@ -130,11 +126,7 @@ class TestPIDController:
         # Force multiple updates with consistent error
         for _ in range(10):
             self.pid._last_update_time = time.time() - 2.0
-            self.pid.update_parameters(
-                current_latency_ms=2000.0,
-                current_throughput=100.0,
-                current_error_rate=0.01
-            )
+            self.pid.update_parameters(current_latency_ms=2000.0, current_throughput=100.0, current_error_rate=0.01)
 
         # Integral terms should be bounded
         assert abs(self.pid._integral_add) <= self.pid.max_integral
@@ -148,11 +140,7 @@ class TestPIDController:
         # Get initial metric values
         initial_updates = REGISTRY.export()["counters"].get("pid_parameter_updates_total", 0)
 
-        self.pid.update_parameters(
-            current_latency_ms=2000.0,
-            current_throughput=50.0,
-            current_error_rate=0.05
-        )
+        self.pid.update_parameters(current_latency_ms=2000.0, current_throughput=50.0, current_error_rate=0.05)
 
         # Check metrics were updated
         final_updates = REGISTRY.export()["counters"].get("pid_parameter_updates_total", 0)
@@ -184,9 +172,17 @@ class TestPIDController:
         params = self.pid.get_parameters()
 
         required_keys = [
-            'kp', 'ki', 'kd', 'target_latency_ms', 'target_throughput',
-            'target_error_rate', 'current_add_factor', 'current_mult_factor',
-            'integral_add', 'integral_mult', 'last_update_time'
+            "kp",
+            "ki",
+            "kd",
+            "target_latency_ms",
+            "target_throughput",
+            "target_error_rate",
+            "current_add_factor",
+            "current_mult_factor",
+            "integral_add",
+            "integral_mult",
+            "last_update_time",
         ]
 
         for key in required_keys:
@@ -215,8 +211,8 @@ async def test_pid_convergence_under_step_load():
         pid._last_update_time = time.time() - 0.2
         pid.update_parameters(
             current_latency_ms=1500.0,  # At target
-            current_throughput=100.0,   # At target
-            current_error_rate=0.01     # At target
+            current_throughput=100.0,  # At target
+            current_error_rate=0.01,  # At target
         )
 
     # Parameters should be relatively stable
@@ -228,8 +224,8 @@ async def test_pid_convergence_under_step_load():
         pid._last_update_time = time.time() - 0.2
         pid.update_parameters(
             current_latency_ms=3000.0,  # High latency
-            current_throughput=30.0,    # Low throughput
-            current_error_rate=0.02     # Slightly high error rate
+            current_throughput=30.0,  # Low throughput
+            current_error_rate=0.02,  # Slightly high error rate
         )
 
     # Parameters should have adjusted
@@ -244,8 +240,8 @@ async def test_pid_convergence_under_step_load():
         pid._last_update_time = time.time() - 0.2
         pid.update_parameters(
             current_latency_ms=1500.0,  # Back to target
-            current_throughput=100.0,   # Back to target
-            current_error_rate=0.01     # Back to target
+            current_throughput=100.0,  # Back to target
+            current_error_rate=0.01,  # Back to target
         )
 
     # Parameters should have adjusted back
@@ -261,4 +257,6 @@ async def test_pid_convergence_under_step_load():
     add_improved = abs(final_add - stable_add) < abs(high_load_add - stable_add)
     mult_improved = abs(final_mult - stable_mult) < abs(high_load_mult - stable_mult)
 
-    assert add_improved or mult_improved, f"No convergence detected: stable=({stable_add}, {stable_mult}), high_load=({high_load_add}, {high_load_mult}), final=({final_add}, {final_mult})"
+    assert add_improved or mult_improved, (
+        f"No convergence detected: stable=({stable_add}, {stable_mult}), high_load=({high_load_add}, {high_load_mult}), final=({final_add}, {final_mult})"
+    )

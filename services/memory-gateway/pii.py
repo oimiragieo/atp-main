@@ -1,6 +1,6 @@
 import re
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 try:
     from metrics.registry import REGISTRY  # type: ignore
@@ -48,7 +48,7 @@ def _mask(s: str, visible: int = 4, fill: str = "*") -> str:
     return fill * (len(s) - visible) + s[-visible:]
 
 
-def redact_text(text: str, mask_map: Optional[dict[str, Optional[str]]] = None) -> str:
+def redact_text(text: str, mask_map: dict[str, str | None] | None = None) -> str:
     """Redact known PII patterns from text using masking rules per kind."""
     mask_map = mask_map or {
         "email": "[redacted-email]",
@@ -71,7 +71,7 @@ def redact_text(text: str, mask_map: Optional[dict[str, Optional[str]]] = None) 
     return out
 
 
-def redact_object(obj: JsonLike, redact_keys: Optional[Iterable[str]] = None) -> JsonLike:
+def redact_object(obj: JsonLike, redact_keys: Iterable[str] | None = None) -> JsonLike:
     """Redact PII from JSON-like objects. Keys matching redact_keys are fully redacted."""
     base = list(redact_keys) if redact_keys else []
     redact_keys_set = set(base + ["password", "secret", "token", "ssn", "credit_card", "api_key"])  # common

@@ -33,10 +33,7 @@ class TestDpTelemetryExporter:
     @pytest.fixture
     def exporter(self, temp_dir):
         """Create a test exporter instance."""
-        return DpTelemetryExporter(
-            export_path=str(temp_dir),
-            max_epsilon_per_tenant=2.0
-        )
+        return DpTelemetryExporter(export_path=str(temp_dir), max_epsilon_per_tenant=2.0)
 
     @pytest.fixture
     def sample_events(self):
@@ -51,7 +48,7 @@ class TestDpTelemetryExporter:
                 epsilon_used=0.1,
                 sensitivity=1.0,
                 raw_value=100,
-                metadata={"endpoint": "/api/v1"}
+                metadata={"endpoint": "/api/v1"},
             ),
             DpTelemetryEvent(
                 event_id="evt_002",
@@ -62,7 +59,7 @@ class TestDpTelemetryExporter:
                 epsilon_used=0.2,
                 sensitivity=10.0,
                 raw_value=250,
-                metadata={"method": "GET"}
+                metadata={"method": "GET"},
             ),
             DpTelemetryEvent(
                 event_id="evt_003",
@@ -73,8 +70,8 @@ class TestDpTelemetryExporter:
                 epsilon_used=0.05,
                 sensitivity=0.1,
                 raw_value=0.02,
-                metadata={"status_code": "500"}
-            )
+                metadata={"status_code": "500"},
+            ),
         ]
 
     def test_add_event_within_budget(self, exporter, sample_events):
@@ -96,7 +93,7 @@ class TestDpTelemetryExporter:
             timestamp=datetime.now(),
             dp_value=100.0,
             epsilon_used=1.8,
-            sensitivity=1.0
+            sensitivity=1.0,
         )
 
         assert exporter.add_event(event1)
@@ -110,7 +107,7 @@ class TestDpTelemetryExporter:
             timestamp=datetime.now(),
             dp_value=200.0,
             epsilon_used=0.3,  # 1.8 + 0.3 = 2.1 > 2.0 limit
-            sensitivity=1.0
+            sensitivity=1.0,
         )
 
         assert not exporter.add_event(event2)
@@ -129,7 +126,7 @@ class TestDpTelemetryExporter:
         assert Path(filepath).exists()
 
         # Verify file contents
-        with open(filepath, encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
 
         assert "export_timestamp" in data
@@ -156,7 +153,7 @@ class TestDpTelemetryExporter:
         assert Path(filepath).exists()
 
         # Verify file contents
-        with open(filepath, newline='', encoding='utf-8') as f:
+        with open(filepath, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             rows = list(reader)
 
@@ -178,7 +175,7 @@ class TestDpTelemetryExporter:
         assert Path(filepath).exists()
 
         # Verify file contents
-        with open(filepath, encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             content = f.read()
 
         assert "# DP Telemetry Export" in content
@@ -255,15 +252,17 @@ class TestDpTelemetryExporter:
 
     def test_invalid_export_format(self, exporter):
         """Test error handling for invalid export format."""
-        exporter.add_event(DpTelemetryEvent(
-            event_id="test",
-            event_type="test",
-            tenant_id="test",
-            timestamp=datetime.now(),
-            dp_value=1.0,
-            epsilon_used=0.1,
-            sensitivity=1.0
-        ))
+        exporter.add_event(
+            DpTelemetryEvent(
+                event_id="test",
+                event_type="test",
+                tenant_id="test",
+                timestamp=datetime.now(),
+                dp_value=1.0,
+                epsilon_used=0.1,
+                sensitivity=1.0,
+            )
+        )
 
         with pytest.raises(ValueError, match="Unsupported export format"):
             exporter.export_batch("invalid_format")
@@ -277,7 +276,7 @@ class TestDpTelemetryExporter:
             timestamp=datetime.now(),
             dp_value=1.0,
             epsilon_used=0.5,
-            sensitivity=1.0
+            sensitivity=1.0,
         )
 
         event2 = DpTelemetryEvent(
@@ -287,7 +286,7 @@ class TestDpTelemetryExporter:
             timestamp=datetime.now(),
             dp_value=2.0,
             epsilon_used=0.7,
-            sensitivity=1.0
+            sensitivity=1.0,
         )
 
         exporter.add_event(event1)

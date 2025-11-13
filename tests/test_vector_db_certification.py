@@ -39,7 +39,7 @@ class TestBenchmarkConfig:
             embedding_dim=768,
             k_values=[1, 10, 100],
             namespaces=["custom"],
-            backends=["in_memory"]
+            backends=["in_memory"],
         )
 
         assert config.dataset_size == 500
@@ -63,7 +63,7 @@ class TestBenchmarkResult:
             throughput_qps=100.0,
             recall_at_k={1: 0.8, 5: 0.6, 10: 0.4},
             error_count=2,
-            total_queries=100
+            total_queries=100,
         )
 
         assert result.backend == "in_memory"
@@ -91,7 +91,7 @@ class TestCertificationReport:
                 throughput_qps=100.0,
                 recall_at_k={1: 0.8},
                 error_count=0,
-                total_queries=100
+                total_queries=100,
             )
         ]
 
@@ -100,7 +100,7 @@ class TestCertificationReport:
             config=config,
             results=results,
             recommendations={"in_memory": "Good performance"},
-            certification_status={"in_memory": "CERTIFIED"}
+            certification_status={"in_memory": "CERTIFIED"},
         )
 
         assert report.timestamp == 1234567890.0
@@ -116,11 +116,7 @@ class TestVectorBenchmarkHarness:
     def setup_method(self):
         """Set up test fixtures."""
         self.config = BenchmarkConfig(
-            dataset_size=100,
-            query_count=10,
-            k_values=[1, 5],
-            namespaces=["test"],
-            backends=["in_memory"]
+            dataset_size=100, query_count=10, k_values=[1, 5], namespaces=["test"], backends=["in_memory"]
         )
         self.harness = VectorBenchmarkHarness(self.config)
 
@@ -162,23 +158,15 @@ class TestVectorBenchmarkHarness:
 
         # Create mock search results
         results = [
-            VectorSearchResult(
-                key="key_0",
-                score=0.9,
-                metadata={"category": "cat_0"}
-            ),
-            VectorSearchResult(
-                key="key_1",
-                score=0.8,
-                metadata={"category": "cat_1"}
-            )
+            VectorSearchResult(key="key_0", score=0.9, metadata={"category": "cat_0"}),
+            VectorSearchResult(key="key_1", score=0.8, metadata={"category": "cat_1"}),
         ]
 
         # Query key corresponds to category cat_0
         recall = self.harness._calculate_recall_at_k("test_item_0", results, 2)
         assert recall > 0  # Should find at least one relevant result
 
-    @patch('tools.vector_db_certification.InMemoryVectorBackend')
+    @patch("tools.vector_db_certification.InMemoryVectorBackend")
     async def test_benchmark_backend(self, mock_backend_class):
         """Test backend benchmarking."""
         # Create mock backend
@@ -187,9 +175,7 @@ class TestVectorBenchmarkHarness:
 
         # Mock backend operations
         mock_backend.upsert = AsyncMock()
-        mock_backend.query = AsyncMock(return_value=[
-            MagicMock(metadata={"category": "cat_0"})
-        ])
+        mock_backend.query = AsyncMock(return_value=[MagicMock(metadata={"category": "cat_0"})])
 
         # Run benchmark
         results = await self.harness._benchmark_backend("in_memory", mock_backend, "test")
@@ -227,11 +213,11 @@ class TestVectorBenchmarkHarness:
                         throughput_qps=100.0,
                         recall_at_k={1: 0.8, 5: 0.6},
                         error_count=0,
-                        total_queries=10
+                        total_queries=10,
                     )
                 ],
                 recommendations={"in_memory": "Good performance"},
-                certification_status={"in_memory": "CERTIFIED"}
+                certification_status={"in_memory": "CERTIFIED"},
             )
 
             # Save report
@@ -261,7 +247,7 @@ class TestVectorBenchmarkHarness:
                 throughput_qps=100.0,
                 recall_at_k={1: 0.9, 5: 0.7},
                 error_count=0,
-                total_queries=10
+                total_queries=10,
             ),
             BenchmarkResult(
                 backend="slow_backend",
@@ -271,8 +257,8 @@ class TestVectorBenchmarkHarness:
                 throughput_qps=10.0,
                 recall_at_k={1: 0.5, 5: 0.3},
                 error_count=0,
-                total_queries=10
-            )
+                total_queries=10,
+            ),
         ]
 
         # Generate report
@@ -281,7 +267,10 @@ class TestVectorBenchmarkHarness:
         assert isinstance(report, CertificationReport)
         assert "in_memory" in report.certification_status
         assert "slow_backend" in report.certification_status
-        assert report.certification_status["in_memory"] in ["CERTIFIED", "QUALIFIED"]  # Allow either based on actual performance
+        assert report.certification_status["in_memory"] in [
+            "CERTIFIED",
+            "QUALIFIED",
+        ]  # Allow either based on actual performance
         assert report.certification_status["slow_backend"] == "NOT_RECOMMENDED"
 
 
@@ -295,10 +284,11 @@ class TestCLI:
     def teardown_method(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    @patch('asyncio.run')
-    @patch('tools.vector_db_certification.VectorBenchmarkHarness')
+    @patch("asyncio.run")
+    @patch("tools.vector_db_certification.VectorBenchmarkHarness")
     async def test_main_basic(self, mock_harness_class, mock_asyncio_run):
         """Test main function with basic arguments."""
         from tools.vector_db_certification import main
@@ -321,6 +311,7 @@ class TestCLI:
         # This test ensures the module can be imported without errors
         try:
             import importlib.util
+
             spec = importlib.util.find_spec("tools.vector_db_certification")
             assert spec is not None
         except ImportError as e:
@@ -330,7 +321,7 @@ class TestCLI:
 class TestMetricsIntegration:
     """Test metrics integration."""
 
-    @patch('tools.vector_db_certification.VECTOR_BACKEND_RECALL_AT_K')
+    @patch("tools.vector_db_certification.VECTOR_BACKEND_RECALL_AT_K")
     async def test_metrics_recording(self, mock_metric):
         """Test that metrics are recorded during benchmarking."""
         harness = VectorBenchmarkHarness(BenchmarkConfig(dataset_size=10, query_count=2))
@@ -338,9 +329,7 @@ class TestMetricsIntegration:
         # Mock backend
         mock_backend = AsyncMock()
         mock_backend.upsert = AsyncMock()
-        mock_backend.query = AsyncMock(return_value=[
-            MagicMock(metadata={"category": "cat_0"})
-        ])
+        mock_backend.query = AsyncMock(return_value=[MagicMock(metadata={"category": "cat_0"})])
 
         # Run benchmark
         await harness._benchmark_backend("test_backend", mock_backend, "test")

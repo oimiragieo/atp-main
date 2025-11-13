@@ -32,7 +32,7 @@ class TestSignatureInfo(unittest.TestCase):
             key_id="test-key-001",
             signature="base64signature",
             timestamp=timestamp,
-            signer_info=signer_info
+            signer_info=signer_info,
         )
 
         self.assertEqual(sig_info.algorithm, "RSASSA-PSS-SHA256")
@@ -48,7 +48,7 @@ class TestSignatureInfo(unittest.TestCase):
             signature="base64signature",
             timestamp=datetime(2024, 1, 1, 12, 0, 0),
             signer_info={"name": "Test Signer"},
-            metadata={"version": "1.0"}
+            metadata={"version": "1.0"},
         )
 
         # Serialize
@@ -76,7 +76,7 @@ class TestNotarizationRecord(unittest.TestCase):
             key_id="test-key",
             signature="signature",
             timestamp=timestamp,
-            signer_info={"name": "Notary"}
+            signer_info={"name": "Notary"},
         )
 
         record = NotarizationRecord(
@@ -86,7 +86,7 @@ class TestNotarizationRecord(unittest.TestCase):
             evidence_hash="abc123",
             signature_info=signature_info,
             certificate_chain=["cert1", "cert2"],
-            notary_statement="Test statement"
+            notary_statement="Test statement",
         )
 
         self.assertEqual(record.pack_id, "test-pack-001")
@@ -101,7 +101,7 @@ class TestNotarizationRecord(unittest.TestCase):
             key_id="test-key",
             signature="signature",
             timestamp=datetime(2024, 1, 1, 12, 0, 0),
-            signer_info={"name": "Notary"}
+            signer_info={"name": "Notary"},
         )
 
         original = NotarizationRecord(
@@ -112,7 +112,7 @@ class TestNotarizationRecord(unittest.TestCase):
             signature_info=signature_info,
             certificate_chain=["cert1"],
             notary_statement="Test statement",
-            metadata={"version": "1.0"}
+            metadata={"version": "1.0"},
         )
 
         # Serialize
@@ -139,6 +139,7 @@ class TestEvidencePackSigner(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_signer_initialization(self):
@@ -151,7 +152,7 @@ class TestEvidencePackSigner(unittest.TestCase):
         """Test signing an evidence pack."""
         # Create a test zip file
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         # Sign the pack
@@ -173,7 +174,7 @@ class TestEvidencePackSigner(unittest.TestCase):
         """Test verifying a valid signature."""
         # Create and sign a pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         signature_info = self.signer.sign_evidence_pack(str(pack_path))
@@ -187,7 +188,7 @@ class TestEvidencePackSigner(unittest.TestCase):
         """Test verifying an invalid signature."""
         # Create a pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         # Create fake signature info
@@ -196,7 +197,7 @@ class TestEvidencePackSigner(unittest.TestCase):
             key_id="test-signer",
             signature=base64.b64encode(b"fake_signature").decode(),
             timestamp=datetime.now(),
-            signer_info={"name": "Fake"}
+            signer_info={"name": "Fake"},
         )
 
         # Verify should fail
@@ -211,7 +212,7 @@ class TestEvidencePackSigner(unittest.TestCase):
         pack2_path = self.temp_dir / "pack2.zip"
 
         for pack_path in [pack1_path, pack2_path]:
-            with zipfile.ZipFile(pack_path, 'w') as zf:
+            with zipfile.ZipFile(pack_path, "w") as zf:
                 zf.writestr("test.txt", "test content")
                 zf.writestr("data.json", '{"key": "value"}')
 
@@ -227,10 +228,10 @@ class TestEvidencePackSigner(unittest.TestCase):
         pack1_path = self.temp_dir / "pack1.zip"
         pack2_path = self.temp_dir / "pack2.zip"
 
-        with zipfile.ZipFile(pack1_path, 'w') as zf:
+        with zipfile.ZipFile(pack1_path, "w") as zf:
             zf.writestr("test.txt", "content 1")
 
-        with zipfile.ZipFile(pack2_path, 'w') as zf:
+        with zipfile.ZipFile(pack2_path, "w") as zf:
             zf.writestr("test.txt", "content 2")
 
         # Hash both packs
@@ -259,6 +260,7 @@ class TestEvidencePackNotary(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_notary_initialization(self):
@@ -270,7 +272,7 @@ class TestEvidencePackNotary(unittest.TestCase):
         """Test notarizing an evidence pack."""
         # Create a test pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         # Notarize
@@ -289,7 +291,7 @@ class TestEvidencePackNotary(unittest.TestCase):
         """Test saving and loading notarization records."""
         # Create and notarize a pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         original_record = self.notary.notarize_pack(str(pack_path), "test-pack-001")
@@ -313,7 +315,7 @@ class TestEvidencePackNotary(unittest.TestCase):
         """Test verifying a valid notarization."""
         # Create and notarize a pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         record = self.notary.notarize_pack(str(pack_path), "test-pack-001")
@@ -331,13 +333,13 @@ class TestEvidencePackNotary(unittest.TestCase):
         """Test verifying a tampered pack."""
         # Create and notarize a pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "original content")
 
         record = self.notary.notarize_pack(str(pack_path), "test-pack-001")
 
         # Tamper with the pack
-        with zipfile.ZipFile(pack_path, 'a') as zf:
+        with zipfile.ZipFile(pack_path, "a") as zf:
             zf.writestr("test.txt", "tampered content")
 
         # Verify should fail
@@ -359,6 +361,7 @@ class TestEvidencePackSignatureManager(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_manager_initialization(self):
@@ -371,15 +374,11 @@ class TestEvidencePackSignatureManager(unittest.TestCase):
         """Test signing and notarizing a pack."""
         # Create a test pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         # Sign and notarize
-        result = self.manager.sign_and_notarize_pack(
-            str(pack_path),
-            "test-pack-001",
-            str(self.temp_dir)
-        )
+        result = self.manager.sign_and_notarize_pack(str(pack_path), "test-pack-001", str(self.temp_dir))
 
         # Verify result
         self.assertEqual(result["pack_id"], "test-pack-001")
@@ -400,7 +399,7 @@ class TestEvidencePackSignatureManager(unittest.TestCase):
         """Test verifying integrity of a valid pack."""
         # Create and sign a pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         self.manager.sign_and_notarize_pack(str(pack_path), "test-pack-001", str(self.temp_dir))
@@ -415,7 +414,7 @@ class TestEvidencePackSignatureManager(unittest.TestCase):
     def test_verify_pack_integrity_unknown_pack(self):
         """Test verifying integrity of unknown pack."""
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         result = self.manager.verify_pack_integrity(str(pack_path), "unknown-pack")
@@ -427,7 +426,7 @@ class TestEvidencePackSignatureManager(unittest.TestCase):
         """Test getting signature info for a pack."""
         # Create and sign a pack
         pack_path = self.temp_dir / "test_pack.zip"
-        with zipfile.ZipFile(pack_path, 'w') as zf:
+        with zipfile.ZipFile(pack_path, "w") as zf:
             zf.writestr("test.txt", "test content")
 
         self.manager.sign_and_notarize_pack(str(pack_path), "test-pack-001", str(self.temp_dir))
@@ -443,7 +442,7 @@ class TestEvidencePackSignatureManager(unittest.TestCase):
         # Create multiple packs
         for i in range(3):
             pack_path = self.temp_dir / f"pack_{i}.zip"
-            with zipfile.ZipFile(pack_path, 'w') as zf:
+            with zipfile.ZipFile(pack_path, "w") as zf:
                 zf.writestr("test.txt", f"content {i}")
 
             self.manager.sign_and_notarize_pack(str(pack_path), f"pack-{i}", str(self.temp_dir))
@@ -467,6 +466,7 @@ class TestGlobalFunctions(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_global_manager_initialization(self):

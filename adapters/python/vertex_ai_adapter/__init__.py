@@ -24,18 +24,18 @@ This adapter provides integration with Google Cloud Vertex AI, including:
 - Batch prediction support
 """
 
+from .ab_testing import VertexAIABTesting
 from .adapter import VertexAIAdapter
 from .model_manager import VertexAIModelManager
-from .training_pipeline import VertexAITrainingPipeline
 from .monitoring import VertexAIMonitoring
-from .ab_testing import VertexAIABTesting
+from .training_pipeline import VertexAITrainingPipeline
 
 __all__ = [
     "VertexAIAdapter",
-    "VertexAIModelManager", 
+    "VertexAIModelManager",
     "VertexAITrainingPipeline",
     "VertexAIMonitoring",
-    "VertexAIABTesting"
+    "VertexAIABTesting",
 ]
 
 __version__ = "1.0.0"

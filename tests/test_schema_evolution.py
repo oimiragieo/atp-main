@@ -7,7 +7,6 @@ Tests schema registry, version negotiation, migration, and ingestion policies.
 from unittest.mock import patch
 
 import pytest
-
 from tools.schema_registry import IngestionPolicy, SchemaRegistry
 
 # from tools.schema_metrics import SchemaMetricsCollector  # Temporarily disabled

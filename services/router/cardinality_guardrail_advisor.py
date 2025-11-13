@@ -26,6 +26,7 @@ CARDINALITY_VIOLATIONS_ACTIVE = REGISTRY.gauge("cardinality_violations_active")
 @dataclass
 class CardinalityViolation:
     """Represents a cardinality violation for a metric."""
+
     metric_name: str
     unique_labels: int
     threshold: int
@@ -36,6 +37,7 @@ class CardinalityViolation:
 @dataclass
 class AdvisorRecommendation:
     """Recommendation from the cardinality advisor."""
+
     metric_name: str
     severity: str  # "low", "medium", "high", "critical"
     action: str
@@ -123,13 +125,13 @@ class CardinalityGuardrailAdvisor:
             return  # Too soon for another alert
 
         # Create violation record
-        sample_labels = list(self._metric_cardinality[metric_name])[:self.max_sample_labels]
+        sample_labels = list(self._metric_cardinality[metric_name])[: self.max_sample_labels]
         violation = CardinalityViolation(
             metric_name=metric_name,
             unique_labels=unique_labels,
             threshold=threshold,
             timestamp=now,
-            sample_labels=sample_labels
+            sample_labels=sample_labels,
         )
 
         self._violations[metric_name] = violation
@@ -194,10 +196,7 @@ class CardinalityGuardrailAdvisor:
         else:
             severity = "low"
             action = "Monitor label growth and plan optimization if trend continues"
-            rationale = (
-                f"Metric has {unique_labels} unique labels, exceeding warning threshold "
-                "but not yet critical."
-            )
+            rationale = f"Metric has {unique_labels} unique labels, exceeding warning threshold but not yet critical."
             estimated_impact = "Minimal current impact, but monitor growth rate"
 
         # Generate suggested label optimizations
@@ -209,7 +208,7 @@ class CardinalityGuardrailAdvisor:
             action=action,
             rationale=rationale,
             estimated_impact=estimated_impact,
-            suggested_labels=suggested_labels
+            suggested_labels=suggested_labels,
         )
 
     def _suggest_label_optimizations(self, violation: CardinalityViolation) -> list[str] | None:
@@ -235,8 +234,8 @@ class CardinalityGuardrailAdvisor:
         # Check for common prefixes/suffixes
         prefixes = set()
         for label in sample_labels:
-            if '_' in label:
-                prefixes.add(label.split('_')[0])
+            if "_" in label:
+                prefixes.add(label.split("_")[0])
 
         if len(prefixes) > 1:
             suggestions.append(f"Multiple prefixes detected ({', '.join(prefixes)}) - consider consistent naming")
@@ -247,10 +246,7 @@ class CardinalityGuardrailAdvisor:
         """Get cardinality statistics for all monitored metrics."""
         with self._lock:
             return {
-                metric: {
-                    "unique_labels": len(labels),
-                    "is_violation": metric in self._violations
-                }
+                metric: {"unique_labels": len(labels), "is_violation": metric in self._violations}
                 for metric, labels in self._metric_cardinality.items()
             }
 

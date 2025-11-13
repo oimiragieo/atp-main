@@ -31,7 +31,7 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
                 granted_at=datetime.now() - timedelta(days=30),
                 last_accessed=datetime.now() - timedelta(days=2),
                 granted_by="admin",
-                justification="Production deployment access"
+                justification="Production deployment access",
             ),
             AccessRecord(
                 user_id="user2",
@@ -41,7 +41,7 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
                 granted_at=datetime.now() - timedelta(days=90),
                 last_accessed=datetime.now() - timedelta(days=45),
                 granted_by="manager",
-                justification="Client data access for support"
+                justification="Client data access for support",
             ),
             AccessRecord(
                 user_id="user3",
@@ -51,7 +51,7 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
                 granted_at=datetime.now() - timedelta(days=180),
                 last_accessed=None,  # Never accessed - stale!
                 granted_by="hr",
-                justification="Development team access"
+                justification="Development team access",
             ),
         ]
 
@@ -72,9 +72,9 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
         # Check record structure
         record = records[0]
         self.assertIsInstance(record, AccessRecord)
-        self.assertTrue(hasattr(record, 'user_id'))
-        self.assertTrue(hasattr(record, 'resource_type'))
-        self.assertTrue(hasattr(record, 'permission'))
+        self.assertTrue(hasattr(record, "user_id"))
+        self.assertTrue(hasattr(record, "resource_type"))
+        self.assertTrue(hasattr(record, "permission"))
 
     def test_export_access_records_with_csv_output(self):
         """Test exporting access records to CSV."""
@@ -199,7 +199,7 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
         self.assertEqual(loaded_review.status, "pending")
         self.assertEqual(len(loaded_review.access_records), len(self.mock_records))
 
-    @patch('tools.access_review_attestation.ACCESS_REVIEWS_COMPLETED_TOTAL')
+    @patch("tools.access_review_attestation.ACCESS_REVIEWS_COMPLETED_TOTAL")
     def test_metrics_increment_on_attestation(self, mock_metric):
         """Test that metrics are incremented when review is attested."""
         # Create and attest to a review
@@ -216,9 +216,12 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
         import sys
 
         # Run CLI export
-        result = subprocess.run([
-            sys.executable, "tools/access_review_attestation.py", "export"
-        ], capture_output=True, text=True, cwd=Path(__file__).parent.parent)
+        result = subprocess.run(
+            [sys.executable, "tools/access_review_attestation.py", "export"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent,
+        )
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("Exported", result.stdout)
@@ -230,10 +233,12 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
         import sys
 
         # Run CLI create review
-        result = subprocess.run([
-            sys.executable, "tools/access_review_attestation.py",
-            "create-review", "--reviewer", "test_reviewer"
-        ], capture_output=True, text=True, cwd=Path(__file__).parent.parent)
+        result = subprocess.run(
+            [sys.executable, "tools/access_review_attestation.py", "create-review", "--reviewer", "test_reviewer"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent,
+        )
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("Created review", result.stdout)
@@ -244,15 +249,19 @@ class TestAccessReviewAttestationWorkflow(unittest.TestCase):
         import sys
 
         # First create a review
-        subprocess.run([
-            sys.executable, "tools/access_review_attestation.py",
-            "create-review", "--reviewer", "test_reviewer"
-        ], capture_output=True, cwd=Path(__file__).parent.parent)
+        subprocess.run(
+            [sys.executable, "tools/access_review_attestation.py", "create-review", "--reviewer", "test_reviewer"],
+            capture_output=True,
+            cwd=Path(__file__).parent.parent,
+        )
 
         # Then list pending
-        result = subprocess.run([
-            sys.executable, "tools/access_review_attestation.py", "list-pending"
-        ], capture_output=True, text=True, cwd=Path(__file__).parent.parent)
+        result = subprocess.run(
+            [sys.executable, "tools/access_review_attestation.py", "list-pending"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent,
+        )
 
         self.assertEqual(result.returncode, 0)
         self.assertIn("pending reviews", result.stdout)

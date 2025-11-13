@@ -1,13 +1,13 @@
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Optional
 
 
 class IdempotencyStore:
     def __init__(self):
         self._store: dict[str, tuple[str, float]] = {}
 
-    def get(self, key: str) -> Optional[str]:
+    def get(self, key: str) -> str | None:
         v = self._store.get(key)
         return v[0] if v else None
 
@@ -58,7 +58,7 @@ class CircuitBreaker:
 
 def call_with_retry_and_cb(
     op: Callable[[], str], idem_key: str, idem: IdempotencyStore, rp: RetryPolicy, cb: CircuitBreaker
-) -> tuple[bool, Optional[str], str]:
+) -> tuple[bool, str | None, str]:
     # returns (ok, result, status)
     saved = idem.get(idem_key)
     if saved is not None:

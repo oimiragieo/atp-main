@@ -28,11 +28,12 @@ class PreemptionMetricsHarness:
         return {
             "timestamp": time.time(),
             "preemptions_total": self._get_metric_value("preemptions_total"),
-            "type": "baseline"
+            "type": "baseline",
         }
 
-    def capture_scenario_metrics(self, scenario_name: str, active_sessions: list[Active],
-                               needed_slots: int, preempted: list[str]) -> dict[str, Any]:
+    def capture_scenario_metrics(
+        self, scenario_name: str, active_sessions: list[Active], needed_slots: int, preempted: list[str]
+    ) -> dict[str, Any]:
         """Capture metrics after scenario execution."""
         # Calculate QoS distribution
         qos_dist = defaultdict(int)
@@ -43,7 +44,7 @@ class PreemptionMetricsHarness:
         preempted_by_qos = defaultdict(int)
         for session in preempted:
             # Extract QoS from session ID (first character)
-            qos = session[0] if session else 'unknown'
+            qos = session[0] if session else "unknown"
             preempted_by_qos[qos] += 1
 
         # Calculate age statistics for preempted sessions
@@ -61,7 +62,7 @@ class PreemptionMetricsHarness:
                 "median_age_ms": statistics.median(preempted_ages),
                 "min_age_ms": min(preempted_ages),
                 "max_age_ms": max(preempted_ages),
-                "stdev_age_ms": statistics.stdev(preempted_ages) if len(preempted_ages) > 1 else 0
+                "stdev_age_ms": statistics.stdev(preempted_ages) if len(preempted_ages) > 1 else 0,
             }
 
         return {
@@ -75,7 +76,7 @@ class PreemptionMetricsHarness:
             "preemption_efficiency": len(preempted) / needed_slots if needed_slots > 0 else 0,
             "preemptions_total": self._get_metric_value("preemptions_total"),
             "age_statistics": age_stats,
-            "type": "scenario"
+            "type": "scenario",
         }
 
     def _get_metric_value(self, metric_name: str) -> float:
@@ -84,7 +85,7 @@ class PreemptionMetricsHarness:
             # Access the metric registry to get current values
             # This is a simplified version - in practice you'd need to access
             # the actual metric values from the registry
-            return getattr(REGISTRY, '_metrics', {}).get(metric_name, 0)
+            return getattr(REGISTRY, "_metrics", {}).get(metric_name, 0)
         except Exception:
             return 0
 
@@ -93,11 +94,12 @@ class PreemptionMetricsHarness:
         return {
             "preemptions_delta": scenario["preemptions_total"] - baseline["preemptions_total"],
             "time_delta_ms": (scenario["timestamp"] - baseline["timestamp"]) * 1000,
-            "efficiency": scenario["preemption_efficiency"]
+            "efficiency": scenario["preemption_efficiency"],
         }
 
-    async def run_scenario_with_metrics(self, scenario_name: str, active_sessions: list[Active],
-                                      needed_slots: int, prefer_oldest: bool = True) -> dict[str, Any]:
+    async def run_scenario_with_metrics(
+        self, scenario_name: str, active_sessions: list[Active], needed_slots: int, prefer_oldest: bool = True
+    ) -> dict[str, Any]:
         """Run a scenario and capture comprehensive metrics."""
         # Capture baseline
         baseline = self.capture_baseline_metrics()
@@ -108,21 +110,14 @@ class PreemptionMetricsHarness:
         execution_time_ms = (time.time() - start_time) * 1000
 
         # Capture scenario metrics
-        scenario_metrics = self.capture_scenario_metrics(
-            scenario_name, active_sessions, needed_slots, preempted
-        )
+        scenario_metrics = self.capture_scenario_metrics(scenario_name, active_sessions, needed_slots, preempted)
         scenario_metrics["execution_time_ms"] = execution_time_ms
 
         # Calculate delta
         delta = self.calculate_scenario_delta(baseline, scenario_metrics)
 
         # Combine all metrics
-        result = {
-            "baseline": baseline,
-            "scenario": scenario_metrics,
-            "delta": delta,
-            "preempted_sessions": preempted
-        }
+        result = {"baseline": baseline, "scenario": scenario_metrics, "delta": delta, "preempted_sessions": preempted}
 
         self.metrics_history.append(result)
         return result
@@ -135,10 +130,10 @@ class PreemptionMetricsHarness:
         # Aggregate statistics across all scenarios
         total_scenarios = len(self.metrics_history)
         total_preemptions = sum(r["delta"]["preemptions_delta"] for r in self.metrics_history)
-        avg_efficiency = statistics.mean(r["scenario"]["preemption_efficiency"]
-                                       for r in self.metrics_history if r["scenario"]["needed_slots"] > 0)
-        avg_execution_time = statistics.mean(r["scenario"]["execution_time_ms"]
-                                           for r in self.metrics_history)
+        avg_efficiency = statistics.mean(
+            r["scenario"]["preemption_efficiency"] for r in self.metrics_history if r["scenario"]["needed_slots"] > 0
+        )
+        avg_execution_time = statistics.mean(r["scenario"]["execution_time_ms"] for r in self.metrics_history)
 
         # QoS-specific statistics
         qos_preemption_counts = defaultdict(int)
@@ -147,16 +142,18 @@ class PreemptionMetricsHarness:
                 qos_preemption_counts[qos] += count
 
         # Age statistics aggregation
-        age_means = [r["scenario"]["age_statistics"].get("mean_age_ms", 0)
-                    for r in self.metrics_history
-                    if r["scenario"]["age_statistics"]]
+        age_means = [
+            r["scenario"]["age_statistics"].get("mean_age_ms", 0)
+            for r in self.metrics_history
+            if r["scenario"]["age_statistics"]
+        ]
 
         age_stats_agg = {}
         if age_means:
             age_stats_agg = {
                 "mean_age_across_scenarios": statistics.mean(age_means),
                 "median_age_across_scenarios": statistics.median(age_means),
-                "age_variance": statistics.variance(age_means) if len(age_means) > 1 else 0
+                "age_variance": statistics.variance(age_means) if len(age_means) > 1 else 0,
             }
 
         return {
@@ -165,18 +162,18 @@ class PreemptionMetricsHarness:
                 "total_preemptions": total_preemptions,
                 "average_efficiency": avg_efficiency,
                 "average_execution_time_ms": avg_execution_time,
-                "qos_preemption_distribution": dict(qos_preemption_counts)
+                "qos_preemption_distribution": dict(qos_preemption_counts),
             },
             "age_statistics": age_stats_agg,
             "scenario_details": self.metrics_history,
-            "generated_at": time.time()
+            "generated_at": time.time(),
         }
 
     def export_metrics_report(self, filename: str = "preemption_metrics_report.json"):
         """Export comprehensive metrics report to JSON."""
         report = self.generate_metrics_report()
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(report, f, indent=2)
 
         print(f"📊 Metrics report exported to {filename}")
@@ -201,7 +198,7 @@ async def benchmark_preemption_policy():
                 Active("b2", "bronze", time.time() * 1000 - 800),
                 Active("b3", "bronze", time.time() * 1000 - 1200),
             ],
-            "needed": 3
+            "needed": 3,
         },
         {
             "name": "balanced_load_mixed_preemption",
@@ -212,7 +209,7 @@ async def benchmark_preemption_policy():
                 Active("b1", "bronze", time.time() * 1000 - 1000),
                 Active("b2", "bronze", time.time() * 1000 - 1500),
             ],
-            "needed": 2
+            "needed": 2,
         },
         {
             "name": "bronze_only_preemption",
@@ -223,17 +220,13 @@ async def benchmark_preemption_policy():
                 Active("b3", "bronze", time.time() * 1000 - 3000),
                 Active("b4", "bronze", time.time() * 1000 - 4000),
             ],
-            "needed": 4
-        }
+            "needed": 4,
+        },
     ]
 
     # Run scenarios and capture metrics
     for scenario in scenarios:
-        result = await harness.run_scenario_with_metrics(
-            scenario["name"],
-            scenario["sessions"],
-            scenario["needed"]
-        )
+        result = await harness.run_scenario_with_metrics(scenario["name"], scenario["sessions"], scenario["needed"])
         print(f"✅ Completed: {scenario['name']} - Preempted: {len(result['preempted_sessions'])}")
 
     # Generate and export report

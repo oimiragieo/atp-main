@@ -33,17 +33,10 @@ class TestRetentionConfig:
     def test_load_from_file(self):
         """Test loading configuration from file."""
         config_data = {
-            "policies": {
-                "test_data": {
-                    "data_type": "test_data",
-                    "max_age_days": 7,
-                    "enabled": True,
-                    "dry_run": False
-                }
-            }
+            "policies": {"test_data": {"data_type": "test_data", "max_age_days": 7, "enabled": True, "dry_run": False}}
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
             config_file = f.name
 
@@ -118,15 +111,11 @@ class TestRetentionEnforcer:
             test_file = Path(temp_dir) / "lifecycle-2020-01-01.jsonl"
             old_timestamp = time.time() - (100 * 24 * 60 * 60)  # 100 days ago
 
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 # Create records with old timestamps
                 for i in range(5):
-                    record = {
-                        "timestamp": old_timestamp + i,
-                        "event": f"test_event_{i}",
-                        "data": f"test_data_{i}"
-                    }
-                    f.write(json.dumps(record) + '\n')
+                    record = {"timestamp": old_timestamp + i, "event": f"test_event_{i}", "data": f"test_data_{i}"}
+                    f.write(json.dumps(record) + "\n")
 
             # Test dry run
             result = enforcer.purge_old_data("lifecycle", dry_run=True)
@@ -150,15 +139,11 @@ class TestRetentionEnforcer:
             test_file = Path(temp_dir) / "lifecycle-2020-01-01.jsonl"
             old_timestamp = time.time() - (100 * 24 * 60 * 60)  # 100 days ago
 
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 # Create records with old timestamps
                 for i in range(5):
-                    record = {
-                        "timestamp": old_timestamp + i,
-                        "event": f"test_event_{i}",
-                        "data": f"test_data_{i}"
-                    }
-                    f.write(json.dumps(record) + '\n')
+                    record = {"timestamp": old_timestamp + i, "event": f"test_event_{i}", "data": f"test_data_{i}"}
+                    f.write(json.dumps(record) + "\n")
 
             # Test actual deletion
             result = enforcer.purge_old_data("lifecycle", dry_run=False)
@@ -181,26 +166,18 @@ class TestRetentionEnforcer:
             # Create a test file with mixed data
             test_file = Path(temp_dir) / "lifecycle-2020-01-01.jsonl"
             old_timestamp = time.time() - (100 * 24 * 60 * 60)  # 100 days ago
-            new_timestamp = time.time() - (10 * 24 * 60 * 60)   # 10 days ago
+            new_timestamp = time.time() - (10 * 24 * 60 * 60)  # 10 days ago
 
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 # Old records (should be purged)
                 for i in range(3):
-                    record = {
-                        "timestamp": old_timestamp + i,
-                        "event": f"old_event_{i}",
-                        "data": f"old_data_{i}"
-                    }
-                    f.write(json.dumps(record) + '\n')
+                    record = {"timestamp": old_timestamp + i, "event": f"old_event_{i}", "data": f"old_data_{i}"}
+                    f.write(json.dumps(record) + "\n")
 
                 # New records (should be kept)
                 for i in range(2):
-                    record = {
-                        "timestamp": new_timestamp + i,
-                        "event": f"new_event_{i}",
-                        "data": f"new_data_{i}"
-                    }
-                    f.write(json.dumps(record) + '\n')
+                    record = {"timestamp": new_timestamp + i, "event": f"new_event_{i}", "data": f"new_data_{i}"}
+                    f.write(json.dumps(record) + "\n")
 
             # Test dry run
             result = enforcer.purge_old_data("lifecycle", dry_run=True)
@@ -223,14 +200,14 @@ class TestRetentionEnforcer:
 
             for data_type in ["lifecycle", "admin_audit"]:
                 test_file = Path(temp_dir) / f"{data_type}-2020-01-01.jsonl"
-                with open(test_file, 'w') as f:
+                with open(test_file, "w") as f:
                     for i in range(2):
                         record = {
                             "timestamp": old_timestamp + i,
                             "event": f"{data_type}_event_{i}",
-                            "data": f"{data_type}_data_{i}"
+                            "data": f"{data_type}_data_{i}",
                         }
-                        f.write(json.dumps(record) + '\n')
+                        f.write(json.dumps(record) + "\n")
 
             # Test full purge dry run
             result = enforcer.run_full_purge(dry_run=True)

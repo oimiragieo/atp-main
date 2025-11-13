@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import selectinload
 
 from ..models.database import Model, Provider
@@ -131,9 +131,12 @@ class ProviderRepository(BaseRepository[Provider]):
     ) -> list[Provider]:
         """Search providers by name or display name."""
         async with self.db_manager.get_session() as session:
+            # Escape wildcards to prevent SQL injection
+            safe_search = search_term.replace("%", "\\%").replace("_", "\\_")
+            search_pattern = f"%{safe_search}%"
             stmt = (
                 select(Provider)
-                .where(or_(Provider.name.ilike(f"%{search_term}%"), Provider.display_name.ilike(f"%{search_term}%")))
+                .where(or_(Provider.name.ilike(search_pattern), Provider.display_name.ilike(search_pattern)))
                 .where(not Provider.is_deleted)
             )
 

@@ -7,8 +7,9 @@ import statistics
 import threading
 import time
 from collections import defaultdict, deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 # Optional GPU dependencies
 try:
@@ -86,8 +87,8 @@ class GPUBatchScheduler:
 
         # Control flags
         self.running = False
-        self.scheduler_thread: Optional[threading.Thread] = None
-        self.scheduler_task: Optional[asyncio.Task] = None
+        self.scheduler_thread: threading.Thread | None = None
+        self.scheduler_task: asyncio.Task | None = None
 
         # Adaptive batching state
         self.latency_history: list[float] = []
@@ -198,7 +199,9 @@ class GPUBatchScheduler:
                 processing_time_ms=processing_time,
                 gpu_memory_used=self._get_gpu_memory_usage(),
                 throughput_tokens_per_sec=throughput,
-                latency_p95_ms=statistics.quantiles(self.latency_history, n=4)[-1] if len(self.latency_history) >= 4 else (max(self.latency_history) if self.latency_history else 0),
+                latency_p95_ms=statistics.quantiles(self.latency_history, n=4)[-1]
+                if len(self.latency_history) >= 4
+                else (max(self.latency_history) if self.latency_history else 0),
                 timestamp=time.time(),
             )
 
@@ -319,6 +322,7 @@ class GPUBatchScheduler:
     def _scheduler_loop(self):
         """Legacy sync scheduler loop for backward compatibility."""
         import time
+
         while self.running:
             try:
                 # Check all adapters for batch processing
@@ -366,7 +370,7 @@ class GPUBatchScheduler:
 
 
 # Global scheduler instance
-_scheduler_instance: Optional[GPUBatchScheduler] = None
+_scheduler_instance: GPUBatchScheduler | None = None
 
 
 def get_batch_scheduler(config: BatchConfig = None) -> GPUBatchScheduler:

@@ -124,10 +124,7 @@ class PerTenantSamplingManager:
         return self._samplers[tenant_id]
 
     def record_tenant_error_budget(
-        self,
-        tenant_id: str,
-        budget_consumed_percent: float,
-        error_rate_percent: float
+        self, tenant_id: str, budget_consumed_percent: float, error_rate_percent: float
     ) -> None:
         """Record error budget measurement for a specific tenant."""
         sampler = self.get_tenant_sampler(tenant_id)
@@ -158,10 +155,7 @@ class PerTenantSamplingManager:
         tenant_policies = config.get("tenant_sampling_policies", {})
 
         for tenant_id, policy_data in tenant_policies.items():
-            policy = TenantSamplingPolicy.from_dict({
-                "tenant_id": tenant_id,
-                **policy_data
-            })
+            policy = TenantSamplingPolicy.from_dict({"tenant_id": tenant_id, **policy_data})
             self.add_tenant_policy(policy)
 
         logger.info(f"Loaded {len(tenant_policies)} tenant sampling policies from config")
@@ -196,11 +190,7 @@ def should_sample_for_tenant(tenant_id: str) -> bool:
     return manager.should_sample_for_tenant(tenant_id)
 
 
-def record_tenant_error_budget(
-    tenant_id: str,
-    budget_consumed_percent: float,
-    error_rate_percent: float
-) -> None:
+def record_tenant_error_budget(tenant_id: str, budget_consumed_percent: float, error_rate_percent: float) -> None:
     """Record error budget measurement for a specific tenant."""
     manager = get_tenant_sampling_manager()
     manager.record_tenant_error_budget(tenant_id, budget_consumed_percent, error_rate_percent)

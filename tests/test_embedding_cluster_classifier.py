@@ -31,7 +31,7 @@ class TestMockEmbeddingService:
         # Mock embeddings might be similar, just check they're not identical
         assert len(emb1) == len(emb2) == 32
         # At least some values should be different
-        assert emb1 != emb2 or any(a != b for a, b in zip(emb1, emb2))
+        assert emb1 != emb2 or any(a != b for a, b in zip(emb1, emb2, strict=False))
 
     def test_embed_batch(self):
         """Test batch embedding."""

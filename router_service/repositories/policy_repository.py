@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 
 from ..models.database import Policy
 from .base import BaseRepository
@@ -70,13 +70,16 @@ class PolicyRepository(BaseRepository[Policy]):
     ) -> list[Policy]:
         """Search policies by name or description."""
         async with self.db_manager.get_session() as session:
+            # Escape wildcards to prevent SQL injection
+            safe_search = search_term.replace("%", "\\%").replace("_", "\\_")
+            search_pattern = f"%{safe_search}%"
             stmt = (
                 select(Policy)
                 .where(
                     or_(
-                        Policy.name.ilike(f"%{search_term}%"),
-                        Policy.description.ilike(f"%{search_term}%"),
-                        Policy.policy_id.ilike(f"%{search_term}%"),
+                        Policy.name.ilike(search_pattern),
+                        Policy.description.ilike(search_pattern),
+                        Policy.policy_id.ilike(search_pattern),
                     )
                 )
                 .where(not Policy.is_deleted)

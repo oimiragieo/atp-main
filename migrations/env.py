@@ -43,14 +43,14 @@ def get_database_url() -> str:
         elif database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
         return database_url
-    
+
     # Build from components
     host = os.getenv("DB_HOST", "localhost")
     port = os.getenv("DB_PORT", "5432")
     database = os.getenv("DB_NAME", "atp_router")
     username = os.getenv("DB_USER", "postgres")
     password = os.getenv("DB_PASSWORD", "password")
-    
+
     return f"postgresql+asyncpg://{username}:{password}@{host}:{port}/{database}"
 
 
@@ -97,7 +97,7 @@ async def run_async_migrations() -> None:
     """Run migrations in async mode."""
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_database_url()
-    
+
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",

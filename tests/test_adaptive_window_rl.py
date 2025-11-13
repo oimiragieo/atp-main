@@ -38,11 +38,7 @@ class TestAdaptiveWindowRLAgent:
     def test_state_discretization(self):
         """Test state discretization into bins."""
         state = RLState(
-            current_window=16,
-            latency_ms=750,
-            throughput=75,
-            error_rate=0.02,
-            time_since_last_adjustment=120
+            current_window=16, latency_ms=750, throughput=75, error_rate=0.02, time_since_last_adjustment=120
         )
 
         discrete_state = self.agent.discretize_state(state)
@@ -56,7 +52,7 @@ class TestAdaptiveWindowRLAgent:
         session = "test_session"
 
         # Mock AIMD controller
-        with patch.object(self.aimd, 'get', return_value=32):
+        with patch.object(self.aimd, "get", return_value=32):
             state = self.agent.get_state(session, 1000.0, 50.0, 0.01)
 
             assert state.current_window == 32
@@ -138,7 +134,7 @@ class TestAdaptiveWindowRLAgent:
         """Test getting optimal parameters."""
         params = self.agent.get_optimal_parameters()
 
-        required_keys = ['add', 'mult', 'learning_rate', 'exploration_rate', 'total_adjustments']
+        required_keys = ["add", "mult", "learning_rate", "exploration_rate", "total_adjustments"]
         for key in required_keys:
             assert key in params
             assert isinstance(params[key], (int, float))
@@ -151,7 +147,7 @@ class TestAdaptiveWindowRLAgent:
         self.agent.q_table[state_tuple][0] = 5.0
 
         # Save model
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_file = f.name
 
         try:
@@ -184,8 +180,14 @@ class TestRLTrainingLoop:
         result = await self.trainer.simulate_environment(0)
 
         required_keys = [
-            'episode', 'final_window', 'final_latency', 'final_throughput',
-            'final_error_rate', 'add_parameter', 'mult_parameter', 'total_adjustments'
+            "episode",
+            "final_window",
+            "final_latency",
+            "final_throughput",
+            "final_error_rate",
+            "add_parameter",
+            "mult_parameter",
+            "total_adjustments",
         ]
 
         for key in required_keys:
@@ -202,36 +204,36 @@ class TestRLTrainingLoop:
 
         # Check that all episodes have required data
         for episode_data in history:
-            assert 'episode' in episode_data
-            assert 'final_window' in episode_data
+            assert "episode" in episode_data
+            assert "final_window" in episode_data
 
     def test_get_training_summary(self):
         """Test training summary calculation."""
         # Add mock training data
         self.trainer.training_history = [
             {
-                'episode': 0,
-                'final_latency': 1000.0,
-                'final_throughput': 50.0,
-                'final_error_rate': 0.02,
-                'total_adjustments': 5
+                "episode": 0,
+                "final_latency": 1000.0,
+                "final_throughput": 50.0,
+                "final_error_rate": 0.02,
+                "total_adjustments": 5,
             },
             {
-                'episode': 1,
-                'final_latency': 1200.0,
-                'final_throughput': 45.0,
-                'final_error_rate': 0.03,
-                'total_adjustments': 7
-            }
+                "episode": 1,
+                "final_latency": 1200.0,
+                "final_throughput": 45.0,
+                "final_error_rate": 0.03,
+                "total_adjustments": 7,
+            },
         ]
 
         summary = self.trainer.get_training_summary()
 
-        assert 'avg_final_latency' in summary
-        assert 'avg_final_throughput' in summary
-        assert 'avg_final_error_rate' in summary
-        assert 'total_adjustments' in summary
-        assert summary['training_episodes'] == 2
+        assert "avg_final_latency" in summary
+        assert "avg_final_throughput" in summary
+        assert "avg_final_error_rate" in summary
+        assert "total_adjustments" in summary
+        assert summary["training_episodes"] == 2
 
 
 class TestRLIntegration:
@@ -251,7 +253,7 @@ class TestRLIntegration:
         # Verify training produced results
         assert len(history) == 3
         summary = trainer.get_training_summary()
-        assert summary['training_episodes'] == 3
+        assert summary["training_episodes"] == 3
 
         # Test inference (learning from feedback)
         session = "test_session"
@@ -259,7 +261,7 @@ class TestRLIntegration:
 
         # Check that parameters were adjusted
         params = agent.get_optimal_parameters()
-        assert params['total_adjustments'] >= 1
+        assert params["total_adjustments"] >= 1
 
     def test_rl_action_space(self):
         """Test that action space covers meaningful adjustments."""
@@ -308,10 +310,10 @@ class TestRLMetrics:
         agent = AdaptiveWindowRLAgent(aimd)
 
         # Check that metrics counters exist
-        assert hasattr(agent, '_metrics_rl_adjustments')
-        assert hasattr(agent, '_metrics_rl_rewards')
-        assert hasattr(agent, '_metrics_rl_exploration')
-        assert hasattr(agent, '_metrics_rl_exploitation')
+        assert hasattr(agent, "_metrics_rl_adjustments")
+        assert hasattr(agent, "_metrics_rl_rewards")
+        assert hasattr(agent, "_metrics_rl_exploration")
+        assert hasattr(agent, "_metrics_rl_exploitation")
 
     def test_metrics_updates(self):
         """Test that metrics are updated during RL operations."""

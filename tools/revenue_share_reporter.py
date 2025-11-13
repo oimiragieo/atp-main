@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 from router_service.cost_aggregator import GLOBAL_COST
@@ -44,7 +44,7 @@ class AdapterRevenue:
 class RevenueShareReporter:
     """Generates revenue share reports for adapter providers."""
 
-    def __init__(self, config: Optional[RevenueShareConfig] = None):
+    def __init__(self, config: RevenueShareConfig | None = None):
         self.config = config or RevenueShareConfig()
         self.revenue_share_payouts = REGISTRY.counter("revenue_share_payouts")
 

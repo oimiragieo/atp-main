@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from metrics import DP_EVENTS_EXPORTED_TOTAL
 
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class ExportFormat(Enum):
     """Supported export formats for DP telemetry."""
+
     JSON = "json"
     CSV = "csv"
     PROMETHEUS = "prometheus"
@@ -28,6 +29,7 @@ class ExportFormat(Enum):
 @dataclass
 class DpTelemetryEvent:
     """A differentially private telemetry event."""
+
     event_id: str
     event_type: str
     tenant_id: str
@@ -35,8 +37,8 @@ class DpTelemetryEvent:
     dp_value: float
     epsilon_used: float
     sensitivity: float
-    raw_value: Optional[float] = None  # For debugging only, not exported
-    metadata: Optional[dict[str, Any]] = None
+    raw_value: float | None = None  # For debugging only, not exported
+    metadata: dict[str, Any] | None = None
 
     def to_dict(self, include_raw: bool = False) -> dict[str, Any]:
         """Convert event to dictionary for export."""
@@ -47,7 +49,7 @@ class DpTelemetryEvent:
             "timestamp": self.timestamp.isoformat(),
             "dp_value": self.dp_value,
             "epsilon_used": self.epsilon_used,
-            "sensitivity": self.sensitivity
+            "sensitivity": self.sensitivity,
         }
 
         if include_raw and self.raw_value is not None:
@@ -109,12 +111,17 @@ class DpTelemetryExporter:
 
         events_data = [event.to_dict() for event in self.pending_events]
 
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump({
-                "export_timestamp": datetime.now().isoformat(),
-                "total_events": len(events_data),
-                "events": events_data
-            }, f, indent=2, ensure_ascii=False)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "export_timestamp": datetime.now().isoformat(),
+                    "total_events": len(events_data),
+                    "events": events_data,
+                },
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
 
         logger.info(f"Exported {len(self.pending_events)} events to {filepath}")
         DP_EVENTS_EXPORTED_TOTAL.inc(len(self.pending_events))
@@ -139,7 +146,7 @@ class DpTelemetryExporter:
 
         fieldnames = sorted(fieldnames)  # Ensure consistent ordering
 
-        with open(filepath, 'w', newline='', encoding='utf-8') as f:
+        with open(filepath, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
 
@@ -156,7 +163,7 @@ class DpTelemetryExporter:
         """Export events in Prometheus format."""
         filepath = self.export_path / f"{filename}.prom"
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write("# DP Telemetry Export\n")
             f.write(f"# Generated at {datetime.now().isoformat()}\n\n")
 
@@ -165,10 +172,10 @@ class DpTelemetryExporter:
                 metric_name = f"dp_telemetry_{event.event_type.lower()}"
                 f.write(f"# TYPE {metric_name} gauge\n")
                 f.write(f"{metric_name}{{")
-                f.write(f"tenant_id=\"{event.tenant_id}\",")
-                f.write(f"event_id=\"{event.event_id}\",")
-                f.write(f"sensitivity=\"{event.sensitivity}\",")
-                f.write(f"epsilon_used=\"{event.epsilon_used}\"")
+                f.write(f'tenant_id="{event.tenant_id}",')
+                f.write(f'event_id="{event.event_id}",')
+                f.write(f'sensitivity="{event.sensitivity}",')
+                f.write(f'epsilon_used="{event.epsilon_used}"')
                 f.write(f"}} {event.dp_value} {int(event.timestamp.timestamp())}\n\n")
 
         logger.info(f"Exported {len(self.pending_events)} events to {filepath}")
@@ -187,7 +194,7 @@ class DpTelemetryExporter:
             "epsilon_used": used,
             "epsilon_remaining": remaining,
             "epsilon_limit": self.max_epsilon_per_tenant,
-            "utilization_rate": used / self.max_epsilon_per_tenant if self.max_epsilon_per_tenant > 0 else 0.0
+            "utilization_rate": used / self.max_epsilon_per_tenant if self.max_epsilon_per_tenant > 0 else 0.0,
         }
 
     def reset_budget(self, tenant_id: str):
@@ -198,16 +205,17 @@ class DpTelemetryExporter:
 
 
 # Global exporter instance
-_dp_exporter: Optional[DpTelemetryExporter] = None
+_dp_exporter: DpTelemetryExporter | None = None
 
 
-def get_dp_telemetry_exporter() -> Optional[DpTelemetryExporter]:
+def get_dp_telemetry_exporter() -> DpTelemetryExporter | None:
     """Get the global DP telemetry exporter instance."""
     return _dp_exporter
 
 
-def initialize_dp_telemetry_exporter(export_path: str = "./dp_telemetry",
-                                   max_epsilon_per_tenant: float = 1.0) -> DpTelemetryExporter:
+def initialize_dp_telemetry_exporter(
+    export_path: str = "./dp_telemetry", max_epsilon_per_tenant: float = 1.0
+) -> DpTelemetryExporter:
     """Initialize the global DP telemetry exporter."""
     global _dp_exporter
     _dp_exporter = DpTelemetryExporter(export_path, max_epsilon_per_tenant)

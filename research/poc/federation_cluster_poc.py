@@ -8,7 +8,7 @@ import hmac
 import random
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 # Reuse signing logic (duplicated minimal to keep self-contained)
@@ -42,7 +42,7 @@ class RouterNode:
         self.damping: dict[str, float] = {}  # route_id -> damp factor 0..1
 
     def local_update(
-        self, route_id: str, latency_ms: float, cost: float, constraints: Optional[dict[str, Any]] = None
+        self, route_id: str, latency_ms: float, cost: float, constraints: dict[str, Any] | None = None
     ) -> SignedRoute:
         r = Route(route_id, latency_ms, cost, time.time(), constraints or {})
         self.routes[route_id] = r

@@ -47,18 +47,10 @@ def test_performance_report_generation():
 
     # Add some mock profile results
     profiler.profiles["func1"] = ProfileResult(
-        function_name="func1",
-        total_time=0.1,
-        call_count=1,
-        avg_time=0.1,
-        cumulative_time=0.1
+        function_name="func1", total_time=0.1, call_count=1, avg_time=0.1, cumulative_time=0.1
     )
     profiler.profiles["func2"] = ProfileResult(
-        function_name="func2",
-        total_time=0.2,
-        call_count=1,
-        avg_time=0.2,
-        cumulative_time=0.2
+        function_name="func2", total_time=0.2, call_count=1, avg_time=0.2, cumulative_time=0.2
     )
 
     report = profiler.generate_report("test_endpoint")
@@ -130,11 +122,7 @@ def test_clear_profiles():
     profiler = PerformanceProfiler()
 
     profiler.profiles["test"] = ProfileResult(
-        function_name="test",
-        total_time=0.1,
-        call_count=1,
-        avg_time=0.1,
-        cumulative_time=0.1
+        function_name="test", total_time=0.1, call_count=1, avg_time=0.1, cumulative_time=0.1
     )
 
     assert len(profiler.profiles) == 1

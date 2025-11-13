@@ -29,7 +29,7 @@ class TestToolChainingPlanner:
             output_schema={"type": "object"},
             execute_func=MagicMock(return_value={"results": ["result1", "result2"]}),
             cost_estimate=0.01,
-            latency_estimate_seconds=0.5
+            latency_estimate_seconds=0.5,
         )
 
         self.analyze_tool = ToolDescriptor(
@@ -39,7 +39,7 @@ class TestToolChainingPlanner:
             output_schema={"type": "object"},
             execute_func=MagicMock(return_value={"analysis": "positive"}),
             cost_estimate=0.02,
-            latency_estimate_seconds=1.0
+            latency_estimate_seconds=1.0,
         )
 
         self.summarize_tool = ToolDescriptor(
@@ -49,7 +49,7 @@ class TestToolChainingPlanner:
             output_schema={"type": "object"},
             execute_func=MagicMock(return_value={"summary": "brief summary"}),
             cost_estimate=0.015,
-            latency_estimate_seconds=0.8
+            latency_estimate_seconds=0.8,
         )
 
         self.planner.register_tool(self.memory_search_tool)
@@ -59,11 +59,7 @@ class TestToolChainingPlanner:
     def test_register_tool(self):
         """Test tool registration."""
         tool = ToolDescriptor(
-            name="test_tool",
-            description="Test tool",
-            input_schema={},
-            output_schema={},
-            execute_func=lambda x: {}
+            name="test_tool", description="Test tool", input_schema={}, output_schema={}, execute_func=lambda x: {}
         )
 
         self.planner.register_tool(tool)
@@ -140,11 +136,7 @@ class TestToolChainingPlanner:
         chain = self.planner.chains[chain_id]
 
         # Manually add a step with non-existent tool
-        step = ToolStep(
-            step_id="test_step",
-            tool_name="nonexistent_tool",
-            input_data={}
-        )
+        step = ToolStep(step_id="test_step", tool_name="nonexistent_tool", input_data={})
         chain.steps[step.step_id] = step
 
         result = self.planner.execute_step(chain_id, step.step_id)
@@ -162,7 +154,7 @@ class TestToolChainingPlanner:
         step = ToolStep(
             step_id="test_step",
             tool_name="memory_search",
-            input_data={}  # Missing required 'query' field
+            input_data={},  # Missing required 'query' field
         )
         chain.steps[step.step_id] = step
 
@@ -198,7 +190,7 @@ class TestToolChainingPlanner:
             description="Fetch document",
             input_schema={"required": ["doc_id"]},
             output_schema={"type": "object"},
-            execute_func=MagicMock(return_value={"content": "document content"})
+            execute_func=MagicMock(return_value={"content": "document content"}),
         )
         self.planner.register_tool(fetch_tool)
 
@@ -249,11 +241,7 @@ class TestToolChainingPlanner:
         step2 = ToolStep("step2", "analyze_text", {"text": "test"})
         step3 = ToolStep("step3", "summarize_content", {"content": "test"})
 
-        chain.steps = {
-            "step1": step1,
-            "step2": step2,
-            "step3": step3
-        }
+        chain.steps = {"step1": step1, "step2": step2, "step3": step3}
         chain.execution_order = ["step1", "step2", "step3"]
 
         # Simulate execution
@@ -278,7 +266,7 @@ class TestToolDescriptor:
             description="Test tool",
             input_schema={"required": ["field1", "field2"]},
             output_schema={},
-            execute_func=lambda x: {}
+            execute_func=lambda x: {},
         )
 
         valid_input = {"field1": "value1", "field2": "value2"}
@@ -291,7 +279,7 @@ class TestToolDescriptor:
             description="Test tool",
             input_schema={"required": ["field1", "field2"]},
             output_schema={},
-            execute_func=lambda x: {}
+            execute_func=lambda x: {},
         )
 
         invalid_input = {"field1": "value1"}  # Missing field2
@@ -305,7 +293,7 @@ class TestToolDescriptor:
             input_schema={},
             output_schema={},
             execute_func=lambda x: {},
-            cost_estimate=0.1
+            cost_estimate=0.1,
         )
 
         input_data = {"field": "short"}
@@ -320,11 +308,7 @@ class TestToolStep:
 
     def test_step_creation(self):
         """Test ToolStep creation."""
-        step = ToolStep(
-            step_id="test_step",
-            tool_name="test_tool",
-            input_data={"input": "test"}
-        )
+        step = ToolStep(step_id="test_step", tool_name="test_tool", input_data={"input": "test"})
 
         assert step.step_id == "test_step"
         assert step.tool_name == "test_tool"
@@ -370,11 +354,7 @@ class TestToolChain:
 
     def test_chain_creation(self):
         """Test ToolChain creation."""
-        chain = ToolChain(
-            chain_id="test_chain",
-            goal="Test goal",
-            steps={}
-        )
+        chain = ToolChain(chain_id="test_chain", goal="Test goal", steps={})
 
         assert chain.chain_id == "test_chain"
         assert chain.goal == "Test goal"

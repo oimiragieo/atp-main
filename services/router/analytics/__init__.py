@@ -1,13 +1,13 @@
 """Advanced analytics and insights system for enterprise AI platform."""
 
-from .analytics_manager import AnalyticsManager, get_analytics_manager
 from .analytics_config import AnalyticsConfig
-from .request_analyzer import RequestAnalyzer
-from .performance_analyzer import PerformanceAnalyzer
-from .business_intelligence import BusinessIntelligenceEngine
+from .analytics_manager import AnalyticsManager, get_analytics_manager
 from .anomaly_detector import AnomalyDetector
-from .trend_analyzer import TrendAnalyzer
+from .business_intelligence import BusinessIntelligenceEngine
 from .insights_generator import InsightsGenerator
+from .performance_analyzer import PerformanceAnalyzer
+from .request_analyzer import RequestAnalyzer
+from .trend_analyzer import TrendAnalyzer
 
 __all__ = [
     "AnalyticsManager",
@@ -18,5 +18,5 @@ __all__ = [
     "BusinessIntelligenceEngine",
     "AnomalyDetector",
     "TrendAnalyzer",
-    "InsightsGenerator"
+    "InsightsGenerator",
 ]

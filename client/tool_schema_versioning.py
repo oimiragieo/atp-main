@@ -22,7 +22,7 @@ This module implements versioning strategy for MCP tool schemas, providing:
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import jsonschema
 
@@ -65,7 +65,7 @@ class ToolSchemaVersioning:
         self._version_cache[schema_type] = versions
         return versions
 
-    def get_latest_version(self, schema_type: str) -> Optional[str]:
+    def get_latest_version(self, schema_type: str) -> str | None:
         """Get the latest available version for a schema type.
 
         Args:
@@ -109,8 +109,9 @@ class ToolSchemaVersioning:
             if latest_version and latest_version != version:
                 schema_path = self.schemas_dir / latest_version / f"{schema_type}.json"
                 if schema_path.exists():
-                    print(f"Warning: Schema {schema_type} version {version} not found, "
-                          f"falling back to {latest_version}")
+                    print(
+                        f"Warning: Schema {schema_type} version {version} not found, falling back to {latest_version}"
+                    )
                 else:
                     raise FileNotFoundError(f"Schema {schema_type} not found in any version")
             else:
@@ -122,8 +123,9 @@ class ToolSchemaVersioning:
         self._schema_cache[cache_key] = schema
         return schema
 
-    def validate_message(self, message: dict[str, Any], schema_type: str,
-                        version: str | None = None) -> tuple[bool, str | None]:
+    def validate_message(
+        self, message: dict[str, Any], schema_type: str, version: str | None = None
+    ) -> tuple[bool, str | None]:
         """Validate a message against a schema with version fallback.
 
         Args:
@@ -163,11 +165,11 @@ class ToolSchemaVersioning:
             return requested_version
 
         # Try major version compatibility (e.g., 1.2 requested, 1.1 available)
-        requested_parts = requested_version.lstrip('v').split('.')
+        requested_parts = requested_version.lstrip("v").split(".")
         if len(requested_parts) >= 2:
             major_minor = f"{requested_parts[0]}.{requested_parts[1]}"
             for available in available_versions:
-                available_parts = available.lstrip('v').split('.')
+                available_parts = available.lstrip("v").split(".")
                 if len(available_parts) >= 2 and f"{available_parts[0]}.{available_parts[1]}" == major_minor:
                     return available
 
@@ -175,7 +177,7 @@ class ToolSchemaVersioning:
         if len(requested_parts) >= 1:
             major = requested_parts[0]
             for available in available_versions:
-                available_parts = available.lstrip('v').split('.')
+                available_parts = available.lstrip("v").split(".")
                 if available_parts[0] == major:
                     return available
 
@@ -200,7 +202,7 @@ class ToolSchemaVersioning:
             "version": actual_version,
             "title": schema.get("title", ""),
             "description": schema.get("description", ""),
-            "capabilities": self._extract_capabilities(schema)
+            "capabilities": self._extract_capabilities(schema),
         }
 
     def _extract_capabilities(self, schema: dict[str, Any]) -> list[str]:

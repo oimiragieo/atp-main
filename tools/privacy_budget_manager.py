@@ -5,7 +5,6 @@ import math
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class PrivacyOperation(Enum):
@@ -82,7 +81,7 @@ class PrivacyBudgetManager:
         # Scale cost with data size (logarithmic scaling)
         return base_cost * (1 + math.log(max(data_size, 1)) / 10)
 
-    def get_allocation_status(self, operation_id: str) -> Optional[BudgetAllocation]:
+    def get_allocation_status(self, operation_id: str) -> BudgetAllocation | None:
         """Get the status of a budget allocation."""
         return self.allocations.get(operation_id)
 

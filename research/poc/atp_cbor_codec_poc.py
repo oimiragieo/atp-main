@@ -36,6 +36,7 @@ def _encode_cbor(obj: Any) -> bytes:
     if isinstance(obj, float):
         # Encode float as IEEE 754 double precision
         import struct
+
         return b"\xfb" + struct.pack(">d", obj)
     if isinstance(obj, str):
         b = obj.encode("utf-8")
@@ -75,6 +76,7 @@ def _encode_cbor_zero_copy(obj: Any, buffer: BytesIO) -> None:
     elif isinstance(obj, float):
         # Encode float as IEEE 754 double precision
         import struct
+
         buffer.write(b"\xfb")
         buffer.write(struct.pack(">d", obj))
     elif isinstance(obj, str):

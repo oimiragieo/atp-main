@@ -18,6 +18,7 @@ from router_service.preemption import Active, pick_preemptions
 @dataclass
 class ScenarioResult:
     """Results from a preemption scenario run."""
+
     scenario_name: str
     total_sessions: int
     qos_distribution: dict[str, int]
@@ -43,17 +44,14 @@ class PreemptionScenarioRunner:
             for _ in range(count):
                 age = self.rng.uniform(0, max_age_ms)
                 started_ms = time.time() * 1000 - age
-                sessions.append(Active(
-                    session=f"{qos}{session_id}",
-                    qos=qos,
-                    started_ms=started_ms
-                ))
+                sessions.append(Active(session=f"{qos}{session_id}", qos=qos, started_ms=started_ms))
                 session_id += 1
 
         return sessions
 
-    async def run_scenario(self, name: str, qos_dist: dict[str, int], needed_slots: int,
-                          prefer_oldest: bool = True) -> ScenarioResult:
+    async def run_scenario(
+        self, name: str, qos_dist: dict[str, int], needed_slots: int, prefer_oldest: bool = True
+    ) -> ScenarioResult:
         """Run a single preemption scenario."""
         start_time = time.time()
 
@@ -78,7 +76,7 @@ class PreemptionScenarioRunner:
             preempted_sessions=preempted,
             preempted_counts=dict(preempted_counts),
             execution_time_ms=execution_time_ms,
-            needed_slots=needed_slots
+            needed_slots=needed_slots,
         )
 
         self.results.append(result)
@@ -87,41 +85,31 @@ class PreemptionScenarioRunner:
     async def run_gold_spike_scenario(self) -> ScenarioResult:
         """Scenario: Gold traffic spike requires preemption of lower QoS."""
         return await self.run_scenario(
-            "gold_spike_heavy_bronze",
-            {"gold": 5, "silver": 10, "bronze": 50},
-            needed_slots=15
+            "gold_spike_heavy_bronze", {"gold": 5, "silver": 10, "bronze": 50}, needed_slots=15
         )
 
     async def run_balanced_load_scenario(self) -> ScenarioResult:
         """Scenario: Balanced load with moderate preemption needs."""
         return await self.run_scenario(
-            "balanced_load_moderate_preemption",
-            {"gold": 15, "silver": 20, "bronze": 30},
-            needed_slots=8
+            "balanced_load_moderate_preemption", {"gold": 15, "silver": 20, "bronze": 30}, needed_slots=8
         )
 
     async def run_bronze_dominant_scenario(self) -> ScenarioResult:
         """Scenario: Bronze-dominant with small gold spike."""
         return await self.run_scenario(
-            "bronze_dominant_small_spike",
-            {"gold": 3, "silver": 5, "bronze": 80},
-            needed_slots=5
+            "bronze_dominant_small_spike", {"gold": 3, "silver": 5, "bronze": 80}, needed_slots=5
         )
 
     async def run_silver_heavy_scenario(self) -> ScenarioResult:
         """Scenario: Silver-heavy requiring silver preemption."""
         return await self.run_scenario(
-            "silver_heavy_silver_preemption",
-            {"gold": 8, "silver": 60, "bronze": 20},
-            needed_slots=25
+            "silver_heavy_silver_preemption", {"gold": 8, "silver": 60, "bronze": 20}, needed_slots=25
         )
 
     async def run_minimal_gold_scenario(self) -> ScenarioResult:
         """Scenario: Minimal gold with massive lower QoS."""
         return await self.run_scenario(
-            "minimal_gold_massive_lower",
-            {"gold": 2, "silver": 100, "bronze": 200},
-            needed_slots=50
+            "minimal_gold_massive_lower", {"gold": 2, "silver": 100, "bronze": 200}, needed_slots=50
         )
 
     async def run_all_scenarios(self) -> list[ScenarioResult]:
@@ -155,13 +143,13 @@ class PreemptionScenarioRunner:
                     "preempted_by_qos": r.preempted_counts,
                     "execution_time_ms": r.execution_time_ms,
                     "needed_slots": r.needed_slots,
-                    "preemption_efficiency": len(r.preempted_sessions) / r.needed_slots if r.needed_slots > 0 else 0
+                    "preemption_efficiency": len(r.preempted_sessions) / r.needed_slots if r.needed_slots > 0 else 0,
                 }
                 for r in self.results
-            ]
+            ],
         }
 
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             json.dump(data, f, indent=2)
 
         print(f"📊 Results exported to {filename}")

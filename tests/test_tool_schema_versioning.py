@@ -38,6 +38,7 @@ class TestToolSchemaVersioning:
     def teardown_method(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def _create_test_schemas(self):
@@ -59,11 +60,8 @@ class TestToolSchemaVersioning:
             "$schema": "http://json-schema.org/draft-07/schema#",
             "title": "Test Tool Output v1.0",
             "type": "object",
-            "properties": {
-                "tool_call_id": {"type": "string"},
-                "content": {"type": "string"}
-            },
-            "required": ["tool_call_id", "content"]
+            "properties": {"tool_call_id": {"type": "string"}, "content": {"type": "string"}},
+            "required": ["tool_call_id", "content"],
         }
 
         test_schema_v11 = {
@@ -73,9 +71,9 @@ class TestToolSchemaVersioning:
             "properties": {
                 "tool_call_id": {"type": "string"},
                 "content": {"type": "string"},
-                "sequence": {"type": "integer"}  # New field
+                "sequence": {"type": "integer"},  # New field
             },
-            "required": ["tool_call_id", "content"]
+            "required": ["tool_call_id", "content"],
         }
 
         test_schema_v2 = {
@@ -86,19 +84,19 @@ class TestToolSchemaVersioning:
                 "tool_call_id": {"type": "string"},
                 "content": {"type": "string"},
                 "sequence": {"type": "integer"},
-                "metadata": {"type": "object"}  # Breaking change
+                "metadata": {"type": "object"},  # Breaking change
             },
-            "required": ["tool_call_id", "content", "metadata"]
+            "required": ["tool_call_id", "content", "metadata"],
         }
 
         # Write schema files
-        with open(v1_dir / "toolOutput.json", 'w') as f:
+        with open(v1_dir / "toolOutput.json", "w") as f:
             json.dump(test_schema_v1, f)
 
-        with open(v11_dir / "toolOutput.json", 'w') as f:
+        with open(v11_dir / "toolOutput.json", "w") as f:
             json.dump(test_schema_v11, f)
 
-        with open(v2_dir / "toolOutput.json", 'w') as f:
+        with open(v2_dir / "toolOutput.json", "w") as f:
             json.dump(test_schema_v2, f)
 
     def test_get_available_versions(self):
@@ -143,10 +141,7 @@ class TestToolSchemaVersioning:
 
     def test_validate_message_valid(self):
         """Test validating a valid message."""
-        message = {
-            "tool_call_id": "test-123",
-            "content": "test content"
-        }
+        message = {"tool_call_id": "test-123", "content": "test content"}
         is_valid, error = self.versioning.validate_message(message, "toolOutput", "v1.0")
         assert is_valid
         assert error is None
@@ -202,7 +197,7 @@ class TestToolSchemaVersioning:
             "properties": {
                 "sequence": {"type": "integer"},
                 "experiment_id": {"type": "string"},
-                "error_code": {"type": "string"}
+                "error_code": {"type": "string"},
             }
         }
         capabilities = self.versioning._extract_capabilities(schema)
@@ -217,7 +212,7 @@ class TestToolSchemaVersioning:
 
         # Modify the file (simulate external change)
         v1_file = Path(self.temp_dir) / "v1.0" / "toolOutput.json"
-        with open(v1_file, 'w') as f:
+        with open(v1_file, "w") as f:
             json.dump({"modified": True}, f)
 
         # Second call should return cached version
@@ -225,7 +220,7 @@ class TestToolSchemaVersioning:
         assert schema1 == schema2
         assert "modified" not in schema2
 
-    @patch('client.tool_schema_versioning.jsonschema.validate')
+    @patch("client.tool_schema_versioning.jsonschema.validate")
     def test_validate_message_jsonschema_error(self, mock_validate):
         """Test handling of JSON schema validation errors."""
         mock_validate.side_effect = Exception("Schema validation failed")

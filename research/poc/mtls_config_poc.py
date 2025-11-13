@@ -1,9 +1,8 @@
 import ssl
-from typing import Optional
 
 
 def build_server_context(
-    ca_path: Optional[str], cert_path: Optional[str], key_path: Optional[str], require_client_cert: bool = True
+    ca_path: str | None, cert_path: str | None, key_path: str | None, require_client_cert: bool = True
 ) -> ssl.SSLContext:
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ctx.minimum_version = ssl.TLSVersion.TLSv1_2
@@ -20,7 +19,7 @@ def build_server_context(
 
 
 def build_client_context(
-    ca_path: Optional[str], cert_path: Optional[str] = None, key_path: Optional[str] = None, hostname_check: bool = True
+    ca_path: str | None, cert_path: str | None = None, key_path: str | None = None, hostname_check: bool = True
 ) -> ssl.SSLContext:
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.minimum_version = ssl.TLSVersion.TLSv1_2

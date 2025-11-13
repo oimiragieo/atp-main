@@ -126,7 +126,7 @@ class TestMemoryTools:
         self.tools = MemoryTools(
             memory_gateway_url="http://localhost:8000",
             tenant_id="test_tenant",
-            allowed_namespaces=["session.*", "agent.*", "public.*"]
+            allowed_namespaces=["session.*", "agent.*", "public.*"],
         )
 
     def test_filter_pii_keys_no_pii(self):
@@ -206,10 +206,7 @@ class TestMemoryTools:
     @pytest.mark.asyncio
     async def test_get_context_with_history(self):
         """Test getting context with history."""
-        result = await self.tools.get_context({
-            "context_type": "all",
-            "include_history": True
-        })
+        result = await self.tools.get_context({"context_type": "all", "include_history": True})
 
         assert "tool_history" in result
         assert isinstance(result["tool_history"], list)
@@ -217,11 +214,9 @@ class TestMemoryTools:
     @pytest.mark.asyncio
     async def test_put_memory_allowed_namespace(self):
         """Test putting memory in allowed namespace."""
-        result = await self.tools.put_memory({
-            "namespace": "session.data",
-            "key": "test_key",
-            "value": {"test": "data"}
-        })
+        result = await self.tools.put_memory(
+            {"namespace": "session.data", "key": "test_key", "value": {"test": "data"}}
+        )
 
         assert result["success"] is True
 
@@ -229,21 +224,15 @@ class TestMemoryTools:
     async def test_put_memory_denied_namespace(self):
         """Test putting memory in denied namespace."""
         with pytest.raises(PermissionError, match="Write access denied"):
-            await self.tools.put_memory({
-                "namespace": "private.data",
-                "key": "test_key",
-                "value": {"test": "data"}
-            })
+            await self.tools.put_memory({"namespace": "private.data", "key": "test_key", "value": {"test": "data"}})
 
     @pytest.mark.asyncio
     async def test_put_memory_invalid_data(self):
         """Test putting invalid memory data."""
         with pytest.raises(ValueError, match="not JSON serializable"):
-            await self.tools.put_memory({
-                "namespace": "session.data",
-                "key": "test_key",
-                "value": {"function": lambda x: x}
-            })
+            await self.tools.put_memory(
+                {"namespace": "session.data", "key": "test_key", "value": {"function": lambda x: x}}
+            )
 
     def test_get_tool_definitions(self):
         """Test getting tool definitions."""
@@ -282,11 +271,9 @@ class TestMemoryTools:
     @pytest.mark.asyncio
     async def test_execute_tool_put_memory(self):
         """Test executing putMemory tool."""
-        result = await self.tools.execute_tool("putMemory", {
-            "namespace": "session.data",
-            "key": "test_key",
-            "value": {"test": "data"}
-        })
+        result = await self.tools.execute_tool(
+            "putMemory", {"namespace": "session.data", "key": "test_key", "value": {"test": "data"}}
+        )
         assert result["success"] is True
 
     @pytest.mark.asyncio
@@ -300,11 +287,7 @@ class TestMemoryTools:
         """Test that putMemory updates tool history."""
         initial_history_length = len(self.tools.session_context["tool_history"])
 
-        await self.tools.put_memory({
-            "namespace": "session.data",
-            "key": "test_key",
-            "value": {"test": "data"}
-        })
+        await self.tools.put_memory({"namespace": "session.data", "key": "test_key", "value": {"test": "data"}})
 
         final_history_length = len(self.tools.session_context["tool_history"])
         assert final_history_length == initial_history_length + 1

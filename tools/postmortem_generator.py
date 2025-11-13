@@ -10,7 +10,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 try:
     from metrics.registry import REGISTRY
@@ -30,7 +30,7 @@ except ImportError:
 class PostmortemGenerator:
     """Generates postmortem documents from incident data."""
 
-    def __init__(self, template_path: Optional[str] = None):
+    def __init__(self, template_path: str | None = None):
         self.template_path = template_path or "runbooks/templates/postmortem_template.md"
         self.postmortems_completed = REGISTRY.counter("postmortems_completed")
 

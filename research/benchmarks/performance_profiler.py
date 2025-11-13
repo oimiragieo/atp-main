@@ -15,26 +15,27 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from functools import wraps
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
 class ProfileResult:
     """Result of a profiling operation."""
+
     function_name: str
     total_time: float
     call_count: int
     avg_time: float
     # Optional aggregate or externally provided cumulative timing
-    cumulative_time: Optional[float] = None
+    cumulative_time: float | None = None
     # Optional serialized cProfile stats text
-    profile_data: Optional[str] = None
+    profile_data: str | None = None
     timestamp: float = field(default_factory=time.time)
 
 
 @dataclass
 class PerformanceReport:
     """Performance report."""
+
     endpoint: str
     total_requests: int
     avg_response_time: float
@@ -94,8 +95,8 @@ class PerformanceProfiler:
         If `enable_cprofile` is True, captures and stores a textual summary
         of cProfile statistics in the corresponding ProfileResult.
         """
-        profiler: Optional[cProfile.Profile] = None
-        s: Optional[io.StringIO] = None
+        profiler: cProfile.Profile | None = None
+        s: io.StringIO | None = None
         try:
             if enable_cprofile:
                 profiler = cProfile.Profile()
@@ -134,16 +135,18 @@ class PerformanceProfiler:
             @profiler.profile_decorator("op")
             def f(...): ...
         """
+
         def _decorator(func):
             @wraps(func)
             def _wrapped(*args, **kwargs):
                 with self.profile_function(name, enable_cprofile=enable_cprofile):
                     return func(*args, **kwargs)
+
             return _wrapped
 
         return _decorator
 
-    def get_profile_report(self, name: str) -> Optional[ProfileResult]:
+    def get_profile_report(self, name: str) -> ProfileResult | None:
         """Return profiling result for a given name, if any."""
         return self.profiles.get(name)
 
@@ -158,11 +161,7 @@ class PerformanceProfiler:
             avg_time = round(avg_time, 10)
 
         # Find slow operations (top 5 by total time)
-        slow_ops = sorted(
-            self.profiles.values(),
-            key=lambda x: x.total_time,
-            reverse=True
-        )[:5]
+        slow_ops = sorted(self.profiles.values(), key=lambda x: x.total_time, reverse=True)[:5]
 
         return PerformanceReport(
             endpoint=endpoint,
@@ -171,7 +170,7 @@ class PerformanceProfiler:
             slow_operations=slow_ops,
         )
 
-    def save_report(self, report: PerformanceReport, filename: Optional[str] = None) -> str:
+    def save_report(self, report: PerformanceReport, filename: str | None = None) -> str:
         """Save performance report to file."""
         if filename is None:
             timestamp = int(time.time())
@@ -195,7 +194,7 @@ class PerformanceProfiler:
             ],
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             json.dump(report_data, f, indent=2)
 
         print(f"Performance report saved to {filepath}")
@@ -262,8 +261,8 @@ def run_performance_benchmark():
         # Try importing the benchmark from tools first; fallback to root for legacy paths
 
         # Set minimal environment variables to avoid config errors
-        if 'ROUTER_ADMIN_API_KEY' not in os.environ:
-            os.environ['ROUTER_ADMIN_API_KEY'] = 'benchmark-key'
+        if "ROUTER_ADMIN_API_KEY" not in os.environ:
+            os.environ["ROUTER_ADMIN_API_KEY"] = "benchmark-key"
 
         try:
             from tools.fragmentation_benchmark_poc import run_benchmark as frag_benchmark  # type: ignore

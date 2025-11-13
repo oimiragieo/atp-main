@@ -35,7 +35,7 @@ class TestFrameDiffAnalyzer:
             ttl=255,
             window=Window(max_parallel=4, max_tokens=10000, max_usd_micros=5000000),
             meta=Meta(task_type="chat"),
-            payload=Payload(type="agent.request", content={"query": "Hello"})
+            payload=Payload(type="agent.request", content={"query": "Hello"}),
         )
 
         frame_dict = frame.to_public_dict()
@@ -47,18 +47,9 @@ class TestFrameDiffAnalyzer:
 
     def test_detect_field_addition(self):
         """Test detection of added fields."""
-        old_frame = {
-            "v": 1,
-            "session_id": "test",
-            "qos": "gold"
-        }
+        old_frame = {"v": 1, "session_id": "test", "qos": "gold"}
 
-        new_frame = {
-            "v": 1,
-            "session_id": "test",
-            "qos": "gold",
-            "new_field": "value"
-        }
+        new_frame = {"v": 1, "session_id": "test", "qos": "gold", "new_field": "value"}
 
         diff = self.analyzer.compare_frames(old_frame, new_frame)
 
@@ -69,15 +60,12 @@ class TestFrameDiffAnalyzer:
 
     def test_detect_breaking_field_addition(self):
         """Test detection of breaking field additions."""
-        old_frame = {
-            "v": 1,
-            "session_id": "test"
-        }
+        old_frame = {"v": 1, "session_id": "test"}
 
         new_frame = {
             "v": 1,
             "session_id": "test",
-            "qos": "gold"  # Adding required field
+            "qos": "gold",  # Adding required field
         }
 
         diff = self.analyzer.compare_frames(old_frame, new_frame)
@@ -88,16 +76,9 @@ class TestFrameDiffAnalyzer:
 
     def test_detect_field_removal(self):
         """Test detection of removed fields."""
-        old_frame = {
-            "v": 1,
-            "session_id": "test",
-            "old_field": "value"
-        }
+        old_frame = {"v": 1, "session_id": "test", "old_field": "value"}
 
-        new_frame = {
-            "v": 1,
-            "session_id": "test"
-        }
+        new_frame = {"v": 1, "session_id": "test"}
 
         diff = self.analyzer.compare_frames(old_frame, new_frame)
 
@@ -108,15 +89,9 @@ class TestFrameDiffAnalyzer:
 
     def test_detect_type_change(self):
         """Test detection of type changes."""
-        old_frame = {
-            "v": 1,
-            "count": 42
-        }
+        old_frame = {"v": 1, "count": 42}
 
-        new_frame = {
-            "v": 1,
-            "count": "42"
-        }
+        new_frame = {"v": 1, "count": "42"}
 
         diff = self.analyzer.compare_frames(old_frame, new_frame)
 
@@ -128,15 +103,9 @@ class TestFrameDiffAnalyzer:
 
     def test_detect_breaking_value_change(self):
         """Test detection of breaking value changes."""
-        old_frame = {
-            "v": 1,
-            "qos": "gold"
-        }
+        old_frame = {"v": 1, "qos": "gold"}
 
-        new_frame = {
-            "v": 1,
-            "qos": "silver"
-        }
+        new_frame = {"v": 1, "qos": "silver"}
 
         diff = self.analyzer.compare_frames(old_frame, new_frame)
 
@@ -146,17 +115,12 @@ class TestFrameDiffAnalyzer:
 
     def test_compare_nested_dicts(self):
         """Test comparison of nested dictionary structures."""
-        old_frame = {
-            "meta": {
-                "task_type": "chat",
-                "languages": ["en"]
-            }
-        }
+        old_frame = {"meta": {"task_type": "chat", "languages": ["en"]}}
 
         new_frame = {
             "meta": {
                 "task_type": "chat",
-                "languages": ["en", "es"]  # Added language
+                "languages": ["en", "es"],  # Added language
             }
         }
 
@@ -168,13 +132,9 @@ class TestFrameDiffAnalyzer:
 
     def test_compare_lists(self):
         """Test comparison of list structures."""
-        old_frame = {
-            "flags": ["SYN"]
-        }
+        old_frame = {"flags": ["SYN"]}
 
-        new_frame = {
-            "flags": ["SYN", "ACK"]
-        }
+        new_frame = {"flags": ["SYN", "ACK"]}
 
         diff = self.analyzer.compare_frames(old_frame, new_frame)
 
@@ -185,18 +145,13 @@ class TestFrameDiffAnalyzer:
     def test_compatibility_score_calculation(self):
         """Test compatibility score calculation."""
         # Frame with 4 fields, 1 breaking change
-        old_frame = {
-            "v": 1,
-            "session_id": "test",
-            "qos": "gold",
-            "ttl": 255
-        }
+        old_frame = {"v": 1, "session_id": "test", "qos": "gold", "ttl": 255}
 
         new_frame = {
             "v": 1,
             "session_id": "test",
             "qos": "silver",  # Breaking change
-            "ttl": 255
+            "ttl": 255,
         }
 
         diff = self.analyzer.compare_frames(old_frame, new_frame)
@@ -243,7 +198,7 @@ class TestFrameDiffAnalyzer:
             ttl=255,
             window=Window(max_parallel=4, max_tokens=10000, max_usd_micros=5000000),
             meta=Meta(task_type="chat"),
-            payload=Payload(type="agent.request", content={"query": "Hello"})
+            payload=Payload(type="agent.request", content={"query": "Hello"}),
         )
 
         new_frame = Frame(
@@ -260,16 +215,11 @@ class TestFrameDiffAnalyzer:
             payload=Payload(
                 type="agent.request",
                 content={"query": "Hello"},
-                confidence=0.95  # Added field
-            )
+                confidence=0.95,  # Added field
+            ),
         )
 
-        diff = self.analyzer.compare_frames(
-            old_frame.to_public_dict(),
-            new_frame.to_public_dict(),
-            "v1.0",
-            "v1.1"
-        )
+        diff = self.analyzer.compare_frames(old_frame.to_public_dict(), new_frame.to_public_dict(), "v1.0", "v1.1")
 
         # Should detect additions but not breaking changes
         assert diff.total_changes > 0
@@ -293,8 +243,8 @@ def test_cli_compare_frames():
     from tools.frame_diff_tool import main
 
     # Mock sys.argv for testing
-    with patch('sys.argv', ['frame_diff_tool.py', 'compare-frames']):
-        with patch('builtins.print') as mock_print:
+    with patch("sys.argv", ["frame_diff_tool.py", "compare-frames"]):
+        with patch("builtins.print") as mock_print:
             main()
             # Should print comparison results
             assert mock_print.called
@@ -304,8 +254,8 @@ def test_cli_generate_checklist():
     """Test CLI interface for checklist generation."""
     from tools.frame_diff_tool import main
 
-    with patch('sys.argv', ['frame_diff_tool.py', 'generate-checklist']):
-        with patch('builtins.print') as mock_print:
+    with patch("sys.argv", ["frame_diff_tool.py", "generate-checklist"]):
+        with patch("builtins.print") as mock_print:
             main()
             # Should print checklist
             assert mock_print.called

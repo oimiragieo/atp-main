@@ -36,7 +36,7 @@ class TestFederatedRewardSignal:
                 "avg_latency": 1.2,
                 "total_samples": 1000,
                 "quality_score": 0.88,
-                "cost_efficiency": 0.002
+                "cost_efficiency": 0.002,
             }
         }
 
@@ -46,7 +46,7 @@ class TestFederatedRewardSignal:
             reward_signals=reward_signals,
             participant_count=5,
             privacy_budget_used=0.1,
-            noise_scale=0.5
+            noise_scale=0.5,
         )
 
         assert signal.schema_version == FEDERATED_REWARD_SCHEMA_VERSION
@@ -73,7 +73,7 @@ class TestFederatedRewardSignal:
             aggregation_round=2,
             cluster_hash="hash1234567890123456",  # Must be at least 16 characters
             reward_signals={"model1:task1": {"success_rate": 0.9, "avg_latency": 2.0, "total_samples": 500}},
-            participant_count=3
+            participant_count=3,
         )
 
         json_str = signal.to_json()
@@ -88,7 +88,7 @@ class TestFederatedRewardSignal:
             aggregation_round=1,
             cluster_hash="hash456",
             reward_signals={"model1:task1": {"success_rate": 0.8, "avg_latency": 1.5, "total_samples": 200}},
-            participant_count=2
+            participant_count=2,
         )
 
         assert signal.privacy_budget_used is None
@@ -138,14 +138,8 @@ class TestValidation:
         signal = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="a" * 32,  # 32 character hash
-            reward_signals={
-                "gpt-4:chat": {
-                    "success_rate": 0.95,
-                    "avg_latency": 1.2,
-                    "total_samples": 1000
-                }
-            },
-            participant_count=5
+            reward_signals={"gpt-4:chat": {"success_rate": 0.95, "avg_latency": 1.2, "total_samples": 1000}},
+            participant_count=5,
         )
 
         data = signal.to_dict()
@@ -160,7 +154,7 @@ class TestValidation:
             "cluster_hash": "a" * 32,
             "reward_signals": {"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
             "participant_count": 1,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         errors = validate_federated_reward_signal(data)
@@ -173,7 +167,7 @@ class TestValidation:
             "aggregation_round": 1,
             "cluster_hash": "a" * 32,
             "reward_signals": {"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
-            "participant_count": 1
+            "participant_count": 1,
         }
 
         errors = validate_federated_reward_signal(data)
@@ -188,7 +182,7 @@ class TestValidation:
             "cluster_hash": "a" * 32,
             "reward_signals": {"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
             "participant_count": 1,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         errors = validate_federated_reward_signal(data)
@@ -203,7 +197,7 @@ class TestValidation:
             "cluster_hash": "short",  # Too short
             "reward_signals": {"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
             "participant_count": 1,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         errors = validate_federated_reward_signal(data)
@@ -219,7 +213,7 @@ class TestValidation:
             "cluster_hash": "a" * 32,
             "reward_signals": {"model:task": {"success_rate": 0.9, "avg_latency": 1.0}},  # Missing total_samples
             "participant_count": 1,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         errors = validate_federated_reward_signal(data)
@@ -234,7 +228,7 @@ class TestValidation:
             "cluster_hash": "a" * 32,
             "reward_signals": {"model:task": {"success_rate": 1.5, "avg_latency": 1.0, "total_samples": 100}},  # > 1.0
             "participant_count": 1,
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         errors = validate_federated_reward_signal(data)
@@ -249,7 +243,7 @@ class TestValidation:
             "cluster_hash": "a" * 32,
             "reward_signals": {"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
             "participant_count": 0,  # Invalid: must be positive
-            "timestamp": datetime.now(timezone.utc).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
         errors = validate_federated_reward_signal(data)
@@ -265,7 +259,7 @@ class TestValidation:
             "reward_signals": {"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
             "participant_count": 1,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "privacy_budget_used": -0.1  # Invalid: negative
+            "privacy_budget_used": -0.1,  # Invalid: negative
         }
 
         errors = validate_federated_reward_signal(data)
@@ -286,14 +280,8 @@ class TestAggregation:
         signal = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="hash123",
-            reward_signals={
-                "gpt-4:chat": {
-                    "success_rate": 0.9,
-                    "avg_latency": 1.5,
-                    "total_samples": 100
-                }
-            },
-            participant_count=2
+            reward_signals={"gpt-4:chat": {"success_rate": 0.9, "avg_latency": 1.5, "total_samples": 100}},
+            participant_count=2,
         )
 
         result = aggregate_reward_signals([signal])
@@ -309,30 +297,20 @@ class TestAggregation:
             aggregation_round=1,
             cluster_hash="hash123",
             reward_signals={
-                "gpt-4:chat": {
-                    "success_rate": 0.8,
-                    "avg_latency": 2.0,
-                    "total_samples": 100,
-                    "quality_score": 0.85
-                }
+                "gpt-4:chat": {"success_rate": 0.8, "avg_latency": 2.0, "total_samples": 100, "quality_score": 0.85}
             },
             participant_count=2,
-            privacy_budget_used=0.1
+            privacy_budget_used=0.1,
         )
 
         signal2 = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="hash123",
             reward_signals={
-                "gpt-4:chat": {
-                    "success_rate": 0.95,
-                    "avg_latency": 1.0,
-                    "total_samples": 200,
-                    "quality_score": 0.90
-                }
+                "gpt-4:chat": {"success_rate": 0.95, "avg_latency": 1.0, "total_samples": 200, "quality_score": 0.90}
             },
             participant_count=3,
-            privacy_budget_used=0.15
+            privacy_budget_used=0.15,
         )
 
         result = aggregate_reward_signals([signal1, signal2])
@@ -362,14 +340,14 @@ class TestAggregation:
             aggregation_round=1,
             cluster_hash="hash123",
             reward_signals={"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
-            participant_count=1
+            participant_count=1,
         )
 
         signal2 = FederatedRewardSignal(
             aggregation_round=2,  # Different round
             cluster_hash="hash123",
             reward_signals={"model:task": {"success_rate": 0.8, "avg_latency": 1.5, "total_samples": 100}},
-            participant_count=1
+            participant_count=1,
         )
 
         result = aggregate_reward_signals([signal1, signal2])
@@ -381,14 +359,14 @@ class TestAggregation:
             aggregation_round=1,
             cluster_hash="hash123",
             reward_signals={"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}},
-            participant_count=1
+            participant_count=1,
         )
 
         signal2 = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="hash456",  # Different cluster
             reward_signals={"model:task": {"success_rate": 0.8, "avg_latency": 1.5, "total_samples": 100}},
-            participant_count=1
+            participant_count=1,
         )
 
         result = aggregate_reward_signals([signal1, signal2])
@@ -401,9 +379,9 @@ class TestAggregation:
             cluster_hash="hash123",
             reward_signals={
                 "gpt-4:chat": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100},
-                "gpt-3.5:chat": {"success_rate": 0.85, "avg_latency": 0.8, "total_samples": 50}
+                "gpt-3.5:chat": {"success_rate": 0.85, "avg_latency": 0.8, "total_samples": 50},
             },
-            participant_count=1
+            participant_count=1,
         )
 
         signal2 = FederatedRewardSignal(
@@ -413,7 +391,7 @@ class TestAggregation:
                 "gpt-4:chat": {"success_rate": 0.95, "avg_latency": 1.2, "total_samples": 150}
                 # Missing gpt-3.5:chat
             },
-            participant_count=1
+            participant_count=1,
         )
 
         result = aggregate_reward_signals([signal1, signal2])

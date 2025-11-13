@@ -5,7 +5,6 @@ Prometheus metrics for row-level encryption operations.
 """
 
 import time
-from typing import Optional
 
 try:
     from prometheus_client import Counter, Histogram
@@ -93,7 +92,7 @@ class RowEncryptionMetricsCollector:
         # Send to Prometheus callback
         row_encryption_metrics_callback(operation, duration_ms, success, tenant_id, row_count, error_type)
 
-    def get_operation_stats(self, tenant_id: Optional[str] = None) -> dict:
+    def get_operation_stats(self, tenant_id: str | None = None) -> dict:
         """Get statistics for recorded operations."""
         operations = self.operations
         if tenant_id:

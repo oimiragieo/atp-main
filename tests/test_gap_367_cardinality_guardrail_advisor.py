@@ -154,10 +154,16 @@ class TestCardinalityGuardrailAdvisor(unittest.TestCase):
 
         # Create labels with patterns that can be optimized
         labels = [
-            "user_12345", "user_12346", "user_12347",  # Numeric pattern
+            "user_12345",
+            "user_12346",
+            "user_12347",  # Numeric pattern
             "very_long_label_name_that_exceeds_normal_length_and_should_be_truncated",
-            "short", "medium_length", "another_very_long_label_name_here",  # Length variation
-            "api_v1_endpoint", "api_v2_endpoint", "db_v1_query",  # Multiple prefixes
+            "short",
+            "medium_length",
+            "another_very_long_label_name_here",  # Length variation
+            "api_v1_endpoint",
+            "api_v2_endpoint",
+            "db_v1_query",  # Multiple prefixes
         ]
 
         for label in labels:
@@ -264,6 +270,7 @@ class TestGlobalFunctions(unittest.TestCase):
         """Reset global advisor before each test."""
         # Reset the global advisor
         import router_service.cardinality_guardrail_advisor as cga
+
         cga._advisor = None
 
     def test_get_cardinality_advisor(self):
@@ -302,6 +309,7 @@ class TestGlobalFunctions(unittest.TestCase):
         """Test global get_cardinality_violations function."""
         # Initialize advisor with test-friendly parameters
         from router_service.cardinality_guardrail_advisor import init_cardinality_advisor
+
         init_cardinality_advisor(warning_threshold=5, critical_threshold=10)
 
         # Create violation
@@ -316,6 +324,7 @@ class TestGlobalFunctions(unittest.TestCase):
         """Test global get_advisor_recommendations function."""
         # Initialize advisor with test-friendly parameters
         from router_service.cardinality_guardrail_advisor import init_cardinality_advisor
+
         init_cardinality_advisor(warning_threshold=5, critical_threshold=10)
 
         # Create violation
@@ -338,7 +347,7 @@ class TestAdvisorRecommendation(unittest.TestCase):
             action="Review label usage",
             rationale="High cardinality detected",
             estimated_impact="Performance degradation",
-            suggested_labels=["Aggregate user IDs", "Use ranges"]
+            suggested_labels=["Aggregate user IDs", "Use ranges"],
         )
 
         self.assertEqual(rec.metric_name, "test_metric")
@@ -359,7 +368,7 @@ class TestCardinalityViolation(unittest.TestCase):
             unique_labels=150,
             threshold=100,
             timestamp=1234567890.0,
-            sample_labels=["value1", "value2", "value3"]
+            sample_labels=["value1", "value2", "value3"],
         )
 
         self.assertEqual(violation.metric_name, "test_metric")

@@ -64,17 +64,9 @@ class TestZeroCopyCBOR(unittest.TestCase):
         test_obj = {
             "version": 1,
             "session": "test_session_123",
-            "data": {
-                "numbers": [1, 2, 3, 42],
-                "strings": ["hello", "world"],
-                "nested": {
-                    "deep": {
-                        "value": 999
-                    }
-                }
-            },
+            "data": {"numbers": [1, 2, 3, 42], "strings": ["hello", "world"], "nested": {"deep": {"value": 999}}},
             "flags": ["sync", "ack"],
-            "metadata": None
+            "metadata": None,
         }
 
         # Test regular encoding
@@ -99,10 +91,7 @@ class TestZeroCopyCBOR(unittest.TestCase):
             "flags": ["SYN"],
             "qos": "gold",
             "ttl": 30,
-            "payload": {
-                "type": "test.message",
-                "content": "Hello, world!"
-            }
+            "payload": {"type": "test.message", "content": "Hello, world!"},
         }
 
         key = b"test_key_32_bytes_long_key_123"
@@ -134,11 +123,8 @@ class TestZeroCopyCBOR(unittest.TestCase):
             "payload": {
                 "type": "large.message",
                 "content": large_data,
-                "metadata": {
-                    "size": len(large_data),
-                    "checksum": hash(large_data)
-                }
-            }
+                "metadata": {"size": len(large_data), "checksum": hash(large_data)},
+            },
         }
 
         key = b"large_test_key_32_bytes_long_"
@@ -226,14 +212,7 @@ class TestCBORPerformance(unittest.TestCase):
         import time
 
         # Create test data
-        frame = {
-            "v": 1,
-            "session_id": "perf_test_session",
-            "payload": {
-                "type": "performance.test",
-                "data": "x" * 1000
-            }
-        }
+        frame = {"v": 1, "session_id": "perf_test_session", "payload": {"type": "performance.test", "data": "x" * 1000}}
         key = b"perf_test_key_32_bytes_long_"
 
         # Warm up
@@ -255,10 +234,13 @@ class TestCBORPerformance(unittest.TestCase):
 
         # Zero-copy should be at least as fast (allowing for some variance)
         # In practice, it should be faster due to reduced memory allocations
-        self.assertLessEqual(zero_copy_time, regular_time * 1.2,
-                           f"Zero-copy encoding should not be more than 20% slower: "
-                           f"regular={regular_time:.4f}s, zero_copy={zero_copy_time:.4f}s")
+        self.assertLessEqual(
+            zero_copy_time,
+            regular_time * 1.2,
+            f"Zero-copy encoding should not be more than 20% slower: "
+            f"regular={regular_time:.4f}s, zero_copy={zero_copy_time:.4f}s",
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

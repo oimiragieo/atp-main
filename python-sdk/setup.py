@@ -17,21 +17,22 @@
 ATP Python SDK Setup
 """
 
-from setuptools import setup, find_packages
 import os
 
+from setuptools import find_packages, setup
+
 # Read the README file
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
 # Read requirements
-with open("requirements.txt", "r", encoding="utf-8") as fh:
+with open("requirements.txt", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 # Read version
 version = "1.0.0"
 if os.path.exists("atp_sdk/__init__.py"):
-    with open("atp_sdk/__init__.py", "r") as f:
+    with open("atp_sdk/__init__.py") as f:
         for line in f:
             if line.startswith("__version__"):
                 version = line.split("=")[1].strip().strip('"').strip("'")

@@ -6,7 +6,6 @@ privacy preservation, and differential privacy noise injection.
 """
 
 import pytest
-
 from tools.secure_aggregation_poc import (
     RoutingStats,
     SecureAggregatorCoordinator,
@@ -53,8 +52,7 @@ class TestSecureAggregationConvergence:
                     model_id=stats.model_id,
                     total_requests=stats.total_requests + variation_factor * 10,
                     successful_requests=min(
-                        stats.successful_requests + variation_factor * 8,
-                        stats.total_requests + variation_factor * 10
+                        stats.successful_requests + variation_factor * 8, stats.total_requests + variation_factor * 10
                     ),  # Ensure successful_requests <= total_requests
                     total_latency_ms=stats.total_latency_ms + variation_factor * 1000,
                     total_cost=stats.total_cost + variation_factor * 2.0,

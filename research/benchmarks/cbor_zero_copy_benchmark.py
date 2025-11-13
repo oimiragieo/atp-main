@@ -168,8 +168,12 @@ def run_benchmarks():
         print(".6f")
 
         # Calculate improvement
-        frame_improvement_pct = (results["regular_frame_mean"] - results["zero_copy_frame_mean"]) / results["regular_frame_mean"] * 100
-        cbor_improvement_pct = (results["regular_cbor_mean"] - results["zero_copy_cbor_mean"]) / results["regular_cbor_mean"] * 100
+        frame_improvement_pct = (
+            (results["regular_frame_mean"] - results["zero_copy_frame_mean"]) / results["regular_frame_mean"] * 100
+        )
+        cbor_improvement_pct = (
+            (results["regular_cbor_mean"] - results["zero_copy_cbor_mean"]) / results["regular_cbor_mean"] * 100
+        )
 
         print(f"Frame encoding improvement: {frame_improvement_pct:.1f}%")
         print(f"CBOR encoding improvement: {cbor_improvement_pct:.1f}%")

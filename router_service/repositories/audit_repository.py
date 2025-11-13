@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, func, or_, select
 
 from ..models.database import AuditLog
 from .base import BaseRepository
@@ -134,13 +134,16 @@ class AuditRepository(BaseRepository[AuditLog]):
     ) -> list[AuditLog]:
         """Search audit events by various fields."""
         async with self.db_manager.get_session() as session:
+            # Escape wildcards to prevent SQL injection
+            safe_search = search_term.replace("%", "\\%").replace("_", "\\_")
+            search_pattern = f"%{safe_search}%"
             stmt = select(AuditLog).where(
                 or_(
-                    AuditLog.event_type.ilike(f"%{search_term}%"),
-                    AuditLog.action.ilike(f"%{search_term}%"),
-                    AuditLog.user_id.ilike(f"%{search_term}%"),
-                    AuditLog.resource_type.ilike(f"%{search_term}%"),
-                    AuditLog.resource_id.ilike(f"%{search_term}%"),
+                    AuditLog.event_type.ilike(search_pattern),
+                    AuditLog.action.ilike(search_pattern),
+                    AuditLog.user_id.ilike(search_pattern),
+                    AuditLog.resource_type.ilike(search_pattern),
+                    AuditLog.resource_id.ilike(search_pattern),
                 )
             )
 

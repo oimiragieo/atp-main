@@ -57,4 +57,4 @@ class Permission(Enum):
 
     # Policy management
     POLICY_READ = "policy:read"
-    POLICY_WRITE
+    POLICY_WRITE = "policy:write"

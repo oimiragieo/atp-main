@@ -40,10 +40,7 @@ class ImageRegistrySync:
         self.logger = logging.getLogger(__name__)
 
         # Setup logging
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s'
-        )
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     async def sync_image(self, image: str) -> bool:
         """Sync a single image from source to target registry."""
@@ -94,10 +91,7 @@ class ImageRegistrySync:
     async def _run_command(self, cmd: list[str]) -> subprocess.CompletedProcess:
         """Run a command asynchronously."""
         return await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            timeout=self.config.timeout
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, timeout=self.config.timeout
         )
 
     async def sync_all_images(self) -> dict[str, bool]:
@@ -140,12 +134,7 @@ class ImageRegistrySync:
     def validate_prerequisites(self) -> bool:
         """Validate that required tools are available."""
         try:
-            result = subprocess.run(
-                ["docker", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
+            result = subprocess.run(["docker", "--version"], capture_output=True, text=True, timeout=10)
             if result.returncode != 0:
                 self.logger.error("Docker is not available or not running")
                 return False
@@ -169,7 +158,7 @@ def load_config_from_file(config_path: str) -> ImageSyncConfig:
         images=data["images"],
         dry_run=data.get("dry_run", False),
         concurrency=data.get("concurrency", 3),
-        timeout=data.get("timeout", 300)
+        timeout=data.get("timeout", 300),
     )
 
 
@@ -184,53 +173,24 @@ def create_default_config() -> ImageSyncConfig:
             "redis:7-alpine",
             "prom/prometheus:latest",
             "grafana/grafana:latest",
-            "nginx:1.25-alpine"
+            "nginx:1.25-alpine",
         ],
         dry_run=True,
         concurrency=3,
-        timeout=300
+        timeout=300,
     )
 
 
 async def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="ATP Image Registry Sync Tool")
-    parser.add_argument(
-        "--source-registry",
-        default="docker.io",
-        help="Source registry to pull images from"
-    )
-    parser.add_argument(
-        "--target-registry",
-        required=True,
-        help="Target registry to push images to"
-    )
-    parser.add_argument(
-        "--images",
-        nargs="+",
-        help="List of images to sync"
-    )
-    parser.add_argument(
-        "--config",
-        help="Path to YAML configuration file"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be done without actually syncing"
-    )
-    parser.add_argument(
-        "--concurrency",
-        type=int,
-        default=3,
-        help="Number of concurrent sync operations"
-    )
-    parser.add_argument(
-        "--timeout",
-        type=int,
-        default=300,
-        help="Timeout for individual operations in seconds"
-    )
+    parser.add_argument("--source-registry", default="docker.io", help="Source registry to pull images from")
+    parser.add_argument("--target-registry", required=True, help="Target registry to push images to")
+    parser.add_argument("--images", nargs="+", help="List of images to sync")
+    parser.add_argument("--config", help="Path to YAML configuration file")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would be done without actually syncing")
+    parser.add_argument("--concurrency", type=int, default=3, help="Number of concurrent sync operations")
+    parser.add_argument("--timeout", type=int, default=300, help="Timeout for individual operations in seconds")
 
     args = parser.parse_args()
 

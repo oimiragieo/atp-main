@@ -2,7 +2,6 @@
 
 import math
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -37,8 +36,8 @@ class HoltWintersModel:
     season_length: int
 
     # Model components
-    level: Optional[float] = None
-    trend: Optional[float] = None
+    level: float | None = None
+    trend: float | None = None
     seasonal: list[float] = None
 
     def __post_init__(self):

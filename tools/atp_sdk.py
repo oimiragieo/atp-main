@@ -10,7 +10,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 import aiohttp
@@ -24,11 +24,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SDKConfig:
     """Configuration for ATP Python SDK."""
+
     base_url: str = "http://localhost:8000"
     ws_url: str = "ws://localhost:8000"
-    api_key: Optional[str] = None
-    tenant_id: Optional[str] = None
-    session_id: Optional[str] = None
+    api_key: str | None = None
+    tenant_id: str | None = None
+    session_id: str | None = None
     default_timeout: float = 30.0
     max_retries: int = 3
     retry_delay: float = 1.0
@@ -37,41 +38,47 @@ class SDKConfig:
 
 class ATPClientError(Exception):
     """Base exception for ATP client errors."""
+
     pass
 
 
 class ATPConnectionError(ATPClientError):
     """Connection-related errors."""
+
     pass
 
 
 class AuthenticationError(ATPClientError):
     """Authentication-related errors."""
+
     pass
 
 
 class ValidationError(ATPClientError):
     """Request validation errors."""
+
     pass
 
 
 @dataclass
 class CompletionRequest:
     """Request for text completion."""
+
     prompt: str
     max_tokens: int = 512
     quality: str = "balanced"  # "fast", "balanced", "high"
     latency_slo_ms: int = 5000
     temperature: float = 0.7
     stream: bool = True
-    tenant: Optional[str] = None
-    conversation_id: Optional[str] = None
+    tenant: str | None = None
+    conversation_id: str | None = None
     consistency_level: str = "EVENTUAL"
 
 
 @dataclass
 class CompletionResponse:
     """Response from completion request."""
+
     text: str
     model_used: str
     tokens_in: int
@@ -79,23 +86,18 @@ class CompletionResponse:
     cost_usd: float
     quality_score: float
     finished: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class FrameBuilder:
     """Builder for ATP protocol frames with validation."""
 
-    def __init__(self, session_id: str, tenant_id: Optional[str] = None):
+    def __init__(self, session_id: str, tenant_id: str | None = None):
         self.session_id = session_id
         self.tenant_id = tenant_id
         self.lane_sequencer = LaneSequencer()
 
-    def build_completion_frame(
-        self,
-        stream_id: str,
-        request: CompletionRequest,
-        msg_seq: Optional[int] = None
-    ) -> Frame:
+    def build_completion_frame(self, stream_id: str, request: CompletionRequest, msg_seq: int | None = None) -> Frame:
         """Build a completion request frame."""
         if msg_seq is None:
             lane = Lane(persona_id=self.session_id, stream_id=stream_id)
@@ -116,24 +118,13 @@ class FrameBuilder:
         if request.consistency_level:
             payload_content["consistency_level"] = request.consistency_level
 
-        payload = Payload(
-            type="completion",
-            content=payload_content
-        )
+        payload = Payload(type="completion", content=payload_content)
 
         # Build meta
-        meta = Meta(
-            task_type="completion",
-            tool_permissions=[],
-            environment_id=self.tenant_id
-        )
+        meta = Meta(task_type="completion", tool_permissions=[], environment_id=self.tenant_id)
 
         # Build window
-        window = Window(
-            max_parallel=4,
-            max_tokens=50000,
-            max_usd_micros=1000000
-        )
+        window = Window(max_parallel=4, max_tokens=50000, max_usd_micros=1000000)
 
         return Frame(
             v=1,
@@ -146,7 +137,7 @@ class FrameBuilder:
             ttl=8,
             window=window,
             meta=meta,
-            payload=payload
+            payload=payload,
         )
 
     def build_heartbeat_frame(self, stream_id: str) -> Frame:
@@ -154,10 +145,7 @@ class FrameBuilder:
         lane = Lane(persona_id=self.session_id, stream_id=stream_id)
         msg_seq = self.lane_sequencer.get_next_msg_seq(lane)
 
-        payload = Payload(
-            type="heartbeat",
-            content={}
-        )
+        payload = Payload(type="heartbeat", content={})
 
         return Frame(
             v=1,
@@ -170,7 +158,7 @@ class FrameBuilder:
             ttl=8,
             window=Window(max_parallel=1, max_tokens=100, max_usd_micros=1000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
     def build_capability_frame(
@@ -185,7 +173,7 @@ class FrameBuilder:
         cost_per_token_micros: int | None = None,
         health_endpoint: str | None = None,
         version: str | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> Frame:
         """Build a capability advertisement frame."""
         from .frame import CapabilityPayload
@@ -203,7 +191,7 @@ class FrameBuilder:
             cost_per_token_micros=cost_per_token_micros,
             health_endpoint=health_endpoint,
             version=version,
-            metadata=metadata
+            metadata=metadata,
         )
 
         return Frame(
@@ -217,7 +205,7 @@ class FrameBuilder:
             ttl=30,  # Longer TTL for capability frames
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
     def build_health_frame(
@@ -235,7 +223,7 @@ class FrameBuilder:
         cpu_usage_percent: float | None = None,
         uptime_seconds: int | None = None,
         version: str | None = None,
-        metadata: dict[str, Any] | None = None
+        metadata: dict[str, Any] | None = None,
     ) -> Frame:
         """Build a health status frame."""
         from .frame import HealthPayload
@@ -257,7 +245,7 @@ class FrameBuilder:
             uptime_seconds=uptime_seconds,
             version=version,
             last_health_check=time.time(),
-            metadata=metadata
+            metadata=metadata,
         )
 
         return Frame(
@@ -271,7 +259,7 @@ class FrameBuilder:
             ttl=60,  # Health frames have longer TTL
             window=Window(max_parallel=1, max_tokens=1000, max_usd_micros=10000),
             meta=Meta(),
-            payload=payload
+            payload=payload,
         )
 
 
@@ -280,14 +268,11 @@ class ATPWebSocketClient:
 
     def __init__(self, config: SDKConfig):
         self.config = config
-        self.websocket: Optional[websockets.WebSocketServerProtocol] = None
-        self.frame_builder = FrameBuilder(
-            session_id=config.session_id or "default_session",
-            tenant_id=config.tenant_id
-        )
+        self.websocket: websockets.WebSocketServerProtocol | None = None
+        self.frame_builder = FrameBuilder(session_id=config.session_id or "default_session", tenant_id=config.tenant_id)
         self.connected = False
-        self._reconnect_task: Optional[asyncio.Task] = None
-        self._heartbeat_task: Optional[asyncio.Task] = None
+        self._reconnect_task: asyncio.Task | None = None
+        self._heartbeat_task: asyncio.Task | None = None
         self._response_handlers: dict[str, asyncio.Future] = {}
 
     async def connect(self) -> None:
@@ -304,11 +289,7 @@ class ATPWebSocketClient:
 
             uri = urljoin(self.config.ws_url, "/mcp")
             self.websocket = await websockets.connect(
-                uri,
-                extra_headers=headers,
-                ping_interval=20,
-                ping_timeout=10,
-                close_timeout=5
+                uri, extra_headers=headers, ping_interval=20, ping_timeout=10, close_timeout=5
             )
             self.connected = True
             logger.info("Connected to ATP Router WebSocket")
@@ -364,7 +345,7 @@ class ATPWebSocketClient:
             except Exception as e:
                 logger.warning(f"Reconnection attempt {attempt + 1} failed: {e}")
                 if attempt < self.config.max_retries - 1:
-                    await asyncio.sleep(self.config.retry_delay * (2 ** attempt))
+                    await asyncio.sleep(self.config.retry_delay * (2**attempt))
 
         raise ATPConnectionError("Failed to reconnect after maximum retries")
 
@@ -382,10 +363,7 @@ class ATPWebSocketClient:
             await self.websocket.send(frame.model_dump_json())
 
             # Wait for response with timeout
-            response = await asyncio.wait_for(
-                response_future,
-                timeout=self.config.default_timeout
-            )
+            response = await asyncio.wait_for(response_future, timeout=self.config.default_timeout)
 
             return response
 
@@ -425,12 +403,9 @@ class ATPClient:
 
     def __init__(self, config: SDKConfig):
         self.config = config
-        self.http_session: Optional[aiohttp.ClientSession] = None
-        self.ws_client: Optional[ATPWebSocketClient] = None
-        self.frame_builder = FrameBuilder(
-            session_id=config.session_id or "default_session",
-            tenant_id=config.tenant_id
-        )
+        self.http_session: aiohttp.ClientSession | None = None
+        self.ws_client: ATPWebSocketClient | None = None
+        self.frame_builder = FrameBuilder(session_id=config.session_id or "default_session", tenant_id=config.tenant_id)
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -453,7 +428,7 @@ class ATPClient:
         self.http_session = aiohttp.ClientSession(
             base_url=self.config.base_url,
             headers=headers,
-            timeout=aiohttp.ClientTimeout(total=self.config.default_timeout)
+            timeout=aiohttp.ClientTimeout(total=self.config.default_timeout),
         )
 
         # Create WebSocket client
@@ -468,11 +443,7 @@ class ATPClient:
         if self.http_session:
             await self.http_session.close()
 
-    async def complete(
-        self,
-        request: CompletionRequest,
-        use_websocket: bool = True
-    ) -> CompletionResponse:
+    async def complete(self, request: CompletionRequest, use_websocket: bool = True) -> CompletionResponse:
         """Complete text using ATP Router."""
         if use_websocket and self.ws_client:
             return await self._complete_websocket(request)
@@ -502,7 +473,7 @@ class ATPClient:
             tokens_in=content.get("tokens_in", 0),
             tokens_out=content.get("tokens_out", 0),
             cost_usd=content.get("cost_usd", 0.0),
-            quality_score=content.get("quality_score", 0.0)
+            quality_score=content.get("quality_score", 0.0),
         )
 
     async def _complete_http(self, request: CompletionRequest) -> CompletionResponse:
@@ -546,7 +517,7 @@ class ATPClient:
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 if attempt == self.config.max_retries - 1:
                     raise ATPConnectionError(f"Request failed after {self.config.max_retries} attempts: {e}") from e
-                await asyncio.sleep(self.config.retry_delay * (2 ** attempt))
+                await asyncio.sleep(self.config.retry_delay * (2**attempt))
 
         raise ATPClientError("Request failed")
 
@@ -556,7 +527,7 @@ class ATPClient:
         final_data = {}
 
         async for line in response.content:
-            line = line.decode('utf-8').strip()
+            line = line.decode("utf-8").strip()
             if not line:
                 continue
 
@@ -580,7 +551,7 @@ class ATPClient:
             tokens_in=final_data.get("tokens_in", 0),
             tokens_out=final_data.get("tokens_out", 0),
             cost_usd=final_data.get("cost_usd", 0.0),
-            quality_score=final_data.get("quality_score", 0.0)
+            quality_score=final_data.get("quality_score", 0.0),
         )
 
     async def health_check(self) -> bool:
@@ -596,11 +567,7 @@ class ATPClient:
 
 
 # Convenience functions
-async def complete(
-    prompt: str,
-    config: Optional[SDKConfig] = None,
-    **kwargs
-) -> CompletionResponse:
+async def complete(prompt: str, config: SDKConfig | None = None, **kwargs) -> CompletionResponse:
     """Convenience function for quick completion requests."""
     if config is None:
         config = SDKConfig()

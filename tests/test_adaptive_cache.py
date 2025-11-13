@@ -57,7 +57,7 @@ class TestLFUCache:
         cache.put("key3", "value3")
 
         assert cache.get("key1") == "value1"  # Should still be there
-        assert cache.get("key2") is None     # Should be evicted
+        assert cache.get("key2") is None  # Should be evicted
         assert cache.get("key3") == "value3"  # Should be there
 
     def test_adaptive_ttl_hot_key(self):

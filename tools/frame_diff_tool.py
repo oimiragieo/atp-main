@@ -15,6 +15,7 @@ from router_service.frame import Frame, Meta, Payload, Window
 @dataclass
 class FieldChange:
     """Represents a change in a field between versions."""
+
     field_path: str
     change_type: str  # 'added', 'removed', 'type_changed', 'validation_changed'
     old_value: Any = None
@@ -26,6 +27,7 @@ class FieldChange:
 @dataclass
 class FrameDiff:
     """Result of comparing two frame versions."""
+
     version_old: str
     version_new: str
     changes: list[FieldChange]
@@ -38,12 +40,15 @@ class FrameDiffAnalyzer:
     """Analyzes differences between frame versions."""
 
     def __init__(self):
-        self.breaking_changes_detected = REGISTRY.counter(
-            "frame_diff_breaking_changes_total"
-        )
+        self.breaking_changes_detected = REGISTRY.counter("frame_diff_breaking_changes_total")
 
-    def compare_frames(self, frame_old: dict[str, Any], frame_new: dict[str, Any],
-                      version_old: str = "vCurrent", version_new: str = "vNext") -> FrameDiff:
+    def compare_frames(
+        self,
+        frame_old: dict[str, Any],
+        frame_new: dict[str, Any],
+        version_old: str = "vCurrent",
+        version_new: str = "vNext",
+    ) -> FrameDiff:
         """Compare two frame dictionaries and return detailed diff."""
 
         changes = []
@@ -68,7 +73,7 @@ class FrameDiffAnalyzer:
             changes=changes,
             breaking_changes=breaking_count,
             total_changes=len(changes),
-            compatibility_score=max(0.0, compatibility_score)
+            compatibility_score=max(0.0, compatibility_score),
         )
 
         # Update metrics
@@ -82,23 +87,27 @@ class FrameDiffAnalyzer:
 
         # Field added
         if old_value is None and new_value is not None:
-            changes.append(FieldChange(
-                field_path=field_path,
-                change_type="added",
-                new_value=new_value,
-                breaking=self._is_breaking_addition(field_path, new_value),
-                description=f"New field '{field_path}' added"
-            ))
+            changes.append(
+                FieldChange(
+                    field_path=field_path,
+                    change_type="added",
+                    new_value=new_value,
+                    breaking=self._is_breaking_addition(field_path, new_value),
+                    description=f"New field '{field_path}' added",
+                )
+            )
 
         # Field removed
         elif old_value is not None and new_value is None:
-            changes.append(FieldChange(
-                field_path=field_path,
-                change_type="removed",
-                old_value=old_value,
-                breaking=self._is_breaking_removal(field_path, old_value),
-                description=f"Field '{field_path}' removed"
-            ))
+            changes.append(
+                FieldChange(
+                    field_path=field_path,
+                    change_type="removed",
+                    old_value=old_value,
+                    breaking=self._is_breaking_removal(field_path, old_value),
+                    description=f"Field '{field_path}' removed",
+                )
+            )
 
         # Field modified
         elif old_value != new_value:
@@ -112,14 +121,16 @@ class FrameDiffAnalyzer:
 
         # Type change
         if type(old_value) is not type(new_value):
-            changes.append(FieldChange(
-                field_path=field_path,
-                change_type="type_changed",
-                old_value=type(old_value).__name__,
-                new_value=type(new_value).__name__,
-                breaking=self._is_breaking_type_change(field_path, old_value, new_value),
-                description=f"Type changed from {type(old_value).__name__} to {type(new_value).__name__}"
-            ))
+            changes.append(
+                FieldChange(
+                    field_path=field_path,
+                    change_type="type_changed",
+                    old_value=type(old_value).__name__,
+                    new_value=type(new_value).__name__,
+                    breaking=self._is_breaking_type_change(field_path, old_value, new_value),
+                    description=f"Type changed from {type(old_value).__name__} to {type(new_value).__name__}",
+                )
+            )
 
         # Dictionary comparison
         elif isinstance(old_value, dict) and isinstance(new_value, dict):
@@ -131,14 +142,16 @@ class FrameDiffAnalyzer:
 
         # Value change
         else:
-            changes.append(FieldChange(
-                field_path=field_path,
-                change_type="value_changed",
-                old_value=old_value,
-                new_value=new_value,
-                breaking=self._is_breaking_value_change(field_path, old_value, new_value),
-                description=f"Value changed from {old_value} to {new_value}"
-            ))
+            changes.append(
+                FieldChange(
+                    field_path=field_path,
+                    change_type="value_changed",
+                    old_value=old_value,
+                    new_value=new_value,
+                    breaking=self._is_breaking_value_change(field_path, old_value, new_value),
+                    description=f"Value changed from {old_value} to {new_value}",
+                )
+            )
 
         return changes
 
@@ -158,14 +171,16 @@ class FrameDiffAnalyzer:
         changes = []
 
         if len(old_list) != len(new_list):
-            changes.append(FieldChange(
-                field_path=base_path,
-                change_type="list_length_changed",
-                old_value=len(old_list),
-                new_value=len(new_list),
-                breaking=self._is_breaking_list_change(base_path),
-                description=f"List length changed from {len(old_list)} to {len(new_list)}"
-            ))
+            changes.append(
+                FieldChange(
+                    field_path=base_path,
+                    change_type="list_length_changed",
+                    old_value=len(old_list),
+                    new_value=len(new_list),
+                    breaking=self._is_breaking_list_change(base_path),
+                    description=f"List length changed from {len(old_list)} to {len(new_list)}",
+                )
+            )
 
         # Check if item types are consistent
         if old_list and new_list:
@@ -173,14 +188,16 @@ class FrameDiffAnalyzer:
             new_types = {type(item).__name__ for item in new_list}
 
             if old_types != new_types:
-                changes.append(FieldChange(
-                    field_path=base_path,
-                    change_type="list_item_types_changed",
-                    old_value=old_types,
-                    new_value=new_types,
-                    breaking=True,
-                    description=f"List item types changed from {old_types} to {new_types}"
-                ))
+                changes.append(
+                    FieldChange(
+                        field_path=base_path,
+                        change_type="list_item_types_changed",
+                        old_value=old_types,
+                        new_value=new_types,
+                        breaking=True,
+                        description=f"List item types changed from {old_types} to {new_types}",
+                    )
+                )
 
         return changes
 
@@ -262,7 +279,7 @@ def create_sample_frames() -> tuple[dict[str, Any], dict[str, Any]]:
         ttl=255,
         window=Window(max_parallel=4, max_tokens=10000, max_usd_micros=5000000),
         meta=Meta(task_type="chat"),
-        payload=Payload(type="agent.request", content={"query": "Hello"})
+        payload=Payload(type="agent.request", content={"query": "Hello"}),
     )
 
     # "New" version frame (with some changes)
@@ -280,8 +297,8 @@ def create_sample_frames() -> tuple[dict[str, Any], dict[str, Any]]:
         payload=Payload(
             type="agent.request",
             content={"query": "Hello"},
-            confidence=0.95  # Added confidence field
-        )
+            confidence=0.95,  # Added confidence field
+        ),
     )
 
     return old_frame.to_public_dict(), new_frame.to_public_dict()

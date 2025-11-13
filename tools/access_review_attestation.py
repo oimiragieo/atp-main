@@ -27,7 +27,6 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -38,12 +37,13 @@ from metrics import ACCESS_REVIEWS_COMPLETED_TOTAL
 @dataclass
 class AccessRecord:
     """Represents a user's access to a resource."""
+
     user_id: str
     resource_type: str  # e.g., "namespace", "tenant", "role"
     resource_id: str
     permission: str  # e.g., "read", "write", "admin"
     granted_at: datetime
-    last_accessed: Optional[datetime]
+    last_accessed: datetime | None
     granted_by: str
     justification: str
 
@@ -51,12 +51,13 @@ class AccessRecord:
 @dataclass
 class AccessReview:
     """Represents an access review cycle."""
+
     review_id: str
     review_period_start: datetime
     review_period_end: datetime
     reviewer: str
     access_records: list[AccessRecord]
-    attestation_date: Optional[datetime]
+    attestation_date: datetime | None
     findings: list[str]  # Issues found during review
     actions_taken: list[str]  # Actions taken (revoked, approved, etc.)
     created_at: datetime
@@ -72,7 +73,7 @@ class AccessReviewAttestationWorkflow:
         self.access_file = data_dir / "access_records.jsonl"
         self.reviews_file = data_dir / "access_reviews.jsonl"
 
-    def export_access_records(self, output_file: Optional[Path] = None) -> list[AccessRecord]:
+    def export_access_records(self, output_file: Path | None = None) -> list[AccessRecord]:
         """Export current access records for review."""
         # Mock data - in production this would query actual access control systems
         records = [
@@ -84,7 +85,7 @@ class AccessReviewAttestationWorkflow:
                 granted_at=datetime.now() - timedelta(days=30),
                 last_accessed=datetime.now() - timedelta(days=2),
                 granted_by="admin",
-                justification="Production deployment access"
+                justification="Production deployment access",
             ),
             AccessRecord(
                 user_id="user2",
@@ -94,7 +95,7 @@ class AccessReviewAttestationWorkflow:
                 granted_at=datetime.now() - timedelta(days=90),
                 last_accessed=datetime.now() - timedelta(days=45),
                 granted_by="manager",
-                justification="Client data access for support"
+                justification="Client data access for support",
             ),
             AccessRecord(
                 user_id="user3",
@@ -104,7 +105,7 @@ class AccessReviewAttestationWorkflow:
                 granted_at=datetime.now() - timedelta(days=180),
                 last_accessed=None,  # Never accessed - stale!
                 granted_by="hr",
-                justification="Development team access"
+                justification="Development team access",
             ),
         ]
 
@@ -145,7 +146,7 @@ class AccessReviewAttestationWorkflow:
             findings=findings,
             actions_taken=[],
             created_at=now,
-            status="pending"
+            status="pending",
         )
 
         # Save review
@@ -185,18 +186,16 @@ class AccessReviewAttestationWorkflow:
                 if line.strip():
                     data = json.loads(line)
                     # Convert datetime strings back
-                    data['review_period_start'] = datetime.fromisoformat(data['review_period_start'])
-                    data['review_period_end'] = datetime.fromisoformat(data['review_period_end'])
-                    data['created_at'] = datetime.fromisoformat(data['created_at'])
-                    if data.get('attestation_date'):
-                        data['attestation_date'] = datetime.fromisoformat(data['attestation_date'])
+                    data["review_period_start"] = datetime.fromisoformat(data["review_period_start"])
+                    data["review_period_end"] = datetime.fromisoformat(data["review_period_end"])
+                    data["created_at"] = datetime.fromisoformat(data["created_at"])
+                    if data.get("attestation_date"):
+                        data["attestation_date"] = datetime.fromisoformat(data["attestation_date"])
                     else:
-                        data['attestation_date'] = None
+                        data["attestation_date"] = None
 
                     # Convert access records
-                    data['access_records'] = [
-                        AccessRecord(**record) for record in data['access_records']
-                    ]
+                    data["access_records"] = [AccessRecord(**record) for record in data["access_records"]]
 
                     review = AccessReview(**data)
                     review_id = review.review_id
@@ -207,55 +206,68 @@ class AccessReviewAttestationWorkflow:
                     else:
                         existing = reviews_map[review_id]
                         # If this one has an attestation_date and the existing doesn't, use this one
-                        if (review.attestation_date and not existing.attestation_date):
+                        if review.attestation_date and not existing.attestation_date:
                             reviews_map[review_id] = review
                         # If both have attestation_date, use the more recent one
-                        elif (review.attestation_date and existing.attestation_date and
-                              review.attestation_date > existing.attestation_date):
+                        elif (
+                            review.attestation_date
+                            and existing.attestation_date
+                            and review.attestation_date > existing.attestation_date
+                        ):
                             reviews_map[review_id] = review
 
         return [r for r in reviews_map.values() if r.status == "pending"]
 
     def _write_csv_report(self, records: list[AccessRecord], output_file: Path):
         """Write access records to CSV file."""
-        with open(output_file, 'w', newline='') as csvfile:
-            fieldnames = ['user_id', 'resource_type', 'resource_id', 'permission',
-                         'granted_at', 'last_accessed', 'granted_by', 'justification']
+        with open(output_file, "w", newline="") as csvfile:
+            fieldnames = [
+                "user_id",
+                "resource_type",
+                "resource_id",
+                "permission",
+                "granted_at",
+                "last_accessed",
+                "granted_by",
+                "justification",
+            ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
             writer.writeheader()
             for record in records:
-                writer.writerow({
-                    'user_id': record.user_id,
-                    'resource_type': record.resource_type,
-                    'resource_id': record.resource_id,
-                    'permission': record.permission,
-                    'granted_at': record.granted_at.isoformat(),
-                    'last_accessed': record.last_accessed.isoformat() if record.last_accessed else 'Never',
-                    'granted_by': record.granted_by,
-                    'justification': record.justification,
-                })
+                writer.writerow(
+                    {
+                        "user_id": record.user_id,
+                        "resource_type": record.resource_type,
+                        "resource_id": record.resource_id,
+                        "permission": record.permission,
+                        "granted_at": record.granted_at.isoformat(),
+                        "last_accessed": record.last_accessed.isoformat() if record.last_accessed else "Never",
+                        "granted_by": record.granted_by,
+                        "justification": record.justification,
+                    }
+                )
 
     def _save_review(self, review: AccessReview):
         """Save review to JSONL file."""
         data = asdict(review)
         # Convert datetimes to ISO strings for JSON serialization
-        data['review_period_start'] = review.review_period_start.isoformat()
-        data['review_period_end'] = review.review_period_end.isoformat()
-        data['created_at'] = review.created_at.isoformat()
+        data["review_period_start"] = review.review_period_start.isoformat()
+        data["review_period_end"] = review.review_period_end.isoformat()
+        data["created_at"] = review.created_at.isoformat()
         if review.attestation_date:
-            data['attestation_date'] = review.attestation_date.isoformat()
+            data["attestation_date"] = review.attestation_date.isoformat()
 
         # Convert AccessRecord datetimes
-        for record in data['access_records']:
-            record['granted_at'] = record['granted_at'].isoformat()
-            if record['last_accessed']:
-                record['last_accessed'] = record['last_accessed'].isoformat()
+        for record in data["access_records"]:
+            record["granted_at"] = record["granted_at"].isoformat()
+            if record["last_accessed"]:
+                record["last_accessed"] = record["last_accessed"].isoformat()
 
-        with open(self.reviews_file, 'a') as f:
-            f.write(json.dumps(data) + '\n')
+        with open(self.reviews_file, "a") as f:
+            f.write(json.dumps(data) + "\n")
 
-    def _load_review(self, review_id: str) -> Optional[AccessReview]:
+    def _load_review(self, review_id: str) -> AccessReview | None:
         """Load a specific review by ID."""
         if not self.reviews_file.exists():
             return None
@@ -265,26 +277,24 @@ class AccessReviewAttestationWorkflow:
             for line in f:
                 if line.strip():
                     data = json.loads(line)
-                    if data['review_id'] == review_id:
+                    if data["review_id"] == review_id:
                         # Convert datetime strings back to datetime objects
-                        data['review_period_start'] = datetime.fromisoformat(data['review_period_start'])
-                        data['review_period_end'] = datetime.fromisoformat(data['review_period_end'])
-                        data['created_at'] = datetime.fromisoformat(data['created_at'])
-                        if data.get('attestation_date'):
-                            data['attestation_date'] = datetime.fromisoformat(data['attestation_date'])
+                        data["review_period_start"] = datetime.fromisoformat(data["review_period_start"])
+                        data["review_period_end"] = datetime.fromisoformat(data["review_period_end"])
+                        data["created_at"] = datetime.fromisoformat(data["created_at"])
+                        if data.get("attestation_date"):
+                            data["attestation_date"] = datetime.fromisoformat(data["attestation_date"])
                         else:
-                            data['attestation_date'] = None
+                            data["attestation_date"] = None
 
                         # Convert access record datetime strings back
-                        for record in data['access_records']:
-                            record['granted_at'] = datetime.fromisoformat(record['granted_at'])
-                            if record['last_accessed']:
-                                record['last_accessed'] = datetime.fromisoformat(record['last_accessed'])
+                        for record in data["access_records"]:
+                            record["granted_at"] = datetime.fromisoformat(record["granted_at"])
+                            if record["last_accessed"]:
+                                record["last_accessed"] = datetime.fromisoformat(record["last_accessed"])
 
                         # Convert access records to AccessRecord objects
-                        data['access_records'] = [
-                            AccessRecord(**record) for record in data['access_records']
-                        ]
+                        data["access_records"] = [AccessRecord(**record) for record in data["access_records"]]
 
                         # Keep the latest version (by attestation_date or created_at)
                         current_review = AccessReview(**data)
@@ -292,11 +302,14 @@ class AccessReviewAttestationWorkflow:
                             latest_review = current_review
                         else:
                             # If this one has an attestation_date and the previous doesn't, use this one
-                            if (current_review.attestation_date and not latest_review.attestation_date):
+                            if current_review.attestation_date and not latest_review.attestation_date:
                                 latest_review = current_review
                             # If both have attestation_date, use the more recent one
-                            elif (current_review.attestation_date and latest_review.attestation_date and
-                                  current_review.attestation_date > latest_review.attestation_date):
+                            elif (
+                                current_review.attestation_date
+                                and latest_review.attestation_date
+                                and current_review.attestation_date > latest_review.attestation_date
+                            ):
                                 latest_review = current_review
 
         return latest_review
@@ -305,14 +318,14 @@ class AccessReviewAttestationWorkflow:
 def main():
     """CLI interface for access review attestation workflow."""
     parser = argparse.ArgumentParser(description="Access Review Attestation Workflow")
-    parser.add_argument("action", choices=["export", "create-review", "attest", "list-pending"],
-                       help="Action to perform")
+    parser.add_argument(
+        "action", choices=["export", "create-review", "attest", "list-pending"], help="Action to perform"
+    )
     parser.add_argument("--reviewer", help="Reviewer name for review operations")
     parser.add_argument("--review-id", help="Review ID for attestation")
     parser.add_argument("--actions", nargs="*", help="Actions taken during review")
     parser.add_argument("--output", type=Path, help="Output file for export")
-    parser.add_argument("--max-age-days", type=int, default=90,
-                       help="Maximum age in days for stale access detection")
+    parser.add_argument("--max-age-days", type=int, default=90, help="Maximum age in days for stale access detection")
 
     args = parser.parse_args()
 

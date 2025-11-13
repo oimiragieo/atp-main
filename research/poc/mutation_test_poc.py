@@ -14,8 +14,8 @@ We keep this as a tool so CI can opt-in later.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 
 def _synthetic_cmp(a: int, b: int) -> bool:

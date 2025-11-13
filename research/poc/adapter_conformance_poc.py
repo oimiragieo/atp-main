@@ -94,7 +94,7 @@ def predictability_score(estimates: list[tuple[int, int]], truths: list[tuple[in
     if not estimates or len(estimates) != len(truths):
         return 0.0
     total = 0.0
-    for (ein, eout), (tin, tout) in zip(estimates, truths):
+    for (ein, eout), (tin, tout) in zip(estimates, truths, strict=False):
         total += 0.5 * (mape(ein, tin) + mape(eout, tout))
     avg = total / len(estimates)
     return max(0.0, 1.0 - min(1.0, avg))

@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 
 # GAP-368: Evidence pack assembly pipeline metrics
 EVIDENCE_PACKS_GENERATED_TOTAL = REGISTRY.counter("evidence_packs_generated_total")
-EVIDENCE_PACK_GENERATION_DURATION = REGISTRY.histogram("evidence_pack_generation_duration_seconds", [30, 60, 120, 300, 600])
+EVIDENCE_PACK_GENERATION_DURATION = REGISTRY.histogram(
+    "evidence_pack_generation_duration_seconds", [30, 60, 120, 300, 600]
+)
 
 
 @dataclass
@@ -105,9 +107,7 @@ class EvidencePackAssembler:
         return self.base_path / path
 
     def assemble_pack(
-        self,
-        pack_id: str | None = None,
-        custom_time_range: dict[str, str] | None = None
+        self, pack_id: str | None = None, custom_time_range: dict[str, str] | None = None
     ) -> EvidencePack:
         """Assemble a complete evidence pack.
 
@@ -130,46 +130,30 @@ class EvidencePackAssembler:
         logger.info(f"Assembling evidence pack {pack_id} for time range: {time_range}")
 
         # Collect all components
-        manifest = EvidencePackManifest(
-            pack_id=pack_id,
-            created_at=datetime.now().isoformat(),
-            time_range=time_range
-        )
+        manifest = EvidencePackManifest(pack_id=pack_id, created_at=datetime.now().isoformat(), time_range=time_range)
 
         # Collect policies
         policies = self._collect_policies()
-        manifest.components["policies"] = {
-            "count": len(policies),
-            "sources": list(policies.keys())
-        }
+        manifest.components["policies"] = {"count": len(policies), "sources": list(policies.keys())}
 
         # Collect audit chain
         audit_chain = self._collect_audit_chain(time_range)
-        manifest.components["audit_chain"] = {
-            "count": len(audit_chain),
-            "sources": self.config.audit_patterns
-        }
+        manifest.components["audit_chain"] = {"count": len(audit_chain), "sources": self.config.audit_patterns}
 
         # Collect DP ledger
         dp_ledger = self._collect_dp_ledger(time_range)
-        manifest.components["dp_ledger"] = {
-            "count": len(dp_ledger),
-            "sources": self.config.dp_patterns
-        }
+        manifest.components["dp_ledger"] = {"count": len(dp_ledger), "sources": self.config.dp_patterns}
 
         # Collect retention logs
         retention_logs = self._collect_retention_logs(time_range)
         manifest.components["retention_logs"] = {
             "count": len(retention_logs),
-            "sources": self.config.retention_patterns
+            "sources": self.config.retention_patterns,
         }
 
         # Collect SLO reports
         slo_reports = self._collect_slo_reports(time_range)
-        manifest.components["slo_reports"] = {
-            "count": len(slo_reports),
-            "sources": self.config.slo_patterns
-        }
+        manifest.components["slo_reports"] = {"count": len(slo_reports), "sources": self.config.slo_patterns}
 
         pack = EvidencePack(
             manifest=manifest,
@@ -177,7 +161,7 @@ class EvidencePackAssembler:
             audit_chain=audit_chain,
             dp_ledger=dp_ledger,
             retention_logs=retention_logs,
-            slo_reports=slo_reports
+            slo_reports=slo_reports,
         )
 
         # Record metrics
@@ -211,14 +195,14 @@ class EvidencePackAssembler:
 
         logger.info(f"Saving evidence pack to {output_path}")
 
-        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=self.config.compression_level) as zf:
+        with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED, compresslevel=self.config.compression_level) as zf:
             # Save manifest
             manifest_data = {
                 "pack_id": pack.manifest.pack_id,
                 "created_at": pack.manifest.created_at,
                 "time_range": pack.manifest.time_range,
                 "version": pack.manifest.version,
-                "components": pack.manifest.components
+                "components": pack.manifest.components,
             }
             zf.writestr("manifest.json", json.dumps(manifest_data, indent=2))
 
@@ -250,10 +234,7 @@ class EvidencePackAssembler:
         end_date = datetime.now()
         start_date = end_date - timedelta(days=self.config.days_back)
 
-        return {
-            "start": start_date.isoformat(),
-            "end": end_date.isoformat()
-        }
+        return {"start": start_date.isoformat(), "end": end_date.isoformat()}
 
     def _collect_policies(self) -> dict[str, Any]:
         """Collect policy files from the policies directory."""
@@ -267,12 +248,13 @@ class EvidencePackAssembler:
         for pattern in self.config.policy_patterns:
             for policy_file in policies_path.glob(pattern):
                 try:
-                    if policy_file.suffix.lower() == '.yaml':
+                    if policy_file.suffix.lower() == ".yaml":
                         import yaml
-                        with open(policy_file, encoding='utf-8') as f:
+
+                        with open(policy_file, encoding="utf-8") as f:
                             policies[policy_file.name] = yaml.safe_load(f)
-                    elif policy_file.suffix.lower() == '.json':
-                        with open(policy_file, encoding='utf-8') as f:
+                    elif policy_file.suffix.lower() == ".json":
+                        with open(policy_file, encoding="utf-8") as f:
                             policies[policy_file.name] = json.load(f)
                     else:
                         logger.warning(f"Unsupported policy file format: {policy_file}")
@@ -296,7 +278,7 @@ class EvidencePackAssembler:
         for pattern in self.config.audit_patterns:
             for audit_file in audit_path.glob(pattern):
                 try:
-                    with open(audit_file, encoding='utf-8') as f:
+                    with open(audit_file, encoding="utf-8") as f:
                         for line in f:
                             if line.strip():
                                 entry = json.loads(line.strip())
@@ -323,7 +305,7 @@ class EvidencePackAssembler:
         for pattern in self.config.dp_patterns:
             for dp_file in dp_path.glob(pattern):
                 try:
-                    with open(dp_file, encoding='utf-8') as f:
+                    with open(dp_file, encoding="utf-8") as f:
                         for line in f:
                             if line.strip():
                                 entry = json.loads(line.strip())
@@ -349,7 +331,7 @@ class EvidencePackAssembler:
         for pattern in self.config.retention_patterns:
             for retention_file in retention_path.glob(pattern):
                 try:
-                    with open(retention_file, encoding='utf-8') as f:
+                    with open(retention_file, encoding="utf-8") as f:
                         for line in f:
                             if line.strip():
                                 entry = json.loads(line.strip())
@@ -377,7 +359,7 @@ class EvidencePackAssembler:
         for pattern in ["slm_observations*.jsonl"]:
             for slm_file in slo_path.glob(pattern):
                 try:
-                    with open(slm_file, encoding='utf-8') as f:
+                    with open(slm_file, encoding="utf-8") as f:
                         for line in f:
                             if line.strip():
                                 entry = json.loads(line.strip())
@@ -393,7 +375,7 @@ class EvidencePackAssembler:
         for pattern in ["*counters.json"]:
             for counter_file in slo_path.glob(pattern):
                 try:
-                    with open(counter_file, encoding='utf-8') as f:
+                    with open(counter_file, encoding="utf-8") as f:
                         counters = json.load(f)
                         slo_reports[f"counters_{counter_file.stem}"] = counters
                 except Exception as e:
@@ -404,7 +386,7 @@ class EvidencePackAssembler:
     def _entry_in_time_range(self, entry: dict[str, Any], start_time: datetime, end_time: datetime) -> bool:
         """Check if an entry falls within the specified time range."""
         # Try common timestamp fields
-        timestamp_fields = ['timestamp', 'time', 'created_at', 'event_time']
+        timestamp_fields = ["timestamp", "time", "created_at", "event_time"]
 
         for field in timestamp_fields:
             if field in entry:
@@ -419,9 +401,7 @@ class EvidencePackAssembler:
 
 
 def create_evidence_pack(
-    pack_id: str | None = None,
-    config: EvidencePackConfig | None = None,
-    save_to_disk: bool = True
+    pack_id: str | None = None, config: EvidencePackConfig | None = None, save_to_disk: bool = True
 ) -> EvidencePack:
     """Convenience function to create and optionally save an evidence pack.
 
@@ -451,16 +431,12 @@ def get_evidence_pack_info(pack_path: str) -> dict[str, Any]:
     Returns:
         Dictionary with pack information
     """
-    with zipfile.ZipFile(pack_path, 'r') as zf:
+    with zipfile.ZipFile(pack_path, "r") as zf:
         # Read manifest
-        with zf.open('manifest.json') as f:
+        with zf.open("manifest.json") as f:
             manifest = json.load(f)
 
         # Get file list
         files = zf.namelist()
 
-        return {
-            "manifest": manifest,
-            "files": files,
-            "total_size": sum(zf.getinfo(name).file_size for name in files)
-        }
+        return {"manifest": manifest, "files": files, "total_size": sum(zf.getinfo(name).file_size for name in files)}

@@ -1,6 +1,6 @@
 import random
 import time
-from typing import Callable
+from collections.abc import Callable
 
 
 def fault_injector(

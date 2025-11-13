@@ -29,7 +29,7 @@ class TestMCPClient:
     @pytest.mark.asyncio
     async def test_connect_success(self, client, mock_websocket):
         """Test successful connection to MCP server."""
-        with patch('client.mcp_cli.websockets') as mock_ws_module:
+        with patch("client.mcp_cli.websockets") as mock_ws_module:
             mock_ws_module.connect = AsyncMock(return_value=mock_websocket)
             await client.connect()
 
@@ -39,7 +39,7 @@ class TestMCPClient:
     @pytest.mark.asyncio
     async def test_connect_failure(self, client):
         """Test connection failure handling."""
-        with patch('client.mcp_cli.websockets.connect', side_effect=Exception("Connection refused")):
+        with patch("client.mcp_cli.websockets.connect", side_effect=Exception("Connection refused")):
             with pytest.raises(Exception, match="Connection refused"):
                 await client.connect()
 
@@ -98,8 +98,8 @@ class TestMCPClient:
             "type": "listTools",
             "tools": [
                 {"name": "route.complete", "description": "Complete routing"},
-                {"name": "adapter.python", "description": "Python adapter"}
-            ]
+                {"name": "adapter.python", "description": "Python adapter"},
+            ],
         }
 
         # Set up the mock to return the response
@@ -125,7 +125,7 @@ class TestMCPClient:
                 "sequence": 1,
                 "cumulative_tokens": 1,
                 "is_partial": True,
-                "dp_metrics_emitted": True
+                "dp_metrics_emitted": True,
             },
             {
                 "type": "toolOutput",
@@ -135,17 +135,18 @@ class TestMCPClient:
                 "cumulative_tokens": 2,
                 "final": True,
                 "dp_metrics_emitted": True,
-                "metadata": {"model_used": "gpt-4", "latency_ms": 150}
-            }
+                "metadata": {"model_used": "gpt-4", "latency_ms": 150},
+            },
         ]
 
         # Set up the mock to return responses in sequence, then raise ConnectionClosedError
         from websockets import frames
         from websockets.exceptions import ConnectionClosedError
+
         close_frame = frames.Close(1000, "Connection closed")
-        mock_websocket.recv.side_effect = [
-            json.dumps(resp) for resp in responses
-        ] + [ConnectionClosedError(close_frame, None)]
+        mock_websocket.recv.side_effect = [json.dumps(resp) for resp in responses] + [
+            ConnectionClosedError(close_frame, None)
+        ]
 
         await client.call_tool("route.complete", {"prompt": "Hello world"}, stream=True)
 
@@ -161,13 +162,7 @@ class TestMCPClient:
         """Test handling error responses from tool calls."""
         client.websocket = mock_websocket
 
-        error_response = {
-            "type": "error",
-            "error": {
-                "code": "INTERNAL_ERROR",
-                "message": "Tool execution failed"
-            }
-        }
+        error_response = {"type": "error", "error": {"code": "INTERNAL_ERROR", "message": "Tool execution failed"}}
 
         mock_websocket.recv.return_value = json.dumps(error_response)
 
@@ -182,6 +177,7 @@ class TestMCPClient:
         client.websocket = mock_websocket
 
         from websockets.exceptions import ConnectionClosedError
+
         mock_websocket.recv.side_effect = ConnectionClosedError(None, None)
 
         await client.call_tool("route.complete", {"prompt": "test"}, stream=True)

@@ -6,7 +6,7 @@ import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 class AllocationStrategy(Enum):
@@ -37,7 +37,7 @@ class TenantProfile:
     historical_usage: float = 0.0
     current_allocation: float = 0.0
     fairness_score: float = 1.0
-    last_allocation_time: Optional[datetime] = None
+    last_allocation_time: datetime | None = None
     allocation_history: list[float] = field(default_factory=list)
 
 
@@ -65,7 +65,7 @@ class AllocationResult:
     allocated_epsilon: float
     allocation_strategy: AllocationStrategy
     allocated_at: datetime = field(default_factory=datetime.now)
-    expires_at: Optional[datetime] = None
+    expires_at: datetime | None = None
     fairness_adjustment: float = 1.0
 
 
@@ -360,7 +360,7 @@ class AdaptiveDPMarketplace:
             "strategy_metrics": self.strategy_metrics,
         }
 
-    def get_tenant_status(self, tenant_id: str) -> Optional[dict[str, Any]]:
+    def get_tenant_status(self, tenant_id: str) -> dict[str, Any] | None:
         """Get status for a specific tenant."""
         if tenant_id not in self.tenants:
             return None

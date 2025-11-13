@@ -2,7 +2,6 @@ import abc
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class SandboxState(Enum):
@@ -12,8 +11,10 @@ class SandboxState(Enum):
     STOPPED = "stopped"
     FAILED = "failed"
 
+
 class SandboxError(Exception):
     pass
+
 
 @dataclass
 class SandboxConfig:
@@ -22,10 +23,10 @@ class SandboxConfig:
     disk_mb: int = 1024
     timeout_seconds: int = 300
     network_enabled: bool = False
-    allowlist_domains: Optional[list[str]] = None
-    read_only_paths: Optional[list[str]] = None
-    temp_paths: Optional[list[str]] = None
-    tool_id: Optional[str] = None  # Tool identifier for cost cap enforcement
+    allowlist_domains: list[str] | None = None
+    read_only_paths: list[str] | None = None
+    temp_paths: list[str] | None = None
+    tool_id: str | None = None  # Tool identifier for cost cap enforcement
 
     def __post_init__(self):
         if self.allowlist_domains is None:
@@ -35,6 +36,7 @@ class SandboxConfig:
         if self.temp_paths is None:
             self.temp_paths = ["/tmp", "/var/tmp"]  # noqa: S108
 
+
 @dataclass
 class SandboxResult:
     exit_code: int
@@ -42,6 +44,7 @@ class SandboxResult:
     stderr: str
     duration_seconds: float
     resource_usage: dict
+
 
 class SandboxDriver(abc.ABC):
     def __init__(self):
@@ -77,6 +80,7 @@ class SandboxDriver(abc.ABC):
     async def get_sandbox_status(self, sandbox_id):
         pass
 
+
 class SandboxManager:
     def __init__(self):
         self.drivers = {}
@@ -94,13 +98,17 @@ class SandboxManager:
     def list_drivers(self):
         return list(self.drivers.keys())
 
+
 _sandbox_manager = SandboxManager()
+
 
 def get_sandbox_manager():
     return _sandbox_manager
 
+
 def register_sandbox_driver(name, driver):
     _sandbox_manager.register_driver(name, driver)
+
 
 def get_sandbox_driver(name):
     return _sandbox_manager.get_driver(name)

@@ -140,6 +140,7 @@ def start_sampled_span(
         if tenant_id:
             try:
                 from .per_tenant_sampling import should_sample_for_tenant
+
                 tenant_sample = should_sample_for_tenant(tenant_id)
             except ImportError:
                 tenant_sample = False
@@ -147,6 +148,7 @@ def start_sampled_span(
         # Check error-budget aware tail sampling (global fallback)
         try:
             from .error_budget_tail_sampler import should_sample_trace
+
             tail_sample = should_sample_trace()
         except ImportError:
             tail_sample = False

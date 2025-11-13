@@ -49,7 +49,7 @@ class InMemoryVector(VectorBackend):
         scored = []
         for key, (emb, meta) in space.items():
             # cosine similarity
-            dot = sum(a * b for a, b in zip(embedding, emb))
+            dot = sum(a * b for a, b in zip(embedding, emb, strict=False))
             na = math.sqrt(sum(a * a for a in embedding)) or 1
             nb = math.sqrt(sum(b * b for b in emb)) or 1
             sim = dot / (na * nb)
