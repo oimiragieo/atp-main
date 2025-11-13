@@ -2,10 +2,10 @@
 
 import threading
 import time
-from typing import Optional
+
+from tools.anomaly_poc import SeasonalAnomalyDetector
 
 from metrics.registry import REGISTRY
-from tools.anomaly_poc import SeasonalAnomalyDetector
 
 
 class SeasonalAnomalyDetectionService:
@@ -136,7 +136,7 @@ class SeasonalAnomalyDetectionService:
 
 
 # Global service instance
-_seasonal_anomaly_service: Optional[SeasonalAnomalyDetectionService] = None
+_seasonal_anomaly_service: SeasonalAnomalyDetectionService | None = None
 _service_lock = threading.Lock()
 
 

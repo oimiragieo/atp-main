@@ -41,10 +41,10 @@ class ErrorBudgetAwareTailSampler:
     def __init__(
         self,
         base_sampling_rate: float = 0.1,  # 10% base sampling
-        max_sampling_rate: float = 1.0,   # 100% when critical
-        window_size_minutes: int = 10,    # Look back window
+        max_sampling_rate: float = 1.0,  # 100% when critical
+        window_size_minutes: int = 10,  # Look back window
         high_consumption_threshold: float = 50.0,  # % budget consumed
-        high_error_rate_threshold: float = 5.0,    # % error rate
+        high_error_rate_threshold: float = 5.0,  # % error rate
         adjustment_factor: float = 2.0,  # How much to increase sampling
     ):
         self.base_sampling_rate = base_sampling_rate
@@ -68,17 +68,13 @@ class ErrorBudgetAwareTailSampler:
         # Initialize metrics
         self._g_current_sampling_rate.set(base_sampling_rate)
 
-    def record_error_budget_measurement(
-        self,
-        budget_consumed_percent: float,
-        error_rate_percent: float
-    ) -> None:
+    def record_error_budget_measurement(self, budget_consumed_percent: float, error_rate_percent: float) -> None:
         """Record an error budget measurement for sampling rate calculation."""
         now = time.time()
         sample = ErrorBudgetSample(
             timestamp=now,
             budget_consumed_percent=min(100.0, max(0.0, budget_consumed_percent)),
-            error_rate_percent=min(100.0, max(0.0, error_rate_percent))
+            error_rate_percent=min(100.0, max(0.0, error_rate_percent)),
         )
 
         self.samples.append(sample)
@@ -112,6 +108,7 @@ class ErrorBudgetAwareTailSampler:
     def should_sample(self) -> bool:
         """Determine if the current request/span should be sampled."""
         import random
+
         rate = self.get_current_sampling_rate()
         return random.random() < rate
 
@@ -180,7 +177,7 @@ class ErrorBudgetAwareTailSampler:
         # Calculate slope using simple linear regression
         sum_t = sum(times_norm)
         sum_c = sum(consumptions)
-        sum_tc = sum(t * c for t, c in zip(times_norm, consumptions))
+        sum_tc = sum(t * c for t, c in zip(times_norm, consumptions, strict=False))
         sum_tt = sum(t * t for t in times_norm)
 
         if sum_tt == 0:
@@ -248,10 +245,7 @@ def init_error_budget_tail_sampler(
     return _tail_sampler
 
 
-def record_error_budget_for_sampling(
-    budget_consumed_percent: float,
-    error_rate_percent: float
-) -> None:
+def record_error_budget_for_sampling(budget_consumed_percent: float, error_rate_percent: float) -> None:
     """Record error budget measurement for sampling rate adjustment."""
     sampler = get_tail_sampler()
     sampler.record_error_budget_measurement(budget_consumed_percent, error_rate_percent)

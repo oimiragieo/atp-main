@@ -59,7 +59,7 @@ class SpeculativeSampler:
             "good morning",
             "quick brown fox",
             "machine learning",
-            "artificial intelligence"
+            "artificial intelligence",
         ]
 
     def _generate_draft_response(self, prompt: str) -> str:
@@ -121,11 +121,7 @@ class SpeculativeSampler:
         else:
             return 0.2  # Low confidence for mismatch
 
-    def speculate(
-        self,
-        prompt: str,
-        request_id: str | None = None
-    ) -> dict[str, Any]:
+    def speculate(self, prompt: str, request_id: str | None = None) -> dict[str, Any]:
         """Perform speculative sampling with event tracking.
 
         Args:
@@ -142,7 +138,7 @@ class SpeculativeSampler:
             SpeculativeEventType.SPECULATION_ATTEMPTED,
             self.draft_model,
             request_id=request_id,
-            details={"prompt_length": len(prompt)}
+            details={"prompt_length": len(prompt)},
         )
 
         # Generate draft response
@@ -173,7 +169,7 @@ class SpeculativeSampler:
             "target_latency_ms": target_latency,
             "total_latency_ms": total_time * 1000.0,
             "latency_saved_ms": latency_saved,
-            "effective_response": draft_response if accepted else target_response
+            "effective_response": draft_response if accepted else target_response,
         }
 
         # Emit appropriate event based on outcome
@@ -187,8 +183,8 @@ class SpeculativeSampler:
                 details={
                     "draft_response": draft_response,
                     "target_response": target_response,
-                    "acceptance_threshold": self.acceptance_threshold
-                }
+                    "acceptance_threshold": self.acceptance_threshold,
+                },
             )
         else:
             emit_speculative_event(
@@ -199,8 +195,8 @@ class SpeculativeSampler:
                 details={
                     "draft_response": draft_response,
                     "target_response": target_response,
-                    "acceptance_threshold": self.acceptance_threshold
-                }
+                    "acceptance_threshold": self.acceptance_threshold,
+                },
             )
 
         return result
@@ -233,5 +229,5 @@ class SpeculativeSampler:
             "acceptance_rate": accepted_count / trials,
             "average_latency_saved_ms": total_saved / max(1, accepted_count),
             "average_confidence": total_confidence / trials,
-            "total_speculative_events": trials
+            "total_speculative_events": trials,
         }

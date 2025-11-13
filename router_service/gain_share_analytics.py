@@ -9,7 +9,7 @@ import json
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -41,7 +41,7 @@ class FrontierModel:
 class GainShareAnalytics:
     """Analytics service for gain-share cost optimization and ROI reporting."""
 
-    def __init__(self, data_dir: Optional[str] = None) -> None:
+    def __init__(self, data_dir: str | None = None) -> None:
         # Metrics for gain-share analytics
         self._gain_share_savings_usd_total = REGISTRY.counter("gain_share_savings_usd_total")
         self._baseline_entries_count = REGISTRY.gauge("gain_share_baseline_entries_total")
@@ -105,12 +105,14 @@ class GainShareAnalytics:
 
         data = []
         for model in self._frontier_models.values():
-            data.append({
-                "model_name": model.model_name,
-                "cost_per_1k_tokens_usd": model.cost_per_1k_tokens_usd,
-                "capabilities": model.capabilities,
-                "last_updated": model.last_updated,
-            })
+            data.append(
+                {
+                    "model_name": model.model_name,
+                    "cost_per_1k_tokens_usd": model.cost_per_1k_tokens_usd,
+                    "capabilities": model.capabilities,
+                    "last_updated": model.last_updated,
+                }
+            )
 
         with open(frontier_file, "w") as f:
             json.dump(data, f, indent=2)
@@ -164,7 +166,7 @@ class GainShareAnalytics:
         self,
         model_name: str,
         cost_per_1k_tokens_usd: float,
-        capabilities: Optional[list[str]] = None,
+        capabilities: list[str] | None = None,
     ) -> None:
         """Update or add a frontier model baseline."""
         if capabilities is None:
@@ -180,7 +182,7 @@ class GainShareAnalytics:
         self._frontier_models[model_name] = model
         self._save_frontier_models()
 
-    def get_frontier_model(self, model_name: str) -> Optional[FrontierModel]:
+    def get_frontier_model(self, model_name: str) -> FrontierModel | None:
         """Get frontier model by name."""
         return self._frontier_models.get(model_name)
 
@@ -282,8 +284,8 @@ class GainShareAnalytics:
 
     def get_savings_summary(
         self,
-        tenant: Optional[str] = None,
-        since_timestamp: Optional[int] = None,
+        tenant: str | None = None,
+        since_timestamp: int | None = None,
     ) -> dict[str, Any]:
         """Get savings summary for analytics and reporting.
 
@@ -327,7 +329,9 @@ class GainShareAnalytics:
             "time_range": {
                 "oldest": min(e.timestamp for e in filtered_entries),
                 "newest": max(e.timestamp for e in filtered_entries),
-            } if filtered_entries else None,
+            }
+            if filtered_entries
+            else None,
         }
 
     def get_gain_share_report(

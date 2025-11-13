@@ -1,7 +1,7 @@
 """Success metric integration & validators for GAP-205."""
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -9,9 +9,7 @@ from metrics.registry import REGISTRY
 class ValidationResult:
     """Result of a success/quality validation."""
 
-    def __init__(
-        self, format_ok: bool, safety_ok: bool, quality_score: float, details: Optional[dict[str, Any]] = None
-    ):
+    def __init__(self, format_ok: bool, safety_ok: bool, quality_score: float, details: dict[str, Any] | None = None):
         self.format_ok = format_ok
         self.safety_ok = safety_ok
         self.quality_score = quality_score

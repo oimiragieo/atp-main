@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -36,7 +36,7 @@ class DpLedgerEntry:
     sensitivity: float
     sequence_number: int
     previous_hash: str
-    metadata: Optional[dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
     def to_dict(self, include_hash: bool = True) -> dict[str, Any]:
         """Convert entry to dictionary for serialization."""
@@ -49,7 +49,7 @@ class DpLedgerEntry:
             "epsilon_used": self.epsilon_used,
             "sensitivity": self.sensitivity,
             "sequence_number": self.sequence_number,
-            "previous_hash": self.previous_hash
+            "previous_hash": self.previous_hash,
         }
 
         if self.metadata:
@@ -72,7 +72,7 @@ class DpLedgerEntry:
             "epsilon_used": round(self.epsilon_used, 6),
             "sensitivity": round(self.sensitivity, 6),
             "sequence_number": self.sequence_number,
-            "previous_hash": self.previous_hash
+            "previous_hash": self.previous_hash,
         }
 
         if self.metadata:
@@ -80,13 +80,13 @@ class DpLedgerEntry:
             canonical_data["metadata"] = {k: self.metadata[k] for k in sorted(self.metadata.keys())}
 
         # Serialize to JSON with sorted keys for deterministic hashing
-        canonical_json = json.dumps(canonical_data, sort_keys=True, separators=(',', ':'))
+        canonical_json = json.dumps(canonical_data, sort_keys=True, separators=(",", ":"))
 
         # Compute SHA-256 hash
-        return hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
+        return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'DpLedgerEntry':
+    def from_dict(cls, data: dict[str, Any]) -> "DpLedgerEntry":
         """Create entry from dictionary representation."""
         return cls(
             entry_id=data["entry_id"],
@@ -98,17 +98,16 @@ class DpLedgerEntry:
             sensitivity=data["sensitivity"],
             sequence_number=data["sequence_number"],
             previous_hash=data["previous_hash"],
-            metadata=data.get("metadata")
+            metadata=data.get("metadata"),
         )
 
 
 class DpLedgerExporter:
     """Exports differentially private events to a tamper-evident ledger."""
 
-    def __init__(self,
-                 ledger_path: str = "./dp_ledger",
-                 max_epsilon_per_tenant: float = 2.0,
-                 hmac_key: Optional[bytes] = None):
+    def __init__(
+        self, ledger_path: str = "./dp_ledger", max_epsilon_per_tenant: float = 2.0, hmac_key: bytes | None = None
+    ):
         self.ledger_path = Path(ledger_path)
         self.ledger_path.mkdir(exist_ok=True)
         self.max_epsilon_per_tenant = max_epsilon_per_tenant
@@ -136,7 +135,7 @@ class DpLedgerExporter:
             return
 
         try:
-            with open(ledger_file, encoding='utf-8') as f:
+            with open(ledger_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             if lines:
@@ -164,13 +163,15 @@ class DpLedgerExporter:
             self.current_sequence = 0
             self.last_hash = "0" * 64
 
-    def add_entry(self,
-                  tenant_id: str,
-                  event_type: str,
-                  dp_value: float,
-                  epsilon_used: float,
-                  sensitivity: float,
-                  metadata: Optional[dict[str, Any]] = None) -> bool:
+    def add_entry(
+        self,
+        tenant_id: str,
+        event_type: str,
+        dp_value: float,
+        epsilon_used: float,
+        sensitivity: float,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
         """Add a DP event to the ledger, checking budget compliance."""
 
         # Check privacy budget
@@ -196,7 +197,7 @@ class DpLedgerExporter:
             sensitivity=sensitivity,
             sequence_number=self.current_sequence,
             previous_hash=self.last_hash,
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Compute and update hash chain
@@ -218,10 +219,10 @@ class DpLedgerExporter:
         """Append entry to the ledger file."""
         ledger_file = self.ledger_path / "ledger.jsonl"
 
-        with open(ledger_file, 'a', encoding='utf-8') as f:
+        with open(ledger_file, "a", encoding="utf-8") as f:
             entry_data = entry.to_dict(include_hash=True)
             json.dump(entry_data, f, ensure_ascii=False)
-            f.write('\n')
+            f.write("\n")
 
     def export_ledger(self, format_type: str = "jsonl") -> str:
         """Export the current ledger state."""
@@ -232,8 +233,8 @@ class DpLedgerExporter:
             # Copy the current ledger file
             ledger_file = self.ledger_path / "ledger.jsonl"
             if ledger_file.exists():
-                with open(ledger_file, encoding='utf-8') as src:
-                    with open(export_file, 'w', encoding='utf-8') as dst:
+                with open(ledger_file, encoding="utf-8") as src:
+                    with open(export_file, "w", encoding="utf-8") as dst:
                         dst.write(src.read())
             else:
                 # Create empty export
@@ -245,18 +246,23 @@ class DpLedgerExporter:
             entries = []
 
             if ledger_file.exists():
-                with open(ledger_file, encoding='utf-8') as f:
+                with open(ledger_file, encoding="utf-8") as f:
                     for line in f:
                         if line.strip():
                             entries.append(json.loads(line.strip()))
 
-            with open(export_file, 'w', encoding='utf-8') as f:
-                json.dump({
-                    "export_timestamp": datetime.now().isoformat(),
-                    "total_entries": len(entries),
-                    "ledger_integrity": self._verify_ledger_integrity(),
-                    "entries": entries
-                }, f, indent=2, ensure_ascii=False)
+            with open(export_file, "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "export_timestamp": datetime.now().isoformat(),
+                        "total_entries": len(entries),
+                        "ledger_integrity": self._verify_ledger_integrity(),
+                        "entries": entries,
+                    },
+                    f,
+                    indent=2,
+                    ensure_ascii=False,
+                )
 
         else:
             raise ValueError(f"Unsupported export format: {format_type}")
@@ -277,7 +283,7 @@ class DpLedgerExporter:
         entries_checked = 0
 
         try:
-            with open(ledger_file, encoding='utf-8') as f:
+            with open(ledger_file, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
@@ -302,13 +308,14 @@ class DpLedgerExporter:
 
         except Exception as e:
             logger.error(f"Ledger integrity check failed: {e}")
-            return {"valid": False, "entries_checked": entries_checked, "corrupt_entries": corrupt_count, "error": str(e)}
+            return {
+                "valid": False,
+                "entries_checked": entries_checked,
+                "corrupt_entries": corrupt_count,
+                "error": str(e),
+            }
 
-        return {
-            "valid": corrupt_count == 0,
-            "entries_checked": entries_checked,
-            "corrupt_entries": corrupt_count
-        }
+        return {"valid": corrupt_count == 0, "entries_checked": entries_checked, "corrupt_entries": corrupt_count}
 
     def get_budget_status(self, tenant_id: str) -> dict[str, float]:
         """Get privacy budget status for a tenant."""
@@ -320,7 +327,7 @@ class DpLedgerExporter:
             "epsilon_used": used,
             "epsilon_remaining": remaining,
             "epsilon_limit": self.max_epsilon_per_tenant,
-            "utilization_rate": used / self.max_epsilon_per_tenant if self.max_epsilon_per_tenant > 0 else 0.0
+            "utilization_rate": used / self.max_epsilon_per_tenant if self.max_epsilon_per_tenant > 0 else 0.0,
         }
 
     def get_ledger_stats(self) -> dict[str, Any]:
@@ -332,21 +339,22 @@ class DpLedgerExporter:
             "ledger_integrity": integrity,
             "active_tenants": len(self.tenant_epsilon_usage),
             "total_epsilon_used": sum(self.tenant_epsilon_usage.values()),
-            "last_hash": self.last_hash
+            "last_hash": self.last_hash,
         }
 
 
 # Global ledger exporter instance
-_dp_ledger_exporter: Optional[DpLedgerExporter] = None
+_dp_ledger_exporter: DpLedgerExporter | None = None
 
 
-def get_dp_ledger_exporter() -> Optional[DpLedgerExporter]:
+def get_dp_ledger_exporter() -> DpLedgerExporter | None:
     """Get the global DP ledger exporter instance."""
     return _dp_ledger_exporter
 
 
-def initialize_dp_ledger_exporter(ledger_path: str = "./dp_ledger",
-                                max_epsilon_per_tenant: float = 2.0) -> DpLedgerExporter:
+def initialize_dp_ledger_exporter(
+    ledger_path: str = "./dp_ledger", max_epsilon_per_tenant: float = 2.0
+) -> DpLedgerExporter:
     """Initialize the global DP ledger exporter."""
     global _dp_ledger_exporter
     _dp_ledger_exporter = DpLedgerExporter(ledger_path, max_epsilon_per_tenant)

@@ -7,7 +7,7 @@ Fallback to heuristic classification when embedding service is unavailable.
 import hashlib
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from sklearn.cluster import KMeans
@@ -65,10 +65,10 @@ class EmbeddingClusterClassifier:
 
     def __init__(
         self,
-        embedding_service: Optional[EmbeddingService] = None,
+        embedding_service: EmbeddingService | None = None,
         n_clusters: int = 10,
         random_state: int = 42,
-        fallback_classifier: Optional[callable] = None,
+        fallback_classifier: callable | None = None,
     ):
         self.embedding_service = embedding_service or MockEmbeddingService()
         self.n_clusters = n_clusters
@@ -81,15 +81,15 @@ class EmbeddingClusterClassifier:
         self._cluster_assignments_total = REGISTRY.counter("atp_cluster_assignments_total")
 
         # Clustering state
-        self.kmeans: Optional[KMeans] = None
-        self.cluster_centers: Optional[np.ndarray] = None
+        self.kmeans: KMeans | None = None
+        self.cluster_centers: np.ndarray | None = None
         self.is_trained = False
 
         # Training data
         self.training_embeddings: list[list[float]] = []
         self.training_labels: list[str] = []
 
-    def classify_task(self, prompt: str) -> Optional[str]:
+    def classify_task(self, prompt: str) -> str | None:
         """Classify task using embedding-based clustering with fallback."""
         self._embedding_requests_total.inc()
 
@@ -116,7 +116,7 @@ class EmbeddingClusterClassifier:
                 return self.fallback_classifier(prompt)
             return None
 
-    def train_clusters(self, training_prompts: list[str], training_labels: Optional[list[str]] = None) -> None:
+    def train_clusters(self, training_prompts: list[str], training_labels: list[str] | None = None) -> None:
         """Train k-means clustering on training data."""
         if not training_prompts:
             return

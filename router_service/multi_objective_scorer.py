@@ -53,9 +53,9 @@ class ObjectiveVector:
         """
         # For minimization objectives (cost, latency, carbon_intensity)
         min_better_or_equal = (
-            self.cost <= other.cost and
-            self.latency <= other.latency and
-            self.carbon_intensity <= other.carbon_intensity
+            self.cost <= other.cost
+            and self.latency <= other.latency
+            and self.carbon_intensity <= other.carbon_intensity
         )
 
         # For maximization objectives (quality_score)
@@ -66,10 +66,10 @@ class ObjectiveVector:
 
         # Must be strictly better in AT LEAST one objective
         strictly_better_in_one = (
-            self.cost < other.cost or
-            self.latency < other.latency or
-            self.quality_score > other.quality_score or
-            self.carbon_intensity < other.carbon_intensity
+            self.cost < other.cost
+            or self.latency < other.latency
+            or self.quality_score > other.quality_score
+            or self.carbon_intensity < other.carbon_intensity
         )
 
         return all_better_or_equal and strictly_better_in_one
@@ -78,10 +78,10 @@ class ObjectiveVector:
         """Calculate Euclidean distance between two objective vectors."""
         # Normalize quality_score (maximize) by negating it for distance calculation
         return (
-            (self.cost - other.cost) ** 2 +
-            (self.latency - other.latency) ** 2 +
-            (-self.quality_score - (-other.quality_score)) ** 2 +  # Negate for maximization
-            (self.carbon_intensity - other.carbon_intensity) ** 2
+            (self.cost - other.cost) ** 2
+            + (self.latency - other.latency) ** 2
+            + (-self.quality_score - (-other.quality_score)) ** 2  # Negate for maximization
+            + (self.carbon_intensity - other.carbon_intensity) ** 2
         ) ** 0.5
 
 
@@ -110,8 +110,9 @@ class MultiObjectiveScorer:
             "carbon_intensity": 0.25,
         }
 
-    def set_weights(self, cost: float = 0.25, latency: float = 0.25,
-                   quality_score: float = 0.25, carbon_intensity: float = 0.25) -> None:
+    def set_weights(
+        self, cost: float = 0.25, latency: float = 0.25, quality_score: float = 0.25, carbon_intensity: float = 0.25
+    ) -> None:
         """Set weights for weighted scalarization.
 
         Args:
@@ -149,10 +150,10 @@ class MultiObjectiveScorer:
 
         # Calculate weighted score
         score = (
-            self.weights["cost"] * cost_norm +
-            self.weights["latency"] * latency_norm +
-            self.weights["quality_score"] * quality_norm +
-            self.weights["carbon_intensity"] * carbon_norm
+            self.weights["cost"] * cost_norm
+            + self.weights["latency"] * latency_norm
+            + self.weights["quality_score"] * quality_norm
+            + self.weights["carbon_intensity"] * carbon_norm
         )
 
         return score
@@ -180,10 +181,7 @@ class MultiObjectiveScorer:
 
             if not is_dominated:
                 # Remove any existing frontier members that are dominated by candidate
-                pareto_frontier = [
-                    f for f in pareto_frontier
-                    if not candidate.objectives.dominates(f.objectives)
-                ]
+                pareto_frontier = [f for f in pareto_frontier if not candidate.objectives.dominates(f.objectives)]
                 pareto_frontier.append(candidate)
 
         # Record frontier size
@@ -191,8 +189,7 @@ class MultiObjectiveScorer:
 
         return pareto_frontier
 
-    def score_options(self, options: list[ScoredOption],
-                     use_pareto: bool = True) -> list[ScoredOption]:
+    def score_options(self, options: list[ScoredOption], use_pareto: bool = True) -> list[ScoredOption]:
         """Score routing options using multi-objective optimization.
 
         Args:
@@ -218,9 +215,9 @@ class MultiObjectiveScorer:
             # Sort by scalar score (descending - higher is better)
             return sorted(options, key=lambda x: x.scalar_score, reverse=True)
 
-    def select_best_option(self, options: list[ScoredOption],
-                          use_pareto: bool = True,
-                          selection_strategy: str = "first") -> ScoredOption | None:
+    def select_best_option(
+        self, options: list[ScoredOption], use_pareto: bool = True, selection_strategy: str = "first"
+    ) -> ScoredOption | None:
         """Select the best option from scored options.
 
         Args:
@@ -245,6 +242,7 @@ class MultiObjectiveScorer:
             return scored_options[0]
         elif selection_strategy == "random":
             import random
+
             return random.choice(scored_options)
         elif selection_strategy == "closest_to_ideal":
             # Find option closest to ideal point (0 cost, 0 latency, 1 quality, 0 carbon)

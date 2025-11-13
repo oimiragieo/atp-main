@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
@@ -39,7 +39,7 @@ class SignatureInfo:
     signature: str
     timestamp: datetime
     signer_info: dict[str, Any]
-    metadata: Optional[dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert signature info to dictionary."""
@@ -48,7 +48,7 @@ class SignatureInfo:
             "key_id": self.key_id,
             "signature": self.signature,
             "timestamp": self.timestamp.isoformat(),
-            "signer_info": self.signer_info
+            "signer_info": self.signer_info,
         }
 
         if self.metadata:
@@ -57,7 +57,7 @@ class SignatureInfo:
         return result
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'SignatureInfo':
+    def from_dict(cls, data: dict[str, Any]) -> "SignatureInfo":
         """Create signature info from dictionary."""
         return cls(
             algorithm=data["algorithm"],
@@ -65,7 +65,7 @@ class SignatureInfo:
             signature=data["signature"],
             timestamp=datetime.fromisoformat(data["timestamp"]),
             signer_info=data["signer_info"],
-            metadata=data.get("metadata")
+            metadata=data.get("metadata"),
         )
 
 
@@ -80,7 +80,7 @@ class NotarizationRecord:
     signature_info: SignatureInfo
     certificate_chain: list[str]
     notary_statement: str
-    metadata: Optional[dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert notarization record to dictionary."""
@@ -92,11 +92,11 @@ class NotarizationRecord:
             "signature_info": self.signature_info.to_dict(),
             "certificate_chain": self.certificate_chain,
             "notary_statement": self.notary_statement,
-            "metadata": self.metadata or {}
+            "metadata": self.metadata or {},
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'NotarizationRecord':
+    def from_dict(cls, data: dict[str, Any]) -> "NotarizationRecord":
         """Create notarization record from dictionary."""
         return cls(
             pack_id=data["pack_id"],
@@ -106,7 +106,7 @@ class NotarizationRecord:
             signature_info=SignatureInfo.from_dict(data["signature_info"]),
             certificate_chain=data["certificate_chain"],
             notary_statement=data["notary_statement"],
-            metadata=data.get("metadata")
+            metadata=data.get("metadata"),
         )
 
 
@@ -125,22 +125,14 @@ class EvidencePackSigner:
 
     def _generate_keypair(self):
         """Generate a new RSA keypair for signing."""
-        self.private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048,
-            backend=default_backend()
-        )
+        self.private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
         self.public_key = self.private_key.public_key()
         logger.info(f"Generated new RSA keypair with key_id: {self.key_id}")
 
     def _load_private_key(self, key_path: str):
         """Load private key from file."""
-        with open(key_path, 'rb') as f:
-            self.private_key = serialization.load_pem_private_key(
-                f.read(),
-                password=None,
-                backend=default_backend()
-            )
+        with open(key_path, "rb") as f:
+            self.private_key = serialization.load_pem_private_key(f.read(), password=None, backend=default_backend())
         self.public_key = self.private_key.public_key()
         logger.info(f"Loaded private key from {key_path}")
 
@@ -162,13 +154,13 @@ class EvidencePackSigner:
 
         # Create signature
         signature_bytes = self.private_key.sign(
-            pack_hash.encode('utf-8'),
+            pack_hash.encode("utf-8"),
             PSS(mgf=MGF1(algorithm=hashes.SHA256()), salt_length=PSS.DIGEST_LENGTH),
-            hashes.SHA256()
+            hashes.SHA256(),
         )
 
         # Encode signature as base64
-        signature_b64 = base64.b64encode(signature_bytes).decode('utf-8')
+        signature_b64 = base64.b64encode(signature_bytes).decode("utf-8")
 
         signature_info = SignatureInfo(
             algorithm="RSASSA-PSS-SHA256",
@@ -176,7 +168,7 @@ class EvidencePackSigner:
             signature=signature_b64,
             timestamp=datetime.now(),
             signer_info=signer_info or {"signer": "ATP Router Service"},
-            metadata={"pack_hash": pack_hash}
+            metadata={"pack_hash": pack_hash},
         )
 
         EVIDENCE_PACK_SIGNATURES_TOTAL.inc()
@@ -190,11 +182,11 @@ class EvidencePackSigner:
 
         hasher = hashlib.sha256()
 
-        with zipfile.ZipFile(pack_path, 'r') as zf:
+        with zipfile.ZipFile(pack_path, "r") as zf:
             # Sort files for deterministic hashing
             for file_info in sorted(zf.filelist, key=lambda x: x.filename):
                 # Hash filename
-                hasher.update(file_info.filename.encode('utf-8'))
+                hasher.update(file_info.filename.encode("utf-8"))
 
                 # Hash file contents
                 with zf.open(file_info) as f:
@@ -209,9 +201,8 @@ class EvidencePackSigner:
             raise ValueError("No public key available")
 
         return self.public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8')
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode("utf-8")
 
     def verify_signature(self, pack_path: str, signature_info: SignatureInfo) -> bool:
         """Verify a signature against an evidence pack.
@@ -236,9 +227,9 @@ class EvidencePackSigner:
             # Verify signature
             self.public_key.verify(
                 signature_bytes,
-                pack_hash.encode('utf-8'),
+                pack_hash.encode("utf-8"),
                 PSS(mgf=MGF1(algorithm=hashes.SHA256()), salt_length=PSS.DIGEST_LENGTH),
-                hashes.SHA256()
+                hashes.SHA256(),
             )
 
             EVIDENCE_PACK_SIGNATURE_VERIFICATIONS_TOTAL.inc()
@@ -258,11 +249,13 @@ class EvidencePackNotary:
         self.notary_id = notary_id
         self.signer = signer or EvidencePackSigner(key_id=f"{notary_id}-signer")
 
-    def notarize_pack(self,
-                     pack_path: str,
-                     pack_id: str,
-                     certificate_chain: list[str] | None = None,
-                     metadata: dict[str, Any] | None = None) -> NotarizationRecord:
+    def notarize_pack(
+        self,
+        pack_path: str,
+        pack_id: str,
+        certificate_chain: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> NotarizationRecord:
         """Notarize an evidence pack.
 
         Args:
@@ -283,8 +276,8 @@ class EvidencePackNotary:
             signer_info={
                 "notary_id": self.notary_id,
                 "role": "evidence_pack_notary",
-                "organization": "ATP Router Service"
-            }
+                "organization": "ATP Router Service",
+            },
         )
 
         # Create certificate chain if not provided
@@ -306,7 +299,7 @@ class EvidencePackNotary:
             signature_info=signature_info,
             certificate_chain=certificate_chain,
             notary_statement=notary_statement,
-            metadata=metadata
+            metadata=metadata,
         )
 
         EVIDENCE_PACK_NOTARIZATIONS_TOTAL.inc()
@@ -326,7 +319,7 @@ class EvidencePackNotary:
         """
         record_data = record.to_dict()
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(record_data, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Saved notarization record to {output_path}")
@@ -341,7 +334,7 @@ class EvidencePackNotary:
         Returns:
             Notarization record
         """
-        with open(record_path, encoding='utf-8') as f:
+        with open(record_path, encoding="utf-8") as f:
             record_data = json.load(f)
 
         return NotarizationRecord.from_dict(record_data)
@@ -356,13 +349,7 @@ class EvidencePackNotary:
         Returns:
             Verification result dictionary
         """
-        result = {
-            "valid": False,
-            "signature_valid": False,
-            "hash_valid": False,
-            "notary_valid": False,
-            "errors": []
-        }
+        result = {"valid": False, "signature_valid": False, "hash_valid": False, "notary_valid": False, "errors": []}
 
         try:
             # Verify notary identity
@@ -386,11 +373,7 @@ class EvidencePackNotary:
                 result["errors"].append("Signature verification failed")
 
             # Overall validity
-            result["valid"] = all([
-                result["notary_valid"],
-                result["hash_valid"],
-                result["signature_valid"]
-            ])
+            result["valid"] = all([result["notary_valid"], result["hash_valid"], result["signature_valid"]])
 
             if result["valid"]:
                 logger.info(f"Notarization verification successful for pack {record.pack_id}")
@@ -412,10 +395,9 @@ class EvidencePackSignatureManager:
         self.signatures: dict[str, SignatureInfo] = {}
         self.notarizations: dict[str, NotarizationRecord] = {}
 
-    def sign_and_notarize_pack(self,
-                              pack_path: str,
-                              pack_id: str,
-                              output_dir: str = "./evidence_packs") -> dict[str, Any]:
+    def sign_and_notarize_pack(
+        self, pack_path: str, pack_id: str, output_dir: str = "./evidence_packs"
+    ) -> dict[str, Any]:
         """Sign and notarize an evidence pack.
 
         Args:
@@ -446,7 +428,7 @@ class EvidencePackSignatureManager:
             "signature_info": notarization_record.signature_info.to_dict(),
             "notarization_record": notarization_record.to_dict(),
             "record_path": str(record_path),
-            "evidence_hash": notarization_record.evidence_hash
+            "evidence_hash": notarization_record.evidence_hash,
         }
 
         logger.info(f"Successfully signed and notarized evidence pack {pack_id}")
@@ -463,15 +445,12 @@ class EvidencePackSignatureManager:
             Verification result
         """
         if pack_id not in self.notarizations:
-            return {
-                "valid": False,
-                "error": f"No notarization record found for pack {pack_id}"
-            }
+            return {"valid": False, "error": f"No notarization record found for pack {pack_id}"}
 
         record = self.notarizations[pack_id]
         return self.notary.verify_notarization(pack_path, record)
 
-    def get_pack_signature_info(self, pack_id: str) -> Optional[SignatureInfo]:
+    def get_pack_signature_info(self, pack_id: str) -> SignatureInfo | None:
         """Get signature information for a pack.
 
         Args:
@@ -482,7 +461,7 @@ class EvidencePackSignatureManager:
         """
         return self.signatures.get(pack_id)
 
-    def get_pack_notarization(self, pack_id: str) -> Optional[NotarizationRecord]:
+    def get_pack_notarization(self, pack_id: str) -> NotarizationRecord | None:
         """Get notarization record for a pack.
 
         Args:
@@ -503,10 +482,10 @@ class EvidencePackSignatureManager:
 
 
 # Global signature manager instance
-_signature_manager: Optional[EvidencePackSignatureManager] = None
+_signature_manager: EvidencePackSignatureManager | None = None
 
 
-def get_evidence_pack_signature_manager() -> Optional[EvidencePackSignatureManager]:
+def get_evidence_pack_signature_manager() -> EvidencePackSignatureManager | None:
     """Get the global evidence pack signature manager instance."""
     return _signature_manager
 

@@ -39,7 +39,9 @@ def validate_schema(obj: Any, required_keys: list[str]) -> bool:
     return True
 
 
-def check_input(payload: Any, required_keys: list[str] | None = None, request_id: str | None = None) -> tuple[bool, str | None]:
+def check_input(
+    payload: Any, required_keys: list[str] | None = None, request_id: str | None = None
+) -> tuple[bool, str | None]:
     """Validate payload type and required keys. Increments input_reject_total on failure."""
     if isinstance(payload, (bytes, bytearray)):
         mime = sniff_mime(bytes(payload))
@@ -49,7 +51,7 @@ def check_input(payload: Any, required_keys: list[str] | None = None, request_id
                 RejectionReason.INPUT_VALIDATION,
                 "input_hardening",
                 request_id,
-                {"reason": "invalid_mime", "detected_mime": mime}
+                {"reason": "invalid_mime", "detected_mime": mime},
             )
             return False, "invalid_mime"
         return True, None
@@ -59,7 +61,7 @@ def check_input(payload: Any, required_keys: list[str] | None = None, request_id
             RejectionReason.SCHEMA_MISMATCH,
             "input_hardening",
             request_id,
-            {"reason": "schema_invalid", "required_keys": required_keys}
+            {"reason": "schema_invalid", "required_keys": required_keys},
         )
         return False, "schema_invalid"
     return True, None

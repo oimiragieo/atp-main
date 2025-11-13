@@ -20,12 +20,7 @@ class StructuredLogger:
 
     def _log(self, level: int, event: str, **fields: Any) -> None:
         """Internal logging method."""
-        record = {
-            "ts": round(time.time(), 3),
-            "level": logging.getLevelName(level),
-            "event": event,
-            **fields
-        }
+        record = {"ts": round(time.time(), 3), "level": logging.getLevelName(level), "event": event, **fields}
         try:
             self.logger.log(level, json.dumps(record, separators=(",", ":")))
         except Exception as err:  # noqa: S110

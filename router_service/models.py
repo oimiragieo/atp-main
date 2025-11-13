@@ -19,32 +19,29 @@ These models ensure type safety and validation for all API interactions.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
 
 class TaskMetadata(BaseModel):
-    task_type: Optional[str] = Field(default=None, description="Caller supplied task type if known")
-    cluster_hint: Optional[str] = Field(default=None, description="Heuristic cluster classification output")
-    prompt_hash: Optional[str] = None
-    received_at: Optional[datetime] = None
+    task_type: str | None = Field(default=None, description="Caller supplied task type if known")
+    cluster_hint: str | None = Field(default=None, description="Heuristic cluster classification output")
+    prompt_hash: str | None = None
+    received_at: datetime | None = None
 
 
 class AskRequest(BaseModel):
     prompt: str = Field(..., min_length=1, max_length=100000, description="The input prompt text")
-    conversation_id: Optional[str] = Field(default=None, max_length=100, description="Conversation identifier")
-    turn_id: Optional[str] = Field(default=None, max_length=100, description="Turn identifier")
+    conversation_id: str | None = Field(default=None, max_length=100, description="Conversation identifier")
+    turn_id: str | None = Field(default=None, max_length=100, description="Turn identifier")
     quality: str = Field(default="balanced", description="Quality tier: fast|balanced|high")
     max_cost_usd: float = Field(default=0.05, ge=0.001, le=10.0, description="Maximum cost in USD")
     latency_slo_ms: int = Field(default=2000, ge=100, le=30000, description="Latency SLO in milliseconds")
     context_refs: list[str] = Field(default_factory=list, max_length=50, description="Context reference IDs")
     tenant: str = Field(default="public", max_length=50, description="Tenant identifier")
-    task_type: Optional[str] = Field(default=None, max_length=50, description="Optional caller-declared task type")
-    session_id: Optional[str] = Field(
-        default=None, max_length=100, description="Session ID for consistency enforcement"
-    )
-    consistency_level: Optional[str] = Field(default="EVENTUAL", description="Consistency level: EVENTUAL or RYW")
+    task_type: str | None = Field(default=None, max_length=50, description="Optional caller-declared task type")
+    session_id: str | None = Field(default=None, max_length=100, description="Session ID for consistency enforcement")
+    consistency_level: str | None = Field(default="EVENTUAL", description="Consistency level: EVENTUAL or RYW")
 
     @field_validator("quality")
     @classmethod
@@ -91,30 +88,30 @@ class FinalResponse(BaseModel):
     savings_pct: float
     escalation_count: int
     quality_score: float
-    cluster_hint: Optional[str] = None
-    energy_kwh: Optional[float] = None
-    co2e_grams: Optional[float] = None
-    tool_success: Optional[bool] = True
-    format_ok: Optional[bool] = True
-    safety_ok: Optional[bool] = True  # GAP-205: Safety validation result
-    phase: Optional[str] = None  # shadow|active
+    cluster_hint: str | None = None
+    energy_kwh: float | None = None
+    co2e_grams: float | None = None
+    tool_success: bool | None = True
+    format_ok: bool | None = True
+    safety_ok: bool | None = True  # GAP-205: Safety validation result
+    phase: str | None = None  # shadow|active
 
 
 class Evidence(BaseModel):
     kind: str = Field(description="Type of evidence (code, test, doc, etc.)")
-    file: Optional[str] = None
-    lines: Optional[str] = None  # e.g., "60-72"
-    content: Optional[str] = None
+    file: str | None = None
+    lines: str | None = None  # e.g., "60-72"
+    content: str | None = None
 
 
 class Finding(BaseModel):
     id: str = Field(description="Unique finding identifier (F-...)")
     type: str = Field(description="Taxonomy key (e.g., code.vuln.aud_check_missing)")
-    file: Optional[str] = None
-    span: Optional[str] = None  # e.g., "45-80"
+    file: str | None = None
+    span: str | None = None  # e.g., "45-80"
     claim: str = Field(description="Human-readable description of the finding")
     evidence: list[Evidence] = Field(default_factory=list)
-    proposed_fix: Optional[str] = None
+    proposed_fix: str | None = None
     tests: list[str] = Field(default_factory=list)
     severity: str = Field(description="high|medium|low|info")
     confidence: float = Field(ge=0.0, le=1.0, description="Confidence score 0.0-1.0")

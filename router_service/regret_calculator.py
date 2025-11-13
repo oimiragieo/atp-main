@@ -5,7 +5,7 @@ measuring the cost difference between chosen and optimal models.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -156,7 +156,7 @@ class RegretCalculator:
 
 
 # Global instance
-_regret_calculator: Optional[RegretCalculator] = None
+_regret_calculator: RegretCalculator | None = None
 
 
 def get_regret_calculator() -> RegretCalculator:

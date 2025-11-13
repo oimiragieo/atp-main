@@ -4,7 +4,7 @@ Not production: uses static priors; future wiring: dynamic stats.
 
 import os
 import random
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import CARBON_AWARE_ROUTING_DECISIONS_TOTAL, CARBON_INTENSITY_WEIGHT
 
@@ -21,7 +21,7 @@ def choose(
     required_safety: str = "A",
     carbon_aware: bool = True,
     total_tokens: int = 1000,
-) -> tuple[list[Candidate], Optional[RegretAnalysis], dict[str, Any]]:
+) -> tuple[list[Candidate], RegretAnalysis | None, dict[str, Any]]:
     q_min = QUALITY_THRESH.get(quality, 0.75)
     ordered = sorted(CATALOG, key=lambda c: c.cost_per_1k_tokens)
 

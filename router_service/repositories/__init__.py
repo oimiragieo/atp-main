@@ -10,10 +10,10 @@ from .request_repository import RequestRepository
 
 __all__ = [
     "BaseRepository",
-    "AuditRepository", 
+    "AuditRepository",
     "ComplianceRepository",
     "ModelRepository",
     "PolicyRepository",
     "ProviderRepository",
-    "RequestRepository"
+    "RequestRepository",
 ]

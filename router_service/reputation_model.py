@@ -3,7 +3,7 @@
 import math
 import time
 from collections import defaultdict
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -28,7 +28,7 @@ class ReputationModel:
         self._reputation_gauge = REGISTRY.gauge("persona_reputation_score")
 
     def record_performance(
-        self, persona: str, accuracy: float, latency_ms: float, quality_score: float, timestamp: Optional[float] = None
+        self, persona: str, accuracy: float, latency_ms: float, quality_score: float, timestamp: float | None = None
     ) -> None:
         """Record a performance measurement for a persona."""
         if timestamp is None:
@@ -47,7 +47,7 @@ class ReputationModel:
         if len(self._persona_stats[persona]) > 100:
             self._cleanup_old_data(persona)
 
-    def get_reputation_score(self, persona: str) -> Optional[float]:
+    def get_reputation_score(self, persona: str) -> float | None:
         """Compute reputation score for a persona."""
         stats = self._persona_stats.get(persona, [])
         if len(stats) < self.min_samples:
@@ -102,7 +102,7 @@ class ReputationModel:
 
         return reputation
 
-    def get_reliability_score(self, persona: str) -> Optional[float]:
+    def get_reliability_score(self, persona: str) -> float | None:
         """Compute reliability score based on consistency of performance."""
         stats = self._persona_stats.get(persona, [])
         if len(stats) < self.min_samples:

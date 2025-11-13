@@ -8,7 +8,7 @@ and churn rate analysis.
 import hashlib
 import time
 from collections import defaultdict
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from sklearn.cluster import AgglomerativeClustering
@@ -26,7 +26,7 @@ class TaskClusteringPipeline:
 
     def __init__(
         self,
-        embedding_service: Optional[EmbeddingService] = None,
+        embedding_service: EmbeddingService | None = None,
         n_clusters: int = 10,
         tfidf_max_features: int = 1000,
         random_state: int = 42,
@@ -43,14 +43,14 @@ class TaskClusteringPipeline:
         self.scaler = StandardScaler()
 
         # Clustering components
-        self.clusterer: Optional[AgglomerativeClustering] = None
+        self.clusterer: AgglomerativeClustering | None = None
         self.is_trained = False
 
         # Training data storage
         self.training_prompts: list[str] = []
-        self.training_features: Optional[np.ndarray] = None
-        self.cluster_labels: Optional[np.ndarray] = None
-        self.cluster_centers: Optional[np.ndarray] = None
+        self.training_features: np.ndarray | None = None
+        self.cluster_labels: np.ndarray | None = None
+        self.cluster_centers: np.ndarray | None = None
 
         # Cluster tracking for churn analysis
         self.previous_cluster_assignments: dict[str, int] = {}
@@ -91,7 +91,7 @@ class TaskClusteringPipeline:
 
     def _update_cluster_tracking(self, prompt_hashes: list[str], new_labels: np.ndarray) -> None:
         """Update cluster tracking for churn analysis."""
-        current_assignments = dict(zip(prompt_hashes, new_labels))
+        current_assignments = dict(zip(prompt_hashes, new_labels, strict=False))
 
         # Calculate churn
         total_changes = 0
@@ -158,7 +158,7 @@ class TaskClusteringPipeline:
             print(f"Task clustering training failed: {e}")
             self.is_trained = False
 
-    def classify_task(self, prompt: str) -> Optional[str]:
+    def classify_task(self, prompt: str) -> str | None:
         """Classify task using trained clustering model."""
         if not self.is_trained or self.cluster_centers is None:
             return None

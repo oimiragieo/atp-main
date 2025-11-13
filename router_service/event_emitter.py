@@ -189,6 +189,7 @@ def get_event_emitter() -> EventEmitter:
     """Get the global event emitter instance."""
     return _EVENT_EMITTER
 
+
 def emit_rejection_event(
     reason: RejectionReason,
     component: str,
@@ -225,9 +226,7 @@ def emit_speculative_event(
         request_id: Optional request identifier
         details: Additional context details
     """
-    event = SpeculativeEvent(
-        event_type, model_name, latency_saved_ms, confidence_score, request_id, details
-    )
+    event = SpeculativeEvent(event_type, model_name, latency_saved_ms, confidence_score, request_id, details)
     _EVENT_EMITTER.emit_speculative(event)
     # Increment the metric counter
     SPECULATIVE_EVENTS_TOTAL.inc(1)
