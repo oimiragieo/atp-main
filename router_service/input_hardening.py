@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from metrics.registry import REGISTRY
+
 from router_service.event_emitter import RejectionReason, emit_rejection_event
 
 _CTR_INPUT_REJECT = REGISTRY.counter("input_reject_total")

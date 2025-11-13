@@ -99,7 +99,7 @@ async def get_database_health(user: UserInfo = Depends(require_admin())) -> Data
 
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}") from e
 
 
 @database_router.get("/backups", response_model=list[BackupInfoModel])
@@ -124,7 +124,7 @@ async def list_backups(user: UserInfo = Depends(require_admin())) -> list[Backup
 
     except Exception as e:
         logger.error(f"Failed to list backups: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to list backups: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list backups: {str(e)}") from e
 
 
 @database_router.post("/backups")
@@ -155,7 +155,7 @@ async def create_backup(request: BackupRequest, user: UserInfo = Depends(require
 
     except Exception as e:
         logger.error(f"Backup creation failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Backup creation failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backup creation failed: {str(e)}") from e
 
 
 @database_router.post("/restore")
@@ -189,7 +189,7 @@ async def restore_database(request: RestoreRequest, user: UserInfo = Depends(req
         raise
     except Exception as e:
         logger.error(f"Database restore failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Database restore failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database restore failed: {str(e)}") from e
 
 
 @database_router.post("/backups/{backup_name}/verify")
@@ -224,7 +224,7 @@ async def verify_backup(backup_name: str, user: UserInfo = Depends(require_admin
         raise
     except Exception as e:
         logger.error(f"Backup verification failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Backup verification failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backup verification failed: {str(e)}") from e
 
 
 @database_router.get("/scheduler/status")
@@ -252,7 +252,7 @@ async def start_scheduler(user: UserInfo = Depends(require_admin())) -> dict[str
 
     except Exception as e:
         logger.error(f"Failed to start backup scheduler: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to start scheduler: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to start scheduler: {str(e)}") from e
 
 
 @database_router.post("/scheduler/stop")
@@ -268,7 +268,7 @@ async def stop_scheduler(user: UserInfo = Depends(require_admin())) -> dict[str,
 
     except Exception as e:
         logger.error(f"Failed to stop backup scheduler: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to stop scheduler: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to stop scheduler: {str(e)}") from e
 
 
 @database_router.get("/migrations/status")
@@ -285,7 +285,7 @@ async def get_migration_status(user: UserInfo = Depends(require_admin())) -> dic
 
     except Exception as e:
         logger.error(f"Failed to get migration status: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get migration status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get migration status: {str(e)}") from e
 
 
 @database_router.get("/stats")
@@ -315,7 +315,8 @@ async def get_database_stats(user: UserInfo = Depends(require_admin())) -> dict[
                     from sqlalchemy import text
 
                     # Get table row counts
-                    tables = [
+                    # Define allowed tables (whitelist to prevent SQL injection)
+                    allowed_tables = {
                         "requests",
                         "responses",
                         "providers",
@@ -324,10 +325,14 @@ async def get_database_stats(user: UserInfo = Depends(require_admin())) -> dict[
                         "audit_logs",
                         "compliance_violations",
                         "model_stats",
-                    ]
+                    }
 
-                    for table in tables:
+                    for table in allowed_tables:
                         try:
+                            # Validate table name is in whitelist (already validated above, but explicit check)
+                            if table not in allowed_tables:
+                                raise ValueError(f"Invalid table name: {table}")
+                            # Safe to use f-string here since table is from validated whitelist
                             result = await session.execute(text(f"SELECT COUNT(*) FROM {table}"))
                             count = result.scalar()
                             stats["tables"][table] = {"row_count": count}
@@ -347,4 +352,4 @@ async def get_database_stats(user: UserInfo = Depends(require_admin())) -> dict[
 
     except Exception as e:
         logger.error(f"Failed to get database stats: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get database stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get database stats: {str(e)}") from e

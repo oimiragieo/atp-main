@@ -13,6 +13,7 @@ from collections import defaultdict
 from typing import Any
 
 from metrics.registry import REGISTRY
+
 from router_service.preemption import Active, pick_preemptions
 
 

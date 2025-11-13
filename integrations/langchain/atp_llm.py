@@ -31,7 +31,7 @@ try:
     from langchain.schema import Generation, LLMResult
     from langchain.schema.output import GenerationChunk
 except ImportError:
-    raise ImportError("LangChain is required for ATP LangChain integration. Install it with: pip install langchain")
+    raise ImportError("LangChain is required for ATP LangChain integration. Install it with: pip install langchain") from None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -163,12 +163,12 @@ class ATPLangChainLLM(LLM):
                     error_text = await response.text()
                     raise Exception(f"ATP API error {response.status}: {error_text}")
 
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as e:
                 if attempt < self.max_retries - 1:
                     logger.warning(f"Request timeout, retrying (attempt {attempt + 1})")
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
                     continue
-                raise Exception("Request timeout after all retries")
+                raise Exception("Request timeout after all retries") from e
             except Exception as e:
                 if attempt < self.max_retries - 1:
                     logger.warning(f"Request failed: {e}, retrying (attempt {attempt + 1})")
@@ -401,9 +401,9 @@ class ATPLangChainLLM(LLM):
                 else:
                     # If no loop, run cleanup
                     loop.run_until_complete(self._close_session())
-            except Exception:
-                # Ignore cleanup errors
-                pass
+            except Exception as e:
+                # Cleanup errors are expected during interpreter shutdown
+                logger.debug(f"Session cleanup failed during LLM deletion: {e}")
 
 
 # Factory function for easy instantiation

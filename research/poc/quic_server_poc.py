@@ -14,8 +14,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from aiohttp import web
-
 from metrics import REGISTRY
+
 from router_service.frame import Frame
 
 # QUIC-specific metrics

@@ -10,6 +10,7 @@ import time
 from collections import deque
 
 from metrics.registry import REGISTRY
+
 from router_service.event_emitter import RejectionReason, emit_rejection_event
 
 _CTR_REPLAY = REGISTRY.counter("replay_reject_total")

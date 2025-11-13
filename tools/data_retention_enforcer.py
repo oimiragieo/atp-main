@@ -226,7 +226,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="ATP Data Retention Enforcement")
     parser.add_argument("--data-dir", default="./data", help="Data directory path")
-    parser.add_argument("--config", default="./configs/storage/retention_config.json", help="Retention configuration file")
+    parser.add_argument(
+        "--config", default="./configs/storage/retention_config.json", help="Retention configuration file"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Perform dry run without actual deletion")
     parser.add_argument("--data-type", help="Specific data type to purge")
     parser.add_argument("--init-config", action="store_true", help="Initialize default configuration file")

@@ -10,10 +10,9 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
+from metrics.registry import REGISTRY
 from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
-
-from metrics.registry import REGISTRY
 
 logger = logging.getLogger(__name__)
 

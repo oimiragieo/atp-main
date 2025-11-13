@@ -129,7 +129,7 @@ class RegistryAdapter:
             raise
         except Exception as e:
             logger.error(f"Failed to get model {model_name}: {e}")
-            raise KeyError(f"Model {model_name} not found")
+            raise KeyError(f"Model {model_name} not found") from e
 
     def __iter__(self):
         """Iterate over model names (synchronous for compatibility)."""

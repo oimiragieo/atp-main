@@ -313,7 +313,7 @@ class VertexAIAdapter(BaseAdapter):
 
         except Exception as e:
             logger.error(f"Text generation failed: {e}")
-            raise AdapterError(f"Text generation failed: {str(e)}")
+            raise AdapterError(f"Text generation failed: {str(e)}") from e
 
     async def _generate_text_sync(
         self,
@@ -401,7 +401,7 @@ class VertexAIAdapter(BaseAdapter):
 
         except Exception as e:
             logger.error(f"Sync text generation failed: {e}")
-            raise AdapterError(f"Text generation failed: {str(e)}")
+            raise AdapterError(f"Text generation failed: {str(e)}") from e
 
     async def _generate_text_stream(
         self,
@@ -485,7 +485,7 @@ class VertexAIAdapter(BaseAdapter):
 
         except Exception as e:
             logger.error(f"Streaming text generation failed: {e}")
-            raise AdapterError(f"Streaming text generation failed: {str(e)}")
+            raise AdapterError(f"Streaming text generation failed: {str(e)}") from e
 
     async def chat(
         self,
@@ -611,7 +611,7 @@ class VertexAIAdapter(BaseAdapter):
 
         except Exception as e:
             logger.error(f"Model deployment failed: {e}")
-            raise AdapterError(f"Model deployment failed: {str(e)}")
+            raise AdapterError(f"Model deployment failed: {str(e)}") from e
 
     async def undeploy_model(self, endpoint_id: str) -> bool:
         """Undeploy a model from Vertex AI."""

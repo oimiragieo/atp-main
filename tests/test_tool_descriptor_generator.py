@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from metrics.registry import REGISTRY
+
 from router_service.capability_handler import generate_tool_descriptors, get_capability_handler
 
 

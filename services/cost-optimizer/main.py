@@ -93,7 +93,7 @@ async def optimize_cost(request: OptimizationRequest):
         return result
     except Exception as e:
         logger.error(f"Cost optimization failed: {e}")
-        raise HTTPException(status_code=500, detail="Cost optimization failed")
+        raise HTTPException(status_code=500, detail="Cost optimization failed") from e
 
 
 @app.post("/cost/budget/check")
@@ -104,7 +104,7 @@ async def check_budget(request: BudgetCheckRequest):
         return result
     except Exception as e:
         logger.error(f"Budget check failed: {e}")
-        raise HTTPException(status_code=500, detail="Budget check failed")
+        raise HTTPException(status_code=500, detail="Budget check failed") from e
 
 
 @app.post("/cost/forecast")
@@ -115,7 +115,7 @@ async def forecast_costs(request: ForecastRequest):
         return result
     except Exception as e:
         logger.error(f"Cost forecasting failed: {e}")
-        raise HTTPException(status_code=500, detail="Cost forecasting failed")
+        raise HTTPException(status_code=500, detail="Cost forecasting failed") from e
 
 
 @app.get("/cost/pricing")
@@ -126,7 +126,7 @@ async def get_current_pricing():
         return result
     except Exception as e:
         logger.error(f"Failed to get pricing: {e}")
-        raise HTTPException(status_code=500, detail="Failed to get pricing")
+        raise HTTPException(status_code=500, detail="Failed to get pricing") from e
 
 
 async def main():

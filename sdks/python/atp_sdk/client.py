@@ -153,7 +153,7 @@ class ATPClient:
 
             except httpx.RequestError as e:
                 if attempt == self.config.max_retries:
-                    raise ATPError(f"Request failed after {self.config.max_retries} retries: {e}")
+                    raise ATPError(f"Request failed after {self.config.max_retries} retries: {e}") from e
 
                 # Exponential backoff
                 wait_time = 2**attempt
@@ -439,7 +439,7 @@ class AsyncATPClient:
 
             except httpx.RequestError as e:
                 if attempt == self.config.max_retries:
-                    raise ATPError(f"Request failed after {self.config.max_retries} retries: {e}")
+                    raise ATPError(f"Request failed after {self.config.max_retries} retries: {e}") from e
 
                 # Exponential backoff
                 wait_time = 2**attempt

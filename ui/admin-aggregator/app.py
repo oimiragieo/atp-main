@@ -185,4 +185,4 @@ async def health() -> dict[str, Any]:
         cfg = _get_cfg()
         return {"status": "ok", "routers_configured": len(cfg.routers)}
     except Exception as e:  # noqa: S110
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e

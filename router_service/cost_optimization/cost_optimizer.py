@@ -248,7 +248,7 @@ class CostOptimizer:
         # Get current model pricing
         current_pricing = None
 
-        for provider, models in all_pricing.items():
+        for _provider, models in all_pricing.items():
             if current_model in models:
                 current_pricing = models[current_model]
                 break

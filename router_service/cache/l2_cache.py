@@ -139,7 +139,6 @@ class RedisL2Cache(L2Cache):
     async def _init_cluster(self) -> None:
         """Initialize Redis cluster."""
         try:
-            import redis.asyncio as redis
             from redis.asyncio.cluster import RedisCluster
         except ImportError:
             logger.error("Redis cluster support requires redis-py with cluster support")

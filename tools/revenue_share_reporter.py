@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from metrics.registry import REGISTRY
+
 from router_service.cost_aggregator import GLOBAL_COST
 
 

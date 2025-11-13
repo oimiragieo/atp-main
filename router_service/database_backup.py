@@ -15,6 +15,8 @@ import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import aiofiles
+
 from .database import DatabaseConfig
 
 logger = logging.getLogger(__name__)
@@ -138,10 +140,10 @@ class DatabaseBackupManager:
 
             # Save metadata
             metadata_file = backup_file.with_suffix(".json")
-            with open(metadata_file, "w") as f:
-                import json
+            import json
 
-                json.dump(metadata, f, indent=2)
+            async with aiofiles.open(metadata_file, "w") as f:
+                await f.write(json.dumps(metadata, indent=2))
 
             # Copy WAL files to backup directory
             wal_backup_dir = self.backup_dir / f"{backup_name}_wal"
@@ -247,8 +249,9 @@ class DatabaseBackupManager:
                     try:
                         import json
 
-                        with open(metadata_file) as f:
-                            metadata = json.load(f)
+                        async with aiofiles.open(metadata_file) as f:
+                            content = await f.read()
+                            metadata = json.loads(content)
                         backup_info.update(metadata)
                     except Exception as e:
                         logger.warning(f"Failed to read backup metadata: {e}")
@@ -280,8 +283,8 @@ class DatabaseBackupManager:
 
             # For SQL files, check for basic structure
             elif backup_path.suffix == ".sql":
-                with open(backup_path) as f:
-                    content = f.read(1024)
+                async with aiofiles.open(backup_path) as f:
+                    content = await f.read(1024)
                     # Look for PostgreSQL dump header
                     if "PostgreSQL database dump" not in content:
                         return False
@@ -296,9 +299,11 @@ class DatabaseBackupManager:
         """Compress backup file using gzip."""
         compressed_file = backup_file.with_suffix(backup_file.suffix + ".gz")
 
-        with open(backup_file, "rb") as f_in:
-            with gzip.open(compressed_file, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        async with aiofiles.open(backup_file, "rb") as f_in:
+            content = await f_in.read()
+            compressed_content = gzip.compress(content)
+            async with aiofiles.open(compressed_file, "wb") as f_out:
+                await f_out.write(compressed_content)
 
         return compressed_file
 
@@ -306,9 +311,11 @@ class DatabaseBackupManager:
         """Decompress backup file."""
         decompressed_file = backup_file.with_suffix("")
 
-        with gzip.open(backup_file, "rb") as f_in:
-            with open(decompressed_file, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        async with aiofiles.open(backup_file, "rb") as f_in:
+            compressed_content = await f_in.read()
+            decompressed_content = gzip.decompress(compressed_content)
+            async with aiofiles.open(decompressed_file, "wb") as f_out:
+                await f_out.write(decompressed_content)
 
         return decompressed_file
 

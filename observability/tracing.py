@@ -27,7 +27,7 @@ from enum import Enum
 from typing import Any
 
 try:
-    from opentelemetry import baggage, context, trace
+    from opentelemetry import baggage, trace
     from opentelemetry.exporter.jaeger.thrift import JaegerExporter
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
@@ -38,7 +38,6 @@ try:
     from opentelemetry.sdk.trace import Span, TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
     from opentelemetry.sdk.trace.sampling import ALWAYS_OFF, ALWAYS_ON, ParentBased, TraceIdRatioBased
-    from opentelemetry.semantic_conventions.trace import SpanAttributes
     from opentelemetry.trace.status import Status, StatusCode
 except ImportError:
     # Fallback for when OpenTelemetry is not available

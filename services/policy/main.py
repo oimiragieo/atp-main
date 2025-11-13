@@ -73,7 +73,7 @@ async def evaluate_policy(request: PolicyRequest):
         return result
     except Exception as e:
         logger.error(f"Policy evaluation failed: {e}")
-        raise HTTPException(status_code=500, detail="Policy evaluation failed")
+        raise HTTPException(status_code=500, detail="Policy evaluation failed") from e
 
 
 @app.post("/policy/compliance")
@@ -84,7 +84,7 @@ async def validate_compliance(request: ComplianceRequest):
         return result
     except Exception as e:
         logger.error(f"Compliance validation failed: {e}")
-        raise HTTPException(status_code=500, detail="Compliance validation failed")
+        raise HTTPException(status_code=500, detail="Compliance validation failed") from e
 
 
 @app.get("/policy/list")
@@ -95,7 +95,7 @@ async def list_policies():
         return {"policies": [], "count": 0}
     except Exception as e:
         logger.error(f"Failed to list policies: {e}")
-        raise HTTPException(status_code=500, detail="Failed to list policies")
+        raise HTTPException(status_code=500, detail="Failed to list policies") from e
 
 
 async def main():

@@ -5,6 +5,7 @@ import os
 import tempfile
 
 from metrics.registry import REGISTRY
+
 from router_service.observation_curator import MinHashDeduper, ObservationCurator, SafetyFilter
 
 

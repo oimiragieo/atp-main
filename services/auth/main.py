@@ -59,7 +59,7 @@ async def validate_token(credentials: HTTPAuthorizationCredentials = Depends(sec
         return {"valid": True, "user": user_info}
     except Exception as e:
         logger.error(f"Token validation failed: {e}")
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Invalid token") from e
 
 
 @app.post("/auth/refresh")
@@ -70,7 +70,7 @@ async def refresh_token(credentials: HTTPAuthorizationCredentials = Depends(secu
         return {"token": "new_token", "expires_in": 3600}
     except Exception as e:
         logger.error(f"Token refresh failed: {e}")
-        raise HTTPException(status_code=401, detail="Token refresh failed")
+        raise HTTPException(status_code=401, detail="Token refresh failed") from e
 
 
 async def main():

@@ -107,7 +107,7 @@ async def run_compliance_check(
 
     except Exception as e:
         logger.error(f"Failed to run compliance check: {e}")
-        raise HTTPException(status_code=500, detail=f"Compliance check failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Compliance check failed: {str(e)}") from e
 
 
 @compliance_router.get("/violations", response_model=list[ComplianceViolationModel])
@@ -253,7 +253,7 @@ async def get_compliance_dashboard(
 @compliance_router.get("/export/{framework}")
 async def export_compliance_report(
     framework: ComplianceFramework,
-    format: str = Query("json", description="Export format (json, csv)"),
+    export_format: str = Query("json", description="Export format (json, csv)"),
     user: UserInfo = Depends(require_authentication({"read", "write", "admin"})),
 ) -> dict:
     """Export compliance report in specified format."""
@@ -262,7 +262,7 @@ async def export_compliance_report(
     try:
         report = await validator.run_compliance_check(framework)
 
-        if format.lower() == "json":
+        if export_format.lower() == "json":
             return {
                 "format": "json",
                 "report": {
@@ -284,7 +284,7 @@ async def export_compliance_report(
                     ],
                 },
             }
-        elif format.lower() == "csv":
+        elif export_format.lower() == "csv":
             # Generate CSV data
             csv_lines = ["violation_id,rule_id,severity,title,status,detected_at"]
             for v in report.violations:
@@ -295,8 +295,8 @@ async def export_compliance_report(
 
             return {"format": "csv", "data": "\n".join(csv_lines)}
         else:
-            raise HTTPException(status_code=400, detail=f"Unsupported format: {format}")
+            raise HTTPException(status_code=400, detail=f"Unsupported format: {export_format}")
 
     except Exception as e:
         logger.error(f"Failed to export compliance report: {e}")
-        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}") from e

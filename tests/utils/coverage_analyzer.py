@@ -18,12 +18,15 @@ Advanced test coverage analysis and reporting for enterprise components.
 
 import ast
 import json
+import logging
 import os
 import subprocess
 from dataclasses import dataclass
 from typing import Any
 
 import coverage
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -560,8 +563,8 @@ class CoverageAnalyzer:
                             complexity_data[item["name"]] = item["complexity"]
 
                 return complexity_data
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Complexity calculation failed for {filename}: {e}")
 
         # Fallback: simple complexity estimation
         functions = self._extract_functions_from_file(filename)

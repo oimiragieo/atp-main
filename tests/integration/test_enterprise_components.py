@@ -21,8 +21,6 @@ import pytest
 
 # Testcontainers imports
 try:
-    from testcontainers.compose import DockerCompose
-    from testcontainers.postgres import PostgresContainer
     from testcontainers.redis import RedisContainer
 
     TESTCONTAINERS_AVAILABLE = True
@@ -31,11 +29,11 @@ except ImportError:
     pytest.skip("Testcontainers not available", allow_module_level=True)
 
 # Import enterprise components
-from router_service.api_gateway import APIGateway
-
 from metrics.enterprise_metrics import EnterpriseMetricsCollector
 from monitoring.alerting.alert_manager import AlertManager, AlertRule, AlertSeverity
 from monitoring.alerting.incident_response import ActionType, IncidentResponseAutomation, RemediationAction
+from router_service.api_gateway import APIGateway
+
 from observability.performance_analyzer import PerformanceAnalyzer
 from observability.tracing import EnhancedTracer, TraceLevel, TracingConfig
 from router_service.api_versioning import APIVersionManager

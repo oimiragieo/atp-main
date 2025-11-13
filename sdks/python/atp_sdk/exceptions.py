@@ -92,7 +92,7 @@ class ValidationError(ATPError):
         self.field = field
 
 
-class TimeoutError(ATPError):
+class ATPTimeoutError(ATPError):
     """Raised when a request times out."""
 
     def __init__(self, message: str, timeout: float | None = None, details: dict[str, Any] | None = None):

@@ -3,6 +3,7 @@
 import time
 
 from metrics.registry import REGISTRY
+
 from router_service.reputation_model import ReputationModel
 
 

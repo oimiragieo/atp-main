@@ -279,7 +279,7 @@ class MCPConnector:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         status = {}
-        for config, result in zip(configs, results):
+        for config, result in zip(configs, results, strict=True):
             if isinstance(result, Exception):
                 logger.error(f"Failed to connect to {config.name}: {result}")
                 status[config.name] = False

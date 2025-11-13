@@ -3,9 +3,8 @@
 from typing import Any
 
 import yaml
-from pydantic import ValidationError
-
 from metrics.registry import REGISTRY
+from pydantic import ValidationError
 
 from .models import Finding
 

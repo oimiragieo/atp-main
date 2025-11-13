@@ -130,9 +130,9 @@ def _process_data_for_storage(
                 from .advanced_pii import redact_object
 
                 redacted_data = redact_object(data, classification)
-            except:
+            except Exception as e:
                 # Fallback to string redaction
-                pass
+                logger.debug(f"Object redaction failed, using string redaction: {e}")
 
         audit_id = audit_entry.id if audit_entry else None
         return redacted_data, pii_matches, audit_id
@@ -313,10 +313,10 @@ def detect_pii_endpoint(
             }
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid data classification: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid data classification: {e}") from e
     except Exception as e:
         logger.error(f"Error in PII detection: {e}")
-        raise HTTPException(status_code=500, detail="PII detection failed")
+        raise HTTPException(status_code=500, detail="PII detection failed") from e
 
 
 @app.post("/v1/pii/redact")
@@ -348,10 +348,10 @@ def redact_pii_endpoint(
         }
 
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid data classification: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid data classification: {e}") from e
     except Exception as e:
         logger.error(f"Error in PII redaction: {e}")
-        raise HTTPException(status_code=500, detail="PII redaction failed")
+        raise HTTPException(status_code=500, detail="PII redaction failed") from e
 
 
 @app.get("/v1/pii/audit")
@@ -391,7 +391,7 @@ def get_pii_audit_trail(
 
     except Exception as e:
         logger.error(f"Error retrieving PII audit trail: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve audit trail")
+        raise HTTPException(status_code=500, detail="Failed to retrieve audit trail") from e
 
 
 @app.post("/v1/pii/data-subject-request")
@@ -417,7 +417,7 @@ def handle_data_subject_request(
 
     except Exception as e:
         logger.error(f"Error handling data subject request: {e}")
-        raise HTTPException(status_code=500, detail="Failed to process data subject request")
+        raise HTTPException(status_code=500, detail="Failed to process data subject request") from e
 
 
 # Health and Status Endpoints

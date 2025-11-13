@@ -27,6 +27,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+import aiofiles
 import yaml
 
 # Import test runners and utilities
@@ -875,18 +876,18 @@ class TestOrchestrator:
 
         for format_type in self.config["reporting"]["formats"]:
             if format_type == "json":
-                with open(report_dir / "comprehensive-report.json", "w") as f:
-                    json.dump(report, f, indent=2, default=str)
+                async with aiofiles.open(report_dir / "comprehensive-report.json", "w") as f:
+                    await f.write(json.dumps(report, indent=2, default=str))
 
             elif format_type == "html":
                 html_content = self._generate_html_report(report)
-                with open(report_dir / "comprehensive-report.html", "w") as f:
-                    f.write(html_content)
+                async with aiofiles.open(report_dir / "comprehensive-report.html", "w") as f:
+                    await f.write(html_content)
 
             elif format_type == "junit":
                 junit_content = self._generate_junit_report(report)
-                with open(report_dir / "comprehensive-report.xml", "w") as f:
-                    f.write(junit_content)
+                async with aiofiles.open(report_dir / "comprehensive-report.xml", "w") as f:
+                    await f.write(junit_content)
 
     def _generate_html_report(self, report: dict[str, Any]) -> str:
         """Generate HTML report."""
@@ -1124,8 +1125,8 @@ async def main():
 
         # Save results if requested
         if args.output:
-            with open(args.output, "w") as f:
-                json.dump(report, f, indent=2, default=str)
+            async with aiofiles.open(args.output, "w") as f:
+                await f.write(json.dumps(report, indent=2, default=str))
             print(f"\nDetailed results saved to: {args.output}")
 
         # Exit with appropriate code

@@ -72,7 +72,10 @@ class AuthManager:
             # Try to decode without verification (just to check format)
             jwt.decode(token, options={"verify_signature": False})
             return True
-        except:
+        except (jwt.InvalidTokenError, ValueError, AttributeError, KeyError) as e:
+            # Log debug info for troubleshooting
+            import logging
+            logging.getLogger(__name__).debug(f"Token validation failed: {e}")
             return False
 
     def _get_or_refresh_token(self) -> str:
@@ -120,7 +123,7 @@ class AuthManager:
             return self._token_cache
 
         except jwt.InvalidTokenError as e:
-            raise AuthenticationError(f"Invalid JWT token: {e}")
+            raise AuthenticationError(f"Invalid JWT token: {e}") from e
 
     async def _refresh_token_async(self) -> str:
         """Refresh the authentication token (async version)."""
@@ -146,7 +149,10 @@ class AuthManager:
 
             return True
 
-        except:
+        except (jwt.InvalidTokenError, ValueError, AttributeError, KeyError) as e:
+            # Log debug info for troubleshooting
+            import logging
+            logging.getLogger(__name__).debug(f"Token validation failed: {e}")
             return False
 
     def get_token_info(self) -> dict:
@@ -169,7 +175,7 @@ class AuthManager:
                     "scopes": decoded.get("scopes", []),
                 }
             except jwt.InvalidTokenError as e:
-                raise AuthenticationError(f"Invalid JWT token: {e}")
+                raise AuthenticationError(f"Invalid JWT token: {e}") from e
         else:
             return {
                 "type": "api_key",
@@ -262,4 +268,4 @@ class ServiceAccountAuth:
             return token
 
         except Exception as e:
-            raise AuthenticationError(f"Failed to generate service account token: {e}")
+            raise AuthenticationError(f"Failed to generate service account token: {e}") from e

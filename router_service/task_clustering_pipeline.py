@@ -11,12 +11,11 @@ from collections import defaultdict
 from typing import Any
 
 import numpy as np
+from metrics.registry import REGISTRY
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
-
-from metrics.registry import REGISTRY
 
 from .embedding_cluster_classifier import EmbeddingService, MockEmbeddingService
 

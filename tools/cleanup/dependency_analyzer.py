@@ -318,8 +318,9 @@ class DependencyAnalyzer:
                                 if nx.has_path(self.dependency_graph, module_name, leaf):
                                     path_length = nx.shortest_path_length(self.dependency_graph, module_name, leaf)
                                     depths.append(path_length)
-                            except:
-                                pass
+                            except Exception:
+                                # Expected - not all nodes may have paths
+                                continue
 
                         analysis.dependency_depth = min(depths) if depths else 0
 

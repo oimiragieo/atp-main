@@ -132,7 +132,7 @@ async def create_policy(policy: ABACPolicyModel, user: UserInfo = Depends(requir
 
     except Exception as e:
         logger.error(f"Failed to create policy {policy.policy_id}: {e}")
-        raise HTTPException(status_code=400, detail=f"Failed to create policy: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Failed to create policy: {str(e)}") from e
 
 
 @policy_router.get("/", response_model=PolicyListResponse)
@@ -208,7 +208,7 @@ async def update_policy(
 
     except Exception as e:
         logger.error(f"Failed to update policy {policy_id}: {e}")
-        raise HTTPException(status_code=400, detail=f"Failed to update policy: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Failed to update policy: {str(e)}") from e
 
 
 @policy_router.delete("/{policy_id}")

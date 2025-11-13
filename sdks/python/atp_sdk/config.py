@@ -165,10 +165,10 @@ class ATPConfig:
 
             return cls(**config_data)
 
-        except FileNotFoundError:
-            raise ConfigurationError(f"Configuration file not found: {config_file}")
+        except FileNotFoundError as e:
+            raise ConfigurationError(f"Configuration file not found: {config_file}") from e
         except (json.JSONDecodeError, yaml.YAMLError) as e:
-            raise ConfigurationError(f"Invalid configuration file format: {e}")
+            raise ConfigurationError(f"Invalid configuration file format: {e}") from e
 
     def to_dict(self) -> dict[str, Any]:
         """Convert configuration to dictionary."""

@@ -24,15 +24,13 @@ try:
     from langchain.chains import ConversationChain, LLMChain
     from langchain.chains.question_answering import load_qa_chain
     from langchain.chains.summarize import load_summarize_chain
-    from langchain.document_loaders import TextLoader
-    from langchain.prompts import ChatPromptTemplate, PromptTemplate
+    from langchain.prompts import PromptTemplate
     from langchain.schema import AIMessage, HumanMessage, SystemMessage
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
     from langchain.vectorstores import FAISS
 except ImportError:
     raise ImportError(
         "LangChain is required for ATP LangChain integration examples. Install it with: pip install langchain"
-    )
+    ) from None
 
 from .atp_chat_model import ATPChatModel
 from .atp_embeddings import ATPEmbeddings
@@ -275,8 +273,38 @@ def fibonacci(n):
         # Define tools
         def calculator(expression: str) -> str:
             """Calculate mathematical expressions."""
+            import ast
+            import operator
+
+            # Safe math operators only
+            safe_operators = {
+                ast.Add: operator.add,
+                ast.Sub: operator.sub,
+                ast.Mult: operator.mul,
+                ast.Div: operator.truediv,
+                ast.Pow: operator.pow,
+                ast.USub: operator.neg,
+            }
+
+            def safe_eval_node(node):
+                if isinstance(node, ast.Num):
+                    return node.n
+                elif isinstance(node, ast.BinOp):
+                    op = safe_operators.get(type(node.op))
+                    if op is None:
+                        raise ValueError(f"Unsafe operation: {type(node.op).__name__}")
+                    return op(safe_eval_node(node.left), safe_eval_node(node.right))
+                elif isinstance(node, ast.UnaryOp):
+                    op = safe_operators.get(type(node.op))
+                    if op is None:
+                        raise ValueError(f"Unsafe operation: {type(node.op).__name__}")
+                    return op(safe_eval_node(node.operand))
+                else:
+                    raise ValueError(f"Unsafe node type: {type(node).__name__}")
+
             try:
-                result = eval(expression)
+                node = ast.parse(expression, mode='eval')
+                result = safe_eval_node(node.body)
                 return f"The result is: {result}"
             except Exception as e:
                 return f"Error calculating: {e}"

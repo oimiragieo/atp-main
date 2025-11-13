@@ -328,7 +328,7 @@ def get_audit_log(
         return {"events": [], "total_returned": 0, "error": "Audit log file not found"}
     except Exception as e:
         logger.error(f"Failed to read audit log: {e}")
-        raise HTTPException(status_code=500, detail="Failed to read audit log")
+        raise HTTPException(status_code=500, detail="Failed to read audit log") from e
 
 
 @app.get("/v1/compliance/audit-integrity")
@@ -351,7 +351,7 @@ def verify_audit_integrity(x_tenant_id: str = Header(..., alias="x-tenant-id")) 
         return {"integrity_valid": False, "error": "Audit log file not found", "audit_path": AUDIT_PATH}
     except Exception as e:
         logger.error(f"Failed to verify audit integrity: {e}")
-        raise HTTPException(status_code=500, detail="Failed to verify audit integrity")
+        raise HTTPException(status_code=500, detail="Failed to verify audit integrity") from e
 
 
 @app.get("/v1/compliance/gdpr/data-subject/{subject_id}")
@@ -398,7 +398,7 @@ def get_data_subject_info(subject_id: str, x_tenant_id: str = Header(..., alias=
 
     except Exception as e:
         logger.error(f"Failed to retrieve data subject info: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve data subject information")
+        raise HTTPException(status_code=500, detail="Failed to retrieve data subject information") from e
 
 
 @app.delete("/v1/compliance/gdpr/data-subject/{subject_id}")
@@ -436,7 +436,7 @@ def delete_data_subject_data(subject_id: str, x_tenant_id: str = Header(..., ali
 
     except Exception as e:
         logger.error(f"Failed to delete data subject data: {e}")
-        raise HTTPException(status_code=500, detail="Failed to delete data subject data")
+        raise HTTPException(status_code=500, detail="Failed to delete data subject data") from e
 
 
 @app.get("/v1/compliance/soc2/access-report")
@@ -509,7 +509,7 @@ def get_soc2_access_report(
 
     except Exception as e:
         logger.error(f"Failed to generate SOC2 access report: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate SOC2 access report")
+        raise HTTPException(status_code=500, detail="Failed to generate SOC2 access report") from e
 
 
 def _contains_subject_data(data: Any, subject_id: str) -> bool:
