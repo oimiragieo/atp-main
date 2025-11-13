@@ -1,0 +1,142 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "SLA Tier Specifications and SLO Targets",
+    "last_updated": "2025-01-08"
+  },
+  "tiers": {
+    "platinum": {
+      "tier": "platinum",
+      "pricing_multiplier": 5.0,
+      "concurrency_limit": 1000,
+      "rate_limit_qps": 5000,
+      "support_sla_hours": 1,
+      "data_retention_days": 365,
+      "custom_features": [
+        "Dedicated infrastructure",
+        "24/7 premium support",
+        "Custom SLAs",
+        "Advanced analytics",
+        "Priority feature requests"
+      ],
+      "slo_definition": {
+        "compliance_window_days": 30,
+        "alert_threshold_pct": 0.95,
+        "burn_rate_threshold": 2.0,
+        "sli_targets": {
+          "latency_p50_ms": 50,
+          "latency_p95_ms": 100,
+          "latency_p99_ms": 200,
+          "availability_pct": 99.99,
+          "error_budget_pct": 0.01,
+          "throughput_qps": 10000
+        }
+      }
+    },
+    "gold": {
+      "tier": "gold",
+      "pricing_multiplier": 3.0,
+      "concurrency_limit": 500,
+      "rate_limit_qps": 2000,
+      "support_sla_hours": 4,
+      "data_retention_days": 180,
+      "custom_features": [
+        "High availability",
+        "Business hours support",
+        "Enhanced monitoring",
+        "Priority queuing"
+      ],
+      "slo_definition": {
+        "compliance_window_days": 30,
+        "alert_threshold_pct": 0.9,
+        "burn_rate_threshold": 1.5,
+        "sli_targets": {
+          "latency_p50_ms": 75,
+          "latency_p95_ms": 150,
+          "latency_p99_ms": 300,
+          "availability_pct": 99.95,
+          "error_budget_pct": 0.05,
+          "throughput_qps": 5000
+        }
+      }
+    },
+    "silver": {
+      "tier": "silver",
+      "pricing_multiplier": 2.0,
+      "concurrency_limit": 200,
+      "rate_limit_qps": 1000,
+      "support_sla_hours": 12,
+      "data_retention_days": 90,
+      "custom_features": [
+        "Standard availability",
+        "Email support",
+        "Basic monitoring"
+      ],
+      "slo_definition": {
+        "compliance_window_days": 30,
+        "alert_threshold_pct": 0.85,
+        "burn_rate_threshold": 1.2,
+        "sli_targets": {
+          "latency_p50_ms": 100,
+          "latency_p95_ms": 250,
+          "latency_p99_ms": 500,
+          "availability_pct": 99.9,
+          "error_budget_pct": 0.1,
+          "throughput_qps": 2000
+        }
+      }
+    },
+    "bronze": {
+      "tier": "bronze",
+      "pricing_multiplier": 1.5,
+      "concurrency_limit": 100,
+      "rate_limit_qps": 500,
+      "support_sla_hours": 24,
+      "data_retention_days": 30,
+      "custom_features": [
+        "Basic availability",
+        "Community support",
+        "Limited monitoring"
+      ],
+      "slo_definition": {
+        "compliance_window_days": 30,
+        "alert_threshold_pct": 0.8,
+        "burn_rate_threshold": 1.0,
+        "sli_targets": {
+          "latency_p50_ms": 150,
+          "latency_p95_ms": 400,
+          "latency_p99_ms": 800,
+          "availability_pct": 99.5,
+          "error_budget_pct": 0.5,
+          "throughput_qps": 1000
+        }
+      }
+    },
+    "basic": {
+      "tier": "basic",
+      "pricing_multiplier": 1.0,
+      "concurrency_limit": 50,
+      "rate_limit_qps": 200,
+      "support_sla_hours": 72,
+      "data_retention_days": 7,
+      "custom_features": [
+        "Best effort availability",
+        "Community support only",
+        "Minimal monitoring"
+      ],
+      "slo_definition": {
+        "compliance_window_days": 30,
+        "alert_threshold_pct": 0.75,
+        "burn_rate_threshold": 0.8,
+        "sli_targets": {
+          "latency_p50_ms": 250,
+          "latency_p95_ms": 750,
+          "latency_p99_ms": 1500,
+          "availability_pct": 99.0,
+          "error_budget_pct": 1.0,
+          "throughput_qps": 500
+        }
+      }
+    }
+  }
+}

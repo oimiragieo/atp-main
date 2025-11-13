@@ -1,0 +1,15 @@
+{
+  "name": "atp-vscode-poc",
+  "displayName": "ATP VSCode POC",
+  "description": "Minimal VS Code extension for ATP framework integration.",
+  "version": "0.0.1",
+  "engines": { "vscode": ">=1.50.0" },
+  "main": "extension.js",
+  "activationEvents": ["onCommand:atp-vscode-poc.helloWorld"],
+  "contributes": {
+    "commands": [{
+      "command": "atp-vscode-poc.helloWorld",
+      "title": "ATP: Hello World"
+    }]
+  }
+}

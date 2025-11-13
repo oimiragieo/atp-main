@@ -1,0 +1,269 @@
+# Production Configuration for ATP Enterprise AI Platform
+
+# Application settings
+app:
+  name: "ATP Enterprise AI Platform"
+  version: "1.0.0"
+  environment: "production"
+  debug: false
+
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 8080
+  workers: 4
+  timeout: 300
+  keepalive: 2
+
+# Database configuration
+database:
+  # Use environment variable for connection string
+  url: "${DATABASE_URL}"
+  pool_size: 20
+  max_overflow: 30
+  pool_timeout: 30
+  pool_recycle: 3600
+  echo: false
+  
+  # Connection retry settings
+  retry_attempts: 3
+  retry_delay: 1
+
+# Redis configuration
+redis:
+  url: "${REDIS_URL}"
+  max_connections: 100
+  retry_on_timeout: true
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  
+  # Cluster settings
+  cluster_enabled: true
+  max_connections_per_node: 50
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "json"
+  
+  # Log rotation
+  max_bytes: 104857600  # 100MB
+  backup_count: 5
+  
+  # Structured logging fields
+  include_fields:
+    - timestamp
+    - level
+    - message
+    - request_id
+    - tenant_id
+    - user_id
+    - service
+    - component
+
+# Security configuration
+security:
+  # CORS settings
+  cors:
+    enabled: true
+    origins:
+      - "https://yourdomain.com"
+      - "https://app.yourdomain.com"
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    headers: ["Content-Type", "Authorization", "X-Request-ID"]
+    credentials: true
+  
+  # CSRF protection
+  csrf:
+    enabled: true
+    secret_key: "${CSRF_SECRET_KEY}"
+  
+  # Rate limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 1000
+    burst_size: 100
+    
+    # Per-endpoint limits
+    endpoints:
+      "/api/v1/chat": 100
+      "/api/v1/auth": 10
+  
+  # Authentication
+  auth:
+    jwt_secret: "${JWT_SECRET}"
+    jwt_expiry: 3600  # 1 hour
+    refresh_token_expiry: 604800  # 7 days
+    
+    # OIDC settings
+    oidc:
+      enabled: true
+      issuer: "${OIDC_ISSUER}"
+      client_id: "${OIDC_CLIENT_ID}"
+      client_secret: "${OIDC_CLIENT_SECRET}"
+
+# AI Provider configuration
+providers:
+  openai:
+    enabled: true
+    api_key: "${OPENAI_API_KEY}"
+    base_url: "https://api.openai.com/v1"
+    timeout: 60
+    max_retries: 3
+    
+    # Model configuration
+    models:
+      - name: "gpt-4"
+        max_tokens: 8192
+        cost_per_1k_tokens: 0.03
+      - name: "gpt-3.5-turbo"
+        max_tokens: 4096
+        cost_per_1k_tokens: 0.002
+  
+  anthropic:
+    enabled: true
+    api_key: "${ANTHROPIC_API_KEY}"
+    base_url: "https://api.anthropic.com"
+    timeout: 60
+    max_retries: 3
+    
+    models:
+      - name: "claude-3-opus"
+        max_tokens: 4096
+        cost_per_1k_tokens: 0.015
+      - name: "claude-3-sonnet"
+        max_tokens: 4096
+        cost_per_1k_tokens: 0.003
+  
+  google:
+    enabled: true
+    api_key: "${GOOGLE_API_KEY}"
+    base_url: "https://generativelanguage.googleapis.com/v1"
+    timeout: 60
+    max_retries: 3
+    
+    models:
+      - name: "gemini-pro"
+        max_tokens: 2048
+        cost_per_1k_tokens: 0.0005
+
+# Monitoring configuration
+monitoring:
+  # Metrics
+  metrics:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+    
+    # Custom metrics
+    custom_metrics:
+      - name: "request_duration"
+        type: "histogram"
+        description: "Request duration in seconds"
+      - name: "active_connections"
+        type: "gauge"
+        description: "Number of active connections"
+  
+  # Health checks
+  health:
+    enabled: true
+    path: "/health"
+    checks:
+      - name: "database"
+        timeout: 5
+      - name: "redis"
+        timeout: 3
+      - name: "providers"
+        timeout: 10
+  
+  # Tracing
+  tracing:
+    enabled: true
+    service_name: "atp-router"
+    jaeger_endpoint: "${JAEGER_ENDPOINT}"
+    sample_rate: 0.1
+
+# Cost optimization
+cost_optimization:
+  enabled: true
+  
+  # Budget settings
+  budgets:
+    default_daily_limit: 100.0  # USD
+    default_monthly_limit: 3000.0  # USD
+    
+    # Per-tenant limits
+    tenant_limits:
+      enabled: true
+      default_daily: 10.0
+      default_monthly: 300.0
+  
+  # Cost tracking
+  tracking:
+    enabled: true
+    granularity: "request"  # request, hour, day
+    
+  # Optimization strategies
+  strategies:
+    - name: "cost_aware_routing"
+      enabled: true
+      weight: 0.3
+    - name: "quality_threshold"
+      enabled: true
+      min_quality_score: 0.8
+
+# Caching configuration
+caching:
+  # Response caching
+  response_cache:
+    enabled: true
+    ttl: 3600  # 1 hour
+    max_size: 1000
+    
+  # Route caching
+  route_cache:
+    enabled: true
+    ttl: 300  # 5 minutes
+    max_size: 500
+  
+  # Policy caching
+  policy_cache:
+    enabled: true
+    ttl: 60  # 1 minute
+    max_size: 100
+
+# Compliance configuration
+compliance:
+  # Data retention
+  data_retention:
+    default_days: 90
+    audit_logs_days: 2555  # 7 years
+    
+  # PII handling
+  pii:
+    detection_enabled: true
+    redaction_enabled: true
+    
+    # Redaction patterns
+    patterns:
+      - name: "email"
+        pattern: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
+        replacement: "[EMAIL]"
+      - name: "phone"
+        pattern: "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"
+        replacement: "[PHONE]"
+  
+  # Audit logging
+  audit:
+    enabled: true
+    log_all_requests: true
+    include_request_body: false
+    include_response_body: false
+
+# Feature flags
+features:
+  streaming_responses: true
+  function_calling: true
+  multi_modal: true
+  consensus_routing: true
+  adaptive_rate_limiting: true

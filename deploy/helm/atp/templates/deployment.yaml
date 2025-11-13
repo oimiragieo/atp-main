@@ -1,0 +1,380 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+{{- if .Values.router.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "atp.fullname" . }}-router
+  labels:
+    {{- include "atp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: router
+  annotations:
+    deployment.kubernetes.io/revision: "{{ .Values.router.image.tag | default .Chart.AppVersion }}"
+    {{- if .Values.monitoring.enabled }}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+    prometheus.io/path: "/metrics"
+    {{- end }}
+spec:
+  {{- if not .Values.router.autoscaling.enabled }}
+  replicas: {{ .Values.router.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "atp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: router
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- if .Values.istio.enabled }}
+        sidecar.istio.io/inject: "true"
+        {{- end }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "atp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: router
+        version: {{ .Values.router.image.tag | default .Chart.AppVersion }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "atp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: 30
+      {{- if .Values.externalServices.cloudSqlProxy.enabled }}
+      initContainers:
+        - name: wait-for-db
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h localhost -p {{ .Values.externalServices.cloudSqlProxy.port }}; do
+                echo "Waiting for database..."
+                sleep 2
+              done
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      {{- end }}
+      containers:
+        {{- if .Values.externalServices.cloudSqlProxy.enabled }}
+        - name: cloud-sql-proxy
+          image: {{ .Values.externalServices.cloudSqlProxy.image }}
+          command:
+            - "/cloud_sql_proxy"
+            - "-instances={{ .Values.externalServices.cloudSqlProxy.connectionName }}=tcp:{{ .Values.externalServices.cloudSqlProxy.port }}"
+            - "-credential_file=/secrets/service_account.json"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: service-account-key
+              mountPath: /secrets/
+              readOnly: true
+          resources:
+            {{- toYaml .Values.externalServices.cloudSqlProxy.resources | nindent 12 }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.externalServices.cloudSqlProxy.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.externalServices.cloudSqlProxy.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        {{- end }}
+        - name: router
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.router.image.repository }}:{{ .Values.router.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.router.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.router.service.targetPort }}
+              protocol: TCP
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          env:
+            {{- range .Values.router.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: DATABASE_HOST
+              value: "localhost"
+            - name: DATABASE_PORT
+              value: "{{ .Values.externalServices.cloudSqlProxy.port }}"
+            - name: DATABASE_NAME
+              value: {{ .Values.database.credentials.database | default "atp" }}
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.credentials.secretName }}
+                  key: {{ .Values.database.credentials.usernameKey }}
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.credentials.secretName }}
+                  key: {{ .Values.database.credentials.passwordKey }}
+            - name: REDIS_HOST
+              value: {{ .Values.redis.host }}
+            - name: REDIS_PORT
+              value: "{{ .Values.redis.port }}"
+            {{- if .Values.redis.credentials.secretName }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.redis.credentials.secretName }}
+                  key: {{ .Values.redis.credentials.passwordKey }}
+            {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "atp.fullname" . }}-config
+          {{- if .Values.router.healthcheck.enabled }}
+          livenessProbe:
+            {{- toYaml .Values.router.healthcheck.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.router.healthcheck.readinessProbe | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.router.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: var-cache
+              mountPath: /var/cache
+            {{- if .Values.features.auditLogging }}
+            - name: audit-logs
+              mountPath: /var/log/audit
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: var-cache
+          emptyDir: {}
+        {{- if .Values.externalServices.cloudSqlProxy.enabled }}
+        - name: service-account-key
+          secret:
+            secretName: {{ include "atp.fullname" . }}-sa-key
+        {{- end }}
+        {{- if .Values.features.auditLogging }}
+        - name: audit-logs
+          emptyDir: {}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+
+---
+
+{{- if .Values.memoryGateway.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "atp.fullname" . }}-memory-gateway
+  labels:
+    {{- include "atp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: memory-gateway
+spec:
+  {{- if not .Values.memoryGateway.autoscaling.enabled }}
+  replicas: {{ .Values.memoryGateway.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "atp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: memory-gateway
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.istio.enabled }}
+        sidecar.istio.io/inject: "true"
+        {{- end }}
+      labels:
+        {{- include "atp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: memory-gateway
+        version: {{ .Values.memoryGateway.image.tag | default .Chart.AppVersion }}
+    spec:
+      serviceAccountName: {{ include "atp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: memory-gateway
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.memoryGateway.image.repository }}:{{ .Values.memoryGateway.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.memoryGateway.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.memoryGateway.service.targetPort }}
+              protocol: TCP
+          env:
+            - name: REDIS_HOST
+              value: {{ .Values.redis.host }}
+            - name: REDIS_PORT
+              value: "{{ .Values.redis.port }}"
+          envFrom:
+            - configMapRef:
+                name: {{ include "atp.fullname" . }}-config
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.memoryGateway.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+
+---
+
+{{- if .Values.adminDashboard.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "atp.fullname" . }}-admin-dashboard
+  labels:
+    {{- include "atp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin-dashboard
+spec:
+  replicas: {{ .Values.adminDashboard.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      {{- include "atp.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: admin-dashboard
+  template:
+    metadata:
+      annotations:
+        {{- if .Values.istio.enabled }}
+        sidecar.istio.io/inject: "true"
+        {{- end }}
+      labels:
+        {{- include "atp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: admin-dashboard
+        version: {{ .Values.adminDashboard.image.tag | default .Chart.AppVersion }}
+    spec:
+      serviceAccountName: {{ include "atp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: admin-dashboard
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.adminDashboard.image.repository }}:{{ .Values.adminDashboard.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.adminDashboard.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.adminDashboard.service.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.adminDashboard.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

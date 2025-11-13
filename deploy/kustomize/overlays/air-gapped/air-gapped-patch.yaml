@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atp-router
+spec:
+  template:
+    spec:
+      containers:
+      - name: router
+        env:
+        - name: ATP_AIR_GAPPED
+          value: "true"
+        - name: ATP_DISABLE_TELEMETRY
+          value: "true"
+        - name: ATP_LOCAL_MODEL_CACHE
+          value: "/app/models"
+        volumeMounts:
+        - name: model-cache
+          mountPath: /app/models
+        - name: local-registry-cert
+          mountPath: /etc/ssl/certs/registry.crt
+          subPath: registry.crt
+      volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: atp-model-cache
+      - name: local-registry-cert
+        secret:
+          secretName: registry-certs
+      # Remove external network access
+      - name: network-policy
+        configMap:
+          name: air-gapped-network-policy

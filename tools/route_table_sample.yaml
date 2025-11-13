@@ -1,0 +1,34 @@
+# Sample AGP Route Table for Testing
+# Format: router_id -> prefix -> route_info
+
+router1:
+  "10.0.0.0/8":
+    next_hop: "router2"
+    path: [65001, 65002]
+    local_pref: 100
+  "192.168.0.0/16":
+    next_hop: "router1"  # Direct route
+    path: [65001]
+    local_pref: 200
+
+router2:
+  "10.0.0.0/8":
+    next_hop: "router3"
+    path: [65002, 65003]
+    local_pref: 150
+  "172.16.0.0/12":
+    next_hop: "router4"
+    path: [65002, 65004]
+    local_pref: 120
+
+router3:
+  "10.0.0.0/8":
+    next_hop: "router3"  # Destination reached
+    path: [65003]
+    local_pref: 200
+
+router4:
+  "172.16.0.0/12":
+    next_hop: "router4"  # Destination reached
+    path: [65004]
+    local_pref: 180

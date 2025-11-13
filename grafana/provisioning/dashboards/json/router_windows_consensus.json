@@ -1,0 +1,71 @@
+{
+  "title": "ATP Router Windows & Consensus",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Window Admits",
+      "targets": [
+        {
+          "expr": "router_windows_admit_total"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Window Rejects",
+      "targets": [
+        {
+          "expr": "router_windows_reject_total"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "QoS Bronze Drops",
+      "targets": [
+        {
+          "expr": "router_qos_drops_bronze_total"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "type": "timeseries",
+      "title": "Estimate Tokens (p90)",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.9, sum(rate(router_estimate_tokens_bucket[1m])) by (le))"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "type": "timeseries",
+      "title": "Estimate MAPE (tokens) avg",
+      "targets": [
+        {
+          "expr": "avg_over_time(router_estimate_mape_tokens_sum[5m]) / avg_over_time(router_estimate_mape_tokens_count[5m])"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "type": "gauge",
+      "title": "Consensus Confidence",
+      "targets": [
+        {
+          "expr": "router_consensus_confidence"
+        }
+      ],
+      "id": 6
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  }
+}

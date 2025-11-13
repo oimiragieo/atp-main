@@ -1,0 +1,136 @@
+{
+  "rules": [
+    {
+      "name": "ai_model_extraction",
+      "pattern": "(?:extract|dump|steal|copy)\\s+(?:model|weights|parameters|embeddings)",
+      "attack_type": "data_exfiltration",
+      "threat_level": "critical",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.9,
+      "description": "Attempts to extract AI model information",
+      "tags": ["ai", "model", "extraction"]
+    },
+    {
+      "name": "training_data_leak",
+      "pattern": "(?:show|reveal|display)\\s+(?:training\\s+data|dataset|examples)",
+      "attack_type": "data_exfiltration",
+      "threat_level": "high",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.85,
+      "description": "Attempts to leak training data",
+      "tags": ["ai", "training", "data"]
+    },
+    {
+      "name": "prompt_template_extraction",
+      "pattern": "(?:template|format|structure)\\s+(?:of\\s+)?(?:your\\s+)?(?:prompt|instruction)",
+      "attack_type": "system_prompt_leak",
+      "threat_level": "high",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.8,
+      "description": "Attempts to extract prompt templates",
+      "tags": ["prompt", "template", "extraction"]
+    },
+    {
+      "name": "adversarial_examples",
+      "pattern": "(?:adversarial|poisoning|backdoor)\\s+(?:example|attack|input)",
+      "attack_type": "adversarial_prompt",
+      "threat_level": "high",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.9,
+      "description": "Adversarial attack attempts",
+      "tags": ["adversarial", "attack", "poisoning"]
+    },
+    {
+      "name": "model_inversion",
+      "pattern": "(?:invert|reverse)\\s+(?:model|network|function)",
+      "attack_type": "data_exfiltration",
+      "threat_level": "high",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.85,
+      "description": "Model inversion attack attempts",
+      "tags": ["inversion", "reverse", "model"]
+    },
+    {
+      "name": "membership_inference",
+      "pattern": "(?:membership|privacy)\\s+(?:inference|attack|leak)",
+      "attack_type": "data_exfiltration",
+      "threat_level": "medium",
+      "action": "log_only",
+      "enabled": true,
+      "confidence": 0.7,
+      "description": "Membership inference attack attempts",
+      "tags": ["membership", "inference", "privacy"]
+    },
+    {
+      "name": "gradient_extraction",
+      "pattern": "(?:gradient|backprop|derivative)\\s+(?:extraction|leak|access)",
+      "attack_type": "data_exfiltration",
+      "threat_level": "high",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.9,
+      "description": "Gradient extraction attempts",
+      "tags": ["gradient", "extraction", "backprop"]
+    },
+    {
+      "name": "social_engineering",
+      "pattern": "(?:pretend|imagine|roleplay)\\s+(?:you\\s+are|to\\s+be)\\s+(?:my|a)\\s+(?:friend|colleague|boss)",
+      "attack_type": "social_engineering",
+      "threat_level": "medium",
+      "action": "log_only",
+      "enabled": true,
+      "confidence": 0.6,
+      "description": "Social engineering attempts",
+      "tags": ["social", "engineering", "manipulation"]
+    },
+    {
+      "name": "context_manipulation",
+      "pattern": "(?:context|memory|conversation)\\s+(?:manipulation|injection|poisoning)",
+      "attack_type": "adversarial_prompt",
+      "threat_level": "medium",
+      "action": "sanitize",
+      "enabled": true,
+      "confidence": 0.8,
+      "description": "Context manipulation attempts",
+      "tags": ["context", "manipulation", "injection"]
+    },
+    {
+      "name": "output_manipulation",
+      "pattern": "(?:output|response|answer)\\s+(?:manipulation|control|override)",
+      "attack_type": "prompt_injection",
+      "threat_level": "high",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.85,
+      "description": "Output manipulation attempts",
+      "tags": ["output", "manipulation", "control"]
+    },
+    {
+      "name": "system_information_leak",
+      "pattern": "(?:system|server|infrastructure)\\s+(?:information|details|specs)",
+      "attack_type": "data_exfiltration",
+      "threat_level": "medium",
+      "action": "sanitize",
+      "enabled": true,
+      "confidence": 0.7,
+      "description": "System information leakage attempts",
+      "tags": ["system", "information", "leak"]
+    },
+    {
+      "name": "api_key_extraction",
+      "pattern": "(?:api\\s+key|access\\s+token|secret\\s+key)\\s+(?:for|of|from)",
+      "attack_type": "secret_leak",
+      "threat_level": "critical",
+      "action": "block",
+      "enabled": true,
+      "confidence": 0.95,
+      "description": "API key extraction attempts",
+      "tags": ["api", "key", "secret", "extraction"]
+    }
+  ]
+}

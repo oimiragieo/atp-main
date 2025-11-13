@@ -1,0 +1,11 @@
+C:\dev\projects\atp-main\atp-router\target\release\deps\libsocket2-0fc84a4aba0a5386.rmeta: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockaddr.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\socket.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockref.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sys\windows.rs
+
+C:\dev\projects\atp-main\atp-router\target\release\deps\libsocket2-0fc84a4aba0a5386.rlib: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockaddr.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\socket.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockref.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sys\windows.rs
+
+C:\dev\projects\atp-main\atp-router\target\release\deps\socket2-0fc84a4aba0a5386.d: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockaddr.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\socket.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockref.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sys\windows.rs
+
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\lib.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockaddr.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\socket.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sockref.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\socket2-0.5.10\src\sys\windows.rs:

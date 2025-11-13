@@ -1,0 +1,414 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: ATP CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, 'release/*']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: gcr.io
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  CLUSTER_NAME: atp-gke
+  CLUSTER_ZONE: us-central1-a
+
+jobs:
+  # Security and compliance scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Semgrep security scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+  # Code quality and testing
+  test:
+    name: Test and Quality
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [router_service, memory_gateway, admin_dashboard]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ${{ matrix.service }}/requirements.txt
+          pip install -r ${{ matrix.service }}/requirements-dev.txt
+
+      - name: Run linting
+        run: |
+          cd ${{ matrix.service }}
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          black --check .
+          isort --check-only .
+
+      - name: Run type checking
+        run: |
+          cd ${{ matrix.service }}
+          mypy .
+
+      - name: Run tests
+        run: |
+          cd ${{ matrix.service }}
+          pytest --cov=. --cov-report=xml --cov-report=html
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ${{ matrix.service }}/coverage.xml
+          flags: ${{ matrix.service }}
+
+  # Build and push container images
+  build:
+    name: Build Images
+    runs-on: ubuntu-latest
+    needs: [security-scan, test]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        service: [router_service, memory_gateway, admin_dashboard]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/atp-${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Sign container image
+        run: |
+          cosign sign --yes ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/atp-${{ matrix.service }}@${{ steps.build.outputs.digest }}
+        env:
+          COSIGN_EXPERIMENTAL: 1
+
+  # Infrastructure deployment
+  infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Terraform Init
+        run: |
+          cd deploy/terraform
+          terraform init \
+            -backend-config="bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" \
+            -backend-config="prefix=terraform/state/${{ github.event.inputs.environment || 'staging' }}"
+
+      - name: Terraform Plan
+        run: |
+          cd deploy/terraform
+          terraform plan \
+            -var="project_id=${{ env.PROJECT_ID }}" \
+            -var="environment=${{ github.event.inputs.environment || 'staging' }}" \
+            -var="terraform_state_bucket=${{ secrets.TERRAFORM_STATE_BUCKET }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        run: |
+          cd deploy/terraform
+          terraform apply -auto-approve tfplan
+
+  # Application deployment
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [build, infrastructure]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} \
+            --zone ${{ env.CLUSTER_ZONE }} \
+            --project ${{ env.PROJECT_ID }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.0'
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install atp-${{ github.event.inputs.environment || 'staging' }} \
+            ./deploy/helm/atp \
+            --namespace atp-${{ github.event.inputs.environment || 'staging' }} \
+            --create-namespace \
+            --values ./deploy/helm/atp/values-${{ github.event.inputs.environment || 'staging' }}.yaml \
+            --set global.projectId=${{ env.PROJECT_ID }} \
+            --set router.image.tag=${{ github.sha }} \
+            --set memoryGateway.image.tag=${{ github.sha }} \
+            --set adminDashboard.image.tag=${{ github.sha }} \
+            --wait \
+            --timeout=10m
+
+      - name: Run deployment tests
+        run: |
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=atp \
+            -n atp-${{ github.event.inputs.environment || 'staging' }} \
+            --timeout=300s
+          
+          # Run smoke tests
+          kubectl run smoke-test \
+            --image=curlimages/curl:latest \
+            --rm -i --restart=Never \
+            -n atp-${{ github.event.inputs.environment || 'staging' }} \
+            -- curl -f http://atp-router:8000/health
+
+  # Blue-Green deployment for production
+  blue-green-deploy:
+    name: Blue-Green Deploy
+    runs-on: ubuntu-latest
+    needs: [build, infrastructure]
+    if: github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production'
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Get GKE credentials
+        run: |
+          gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} \
+            --zone ${{ env.CLUSTER_ZONE }} \
+            --project ${{ env.PROJECT_ID }}
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.0'
+
+      - name: Deploy Green environment
+        run: |
+          # Deploy to green environment
+          helm upgrade --install atp-green \
+            ./deploy/helm/atp \
+            --namespace atp-green \
+            --create-namespace \
+            --values ./deploy/helm/atp/values-production.yaml \
+            --set global.projectId=${{ env.PROJECT_ID }} \
+            --set router.image.tag=${{ github.sha }} \
+            --set memoryGateway.image.tag=${{ github.sha }} \
+            --set adminDashboard.image.tag=${{ github.sha }} \
+            --wait \
+            --timeout=10m
+
+      - name: Run integration tests on Green
+        run: |
+          # Wait for pods to be ready
+          kubectl wait --for=condition=ready pod \
+            -l app.kubernetes.io/name=atp \
+            -n atp-green \
+            --timeout=300s
+          
+          # Run comprehensive tests
+          kubectl apply -f deploy/tests/integration-tests.yaml -n atp-green
+          kubectl wait --for=condition=complete job/integration-tests -n atp-green --timeout=600s
+
+      - name: Switch traffic to Green (Blue-Green cutover)
+        run: |
+          # Update ingress to point to green environment
+          kubectl patch ingress atp-ingress \
+            -n atp-production \
+            -p '{"spec":{"rules":[{"host":"api.atp.company.com","http":{"paths":[{"path":"/","pathType":"Prefix","backend":{"service":{"name":"atp-green-router","port":{"number":8000}}}}]}}]}}'
+          
+          # Wait for traffic switch
+          sleep 30
+
+      - name: Verify production traffic
+        run: |
+          # Monitor metrics for 5 minutes
+          for i in {1..10}; do
+            curl -f https://api.atp.company.com/health
+            sleep 30
+          done
+
+      - name: Cleanup Blue environment
+        if: success()
+        run: |
+          # Remove old blue environment
+          helm uninstall atp-blue -n atp-blue || true
+          kubectl delete namespace atp-blue || true
+          
+          # Rename green to blue for next deployment
+          kubectl create namespace atp-blue || true
+          kubectl get all -n atp-green -o yaml | \
+            sed 's/namespace: atp-green/namespace: atp-blue/g' | \
+            kubectl apply -f -
+          kubectl delete namespace atp-green
+
+  # Performance and load testing
+  performance-test:
+    name: Performance Test
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: github.event.inputs.environment == 'staging'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run load tests
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/tests/load:/tests \
+            grafana/k6:latest run /tests/load-test.js \
+            --env BASE_URL=https://staging-api.atp.company.com
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: tests/load/results/
+
+  # Security compliance verification
+  compliance-check:
+    name: Compliance Check
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run compliance checks
+        run: |
+          # Run CIS Kubernetes Benchmark
+          docker run --rm \
+            -v ~/.kube:/root/.kube \
+            aquasec/kube-bench:latest \
+            --json > kube-bench-results.json
+
+      - name: Upload compliance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: compliance-results
+          path: kube-bench-results.json
+
+  # Notification
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [deploy, blue-green-deploy, performance-test, compliance-check]
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

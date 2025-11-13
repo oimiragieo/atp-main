@@ -1,0 +1,4 @@
+[project]
+name = "atpctl"
+version = "0.0.0"
+dependencies = ["typer[all]", "httpx", "jsonschema", "PyYAML"]

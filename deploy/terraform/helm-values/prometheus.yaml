@@ -1,0 +1,365 @@
+# Prometheus Stack Configuration for ATP
+# Comprehensive monitoring setup with Grafana, AlertManager, and custom rules
+
+# Global configuration
+global:
+  rbac:
+    create: true
+    pspEnabled: false
+
+# Prometheus configuration
+prometheus:
+  enabled: true
+  
+  prometheusSpec:
+    # Resource configuration
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 8Gi
+      requests:
+        cpu: 1000m
+        memory: 4Gi
+    
+    # Storage configuration
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: fast-ssd
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+    
+    # Retention configuration
+    retention: 30d
+    retentionSize: 45GB
+    
+    # Service monitor selector
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector:
+      matchLabels:
+        app: atp
+    
+    # Rule selector
+    ruleSelectorNilUsesHelmValues: false
+    ruleSelector:
+      matchLabels:
+        app: atp
+    
+    # Additional scrape configs
+    additionalScrapeConfigs:
+      - job_name: 'atp-custom-metrics'
+        static_configs:
+          - targets: ['atp-service:8000']
+        metrics_path: /metrics
+        scrape_interval: 15s
+        scrape_timeout: 10s
+      
+      - job_name: 'atp-admin-dashboard'
+        static_configs:
+          - targets: ['atp-admin-service:3000']
+        metrics_path: /metrics
+        scrape_interval: 30s
+      
+      - job_name: 'atp-memory-gateway'
+        static_configs:
+          - targets: ['atp-memory-service:8001']
+        metrics_path: /metrics
+        scrape_interval: 30s
+    
+    # External labels
+    externalLabels:
+      cluster: atp-cluster
+      environment: production
+    
+    # Remote write configuration (optional)
+    # remoteWrite:
+    #   - url: "https://prometheus-remote-write.example.com/api/v1/write"
+    #     writeRelabelConfigs:
+    #       - sourceLabels: [__name__]
+    #         regex: 'atp_.*'
+    #         action: keep
+
+# Grafana configuration
+grafana:
+  enabled: true
+  
+  # Admin credentials
+  adminPassword: "admin123"  # Change in production
+  
+  # Resource configuration
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  
+  # Persistence
+  persistence:
+    enabled: true
+    storageClassName: fast-ssd
+    size: 10Gi
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - grafana.atp.company.com
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.atp.company.com
+  
+  # Grafana configuration
+  grafana.ini:
+    server:
+      root_url: "https://grafana.atp.company.com"
+    security:
+      allow_embedding: true
+    auth:
+      disable_login_form: false
+    auth.anonymous:
+      enabled: true
+      org_role: Viewer
+    dashboards:
+      default_home_dashboard_path: /var/lib/grafana/dashboards/atp-overview.json
+  
+  # Data sources
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://prometheus-kube-prometheus-prometheus:9090
+          access: proxy
+          isDefault: true
+        - name: Loki
+          type: loki
+          url: http://loki:3100
+          access: proxy
+  
+  # Dashboard providers
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'atp-dashboards'
+          orgId: 1
+          folder: 'ATP'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards
+  
+  # Dashboards
+  dashboards:
+    atp-dashboards:
+      atp-overview:
+        gnetId: 1860
+        revision: 27
+        datasource: Prometheus
+      atp-slo:
+        gnetId: 14314
+        revision: 2
+        datasource: Prometheus
+      kubernetes-cluster:
+        gnetId: 7249
+        revision: 1
+        datasource: Prometheus
+      node-exporter:
+        gnetId: 1860
+        revision: 27
+        datasource: Prometheus
+
+# AlertManager configuration
+alertmanager:
+  enabled: true
+  
+  alertmanagerSpec:
+    # Resource configuration
+    resources:
+      limits:
+        cpu: 200m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    
+    # Storage configuration
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: fast-ssd
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+    
+    # Retention
+    retention: 120h
+    
+    # External URL
+    externalUrl: "https://alertmanager.atp.company.com"
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    hosts:
+      - alertmanager.atp.company.com
+    tls:
+      - secretName: alertmanager-tls
+        hosts:
+          - alertmanager.atp.company.com
+  
+  # AlertManager configuration
+  config:
+    global:
+      smtp_smarthost: 'smtp.company.com:587'
+      smtp_from: 'alerts@atp.company.com'
+      smtp_auth_username: 'alerts@atp.company.com'
+      smtp_auth_password: 'smtp-password'
+    
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'web.hook'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'critical-alerts'
+        - match:
+            severity: warning
+          receiver: 'warning-alerts'
+    
+    receivers:
+      - name: 'web.hook'
+        webhook_configs:
+          - url: 'http://alertmanager-webhook:5000/webhook'
+            send_resolved: true
+      
+      - name: 'critical-alerts'
+        email_configs:
+          - to: 'oncall@atp.company.com'
+            subject: '[CRITICAL] ATP Alert: {{ .GroupLabels.alertname }}'
+            body: |
+              {{ range .Alerts }}
+              Alert: {{ .Annotations.summary }}
+              Description: {{ .Annotations.description }}
+              Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+              {{ end }}
+        slack_configs:
+          - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+            channel: '#atp-alerts'
+            title: '[CRITICAL] ATP Alert'
+            text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+      
+      - name: 'warning-alerts'
+        email_configs:
+          - to: 'team@atp.company.com'
+            subject: '[WARNING] ATP Alert: {{ .GroupLabels.alertname }}'
+            body: |
+              {{ range .Alerts }}
+              Alert: {{ .Annotations.summary }}
+              Description: {{ .Annotations.description }}
+              Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+              {{ end }}
+
+# Node Exporter
+nodeExporter:
+  enabled: true
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Kube State Metrics
+kubeStateMetrics:
+  enabled: true
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Prometheus Operator
+prometheusOperator:
+  enabled: true
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  # Admission webhooks
+  admissionWebhooks:
+    enabled: true
+    patch:
+      enabled: true
+
+# Default rules
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: true
+    configReloaders: true
+    general: true
+    k8s: true
+    kubeApiserver: true
+    kubeApiserverAvailability: true
+    kubeApiserverSlos: true
+    kubelet: true
+    kubeProxy: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+
+# Additional components
+kubeControllerManager:
+  enabled: false
+
+kubeEtcd:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeProxy:
+  enabled: true
+
+kubeDns:
+  enabled: true

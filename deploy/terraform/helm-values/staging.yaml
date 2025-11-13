@@ -1,0 +1,259 @@
+# ATP Staging Helm Values
+# Staging environment configuration for testing and validation
+
+global:
+  environment: ${environment}
+  imageTag: ${image_tag}
+  
+# Application configuration
+app:
+  name: atp
+  version: "2.0.0"
+  
+  # Reduced replicas for staging
+  replicaCount: ${replicas}
+  
+  image:
+    repository: atp/router-service
+    tag: ${image_tag}
+    pullPolicy: Always  # Always pull latest for staging
+  
+  # Reduced resource limits for staging
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  # Environment variables
+  env:
+    - name: ATP_ENV
+      value: ${environment}
+    - name: ATP_LOG_LEVEL
+      value: "DEBUG"  # More verbose logging for staging
+    - name: ATP_DATABASE_URL
+      value: "postgresql://atp_user:$(DATABASE_PASSWORD)@${database_host}:5432/atp"
+    - name: ATP_REDIS_URL
+      value: "redis://${redis_host}:6379/0"
+    - name: DATABASE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: atp-secrets
+          key: database-password
+  
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+  hosts:
+    - host: staging-api.atp.company.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: atp-staging-tls
+      hosts:
+        - staging-api.atp.company.com
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Network Policy
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: atp-monitoring
+      ports:
+        - protocol: TCP
+          port: 8000
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  path: /metrics
+  labels:
+    app: atp
+    environment: ${environment}
+
+# Resource Quota
+resourceQuota:
+  enabled: true
+  hard:
+    requests.cpu: "5"
+    requests.memory: "10Gi"
+    limits.cpu: "10"
+    limits.memory: "20Gi"
+    persistentvolumeclaims: "5"
+
+# Limit Range
+limitRange:
+  enabled: true
+  limits:
+    - default:
+        cpu: "500m"
+        memory: "1Gi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "256Mi"
+      type: Container
+
+# External Secrets
+externalSecrets:
+  enabled: true
+  secretStore:
+    provider: aws
+    auth:
+      region: us-west-2
+      role: arn:aws:iam::123456789012:role/atp-secrets-role
+  secrets:
+    - name: atp-secrets
+      data:
+        - secretKey: database-password
+          remoteRef:
+            key: /atp/${environment}/database/password
+        - secretKey: redis-password
+          remoteRef:
+            key: /atp/${environment}/redis/password
+        - secretKey: jwt-secret
+          remoteRef:
+            key: /atp/${environment}/jwt/secret
+
+# Prometheus Rules
+prometheusRules:
+  enabled: true
+  rules:
+    - alert: ATPHighErrorRate
+      expr: rate(atp_requests_total{status=~"5.."}[5m]) > 0.2
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "ATP high error rate in staging"
+        description: "ATP error rate is above 20% for 10 minutes"
+    
+    - alert: ATPHighLatency
+      expr: histogram_quantile(0.95, rate(atp_request_duration_seconds_bucket[5m])) > 5
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "ATP high latency in staging"
+        description: "ATP 95th percentile latency is above 5 seconds"
+
+# Admin Dashboard
+adminDashboard:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: atp/admin-dashboard
+    tag: ${image_tag}
+    pullPolicy: Always
+  
+  resources:
+    limits:
+      cpu: 250m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000
+  
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    hosts:
+      - host: staging-admin.atp.company.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: atp-admin-staging-tls
+        hosts:
+          - staging-admin.atp.company.com
+
+# Memory Gateway
+memoryGateway:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: atp/memory-gateway
+    tag: ${image_tag}
+    pullPolicy: Always
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi

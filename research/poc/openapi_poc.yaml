@@ -1,0 +1,54 @@
+openapi: 3.0.0
+info:
+  title: Memory Gateway API
+  version: 0.1.0
+paths:
+  /v1/memory/{ns}/{key}:
+    put:
+      summary: Put object
+      parameters:
+        - in: path
+          name: ns
+          required: true
+          schema: { type: string }
+        - in: path
+          name: key
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                object: { type: object }
+      responses:
+        '200': { description: OK }
+    get:
+      summary: Get object
+      parameters:
+        - in: path
+          name: ns
+          required: true
+          schema: { type: string }
+        - in: path
+          name: key
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /v1/memory/search:
+    post:
+      summary: Search memory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q: { type: string }
+      responses:
+        '200': { description: OK }
+

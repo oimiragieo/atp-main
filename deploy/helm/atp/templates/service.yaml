@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: atp-router
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: atp-router
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8080
+      protocol: TCP
+      name: http

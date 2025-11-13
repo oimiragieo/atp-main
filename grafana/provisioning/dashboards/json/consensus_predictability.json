@@ -1,0 +1,60 @@
+{
+  "id": null,
+  "uid": "consensus-predictability",
+  "title": "Consensus Predictability",
+  "tags": ["ATP", "Consensus"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Agreement p50 (last 5m)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(agreement_pct_bucket[5m])))",
+          "legendFormat": "p50",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Agreement p90 (last 5m)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.9, sum by (le) (rate(agreement_pct_bucket[5m])))",
+          "legendFormat": "p90",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Consensus Strategy Usage",
+      "gridPos": { "h": 6, "w": 12, "x": 6, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(consensus_strategy_used_union_total[5m]))",
+          "legendFormat": "Union",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(consensus_strategy_used_quorum_total[5m]))",
+          "legendFormat": "Quorum",
+          "refId": "B"
+        },
+        {
+          "expr": "sum(rate(consensus_strategy_used_two_phase_total[5m]))",
+          "legendFormat": "Two Phase",
+          "refId": "C"
+        }
+      ]
+    }
+  ]
+}
+

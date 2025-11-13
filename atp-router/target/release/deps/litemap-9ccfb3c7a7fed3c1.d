@@ -1,0 +1,11 @@
+C:\dev\projects\atp-main\atp-router\target\release\deps\liblitemap-9ccfb3c7a7fed3c1.rmeta: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\map.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\mod.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\slice_impl.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\vec_impl.rs
+
+C:\dev\projects\atp-main\atp-router\target\release\deps\liblitemap-9ccfb3c7a7fed3c1.rlib: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\map.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\mod.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\slice_impl.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\vec_impl.rs
+
+C:\dev\projects\atp-main\atp-router\target\release\deps\litemap-9ccfb3c7a7fed3c1.d: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\map.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\mod.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\slice_impl.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\vec_impl.rs
+
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\lib.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\map.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\mod.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\slice_impl.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\litemap-0.8.0\src\store\vec_impl.rs:

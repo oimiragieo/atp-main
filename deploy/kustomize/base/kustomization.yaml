@@ -1,0 +1,31 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../helm/atp/templates/deployment.yaml
+  - ../../helm/atp/templates/service.yaml
+  - ../../helm/atp/templates/servicemonitor.yaml
+  - ../../helm/atp/templates/networkpolicy.yaml
+  - ../../helm/atp/templates/hpa.yaml
+  - ../../helm/atp/templates/pdb.yaml
+  - pvc.yaml
+
+images:
+  - name: atp/router
+    newTag: latest
+
+configMapGenerator:
+  - name: atp-config
+    literals:
+      - ATP_ENV=production
+      - ATP_LOG_LEVEL=info
+
+secretGenerator:
+  - name: atp-secrets
+    literals:
+      - database-url=postgresql://atp:password@postgres:5432/atp
+      - redis-url=redis://redis:6379
+      - jwt-secret=change-me-in-production
+
+patchesStrategicMerge:
+  - deployment-patch.yaml

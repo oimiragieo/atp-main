@@ -1,0 +1,6 @@
+anthropic>=0.18.0
+grpcio>=1.60.0
+grpcio-tools>=1.60.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+protobuf==5.29.3

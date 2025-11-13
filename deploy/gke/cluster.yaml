@@ -1,0 +1,199 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# GKE Cluster Configuration for ATP Platform
+apiVersion: container.v1
+kind: Cluster
+metadata:
+  name: atp-production-cluster
+  description: "ATP Production GKE Cluster with enterprise features"
+spec:
+  # Cluster location and networking
+  location: us-central1
+  network: projects/PROJECT_ID/global/networks/atp-vpc
+  subnetwork: projects/PROJECT_ID/regions/us-central1/subnetworks/atp-subnet
+  
+  # IP allocation for pods and services
+  ipAllocationPolicy:
+    useIpAliases: true
+    clusterSecondaryRangeName: atp-pods
+    servicesSecondaryRangeName: atp-services
+    clusterIpv4CidrBlock: 10.1.0.0/16
+    servicesIpv4CidrBlock: 10.2.0.0/16
+  
+  # Initial node count (will be managed by node pools)
+  initialNodeCount: 1
+  removeDefaultNodePool: true
+  
+  # Kubernetes version
+  initialClusterVersion: "1.28"
+  
+  # Cluster features
+  addonsConfig:
+    # Istio service mesh
+    istioConfig:
+      disabled: false
+      auth: AUTH_MUTUAL_TLS
+    
+    # Network policy enforcement
+    networkPolicyConfig:
+      disabled: false
+    
+    # HTTP load balancing
+    httpLoadBalancing:
+      disabled: false
+    
+    # Horizontal pod autoscaling
+    horizontalPodAutoscaling:
+      disabled: false
+    
+    # Kubernetes dashboard
+    kubernetesDashboard:
+      disabled: true  # Use Cloud Console instead
+    
+    # Cloud DNS
+    dnsCacheConfig:
+      enabled: true
+    
+    # Config connector
+    configConnectorConfig:
+      enabled: true
+    
+    # GKE backup
+    gkeBackupAgentConfig:
+      enabled: true
+  
+  # Network policy
+  networkPolicy:
+    enabled: true
+    provider: CALICO
+  
+  # Workload identity
+  workloadIdentityConfig:
+    workloadPool: PROJECT_ID.svc.id.goog
+  
+  # Private cluster configuration
+  privateClusterConfig:
+    enablePrivateNodes: true
+    enablePrivateEndpoint: false  # Allow public access to API server
+    masterIpv4CidrBlock: 172.16.0.0/28
+    masterGlobalAccessConfig:
+      enabled: true
+  
+  # Master authorized networks
+  masterAuthorizedNetworksConfig:
+    enabled: true
+    cidrBlocks:
+    - displayName: "Corporate Network"
+      cidrBlock: "203.0.113.0/24"
+    - displayName: "VPN Gateway"
+      cidrBlock: "198.51.100.0/24"
+  
+  # Logging and monitoring
+  loggingService: logging.googleapis.com/kubernetes
+  monitoringService: monitoring.googleapis.com/kubernetes
+  
+  # Cluster telemetry
+  clusterTelemetry:
+    type: ENABLED
+  
+  # Binary authorization
+  binaryAuthorization:
+    enabled: true
+    evaluationMode: PROJECT_SINGLETON_POLICY_ENFORCE
+  
+  # Database encryption
+  databaseEncryption:
+    state: ENCRYPTED
+    keyName: projects/PROJECT_ID/locations/us-central1/keyRings/atp-cluster/cryptoKeys/etcd-encryption
+  
+  # Shielded nodes
+  shieldedNodes:
+    enabled: true
+  
+  # Release channel
+  releaseChannel:
+    channel: REGULAR
+  
+  # Notification configuration
+  notificationConfig:
+    pubsub:
+      enabled: true
+      topic: projects/PROJECT_ID/topics/atp-cluster-notifications
+  
+  # Maintenance policy
+  maintenancePolicy:
+    window:
+      dailyMaintenanceWindow:
+        startTime: "02:00"
+    resourceVersion: "1"
+  
+  # Node configuration (default for all node pools)
+  nodeConfig:
+    machineType: e2-standard-4
+    diskSizeGb: 100
+    diskType: pd-ssd
+    
+    # OAuth scopes
+    oauthScopes:
+    - https://www.googleapis.com/auth/cloud-platform
+    
+    # Service account
+    serviceAccount: atp-gke-nodes@PROJECT_ID.iam.gserviceaccount.com
+    
+    # Metadata
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    # Image type
+    imageType: COS_CONTAINERD
+    
+    # Shielded instance config
+    shieldedInstanceConfig:
+      enableSecureBoot: true
+      enableIntegrityMonitoring: true
+    
+    # Workload metadata config
+    workloadMetadataConfig:
+      mode: GKE_METADATA
+    
+    # Node taints (none for default pool)
+    taints: []
+    
+    # Node labels
+    labels:
+      environment: production
+      cluster: atp-production
+    
+    # Local SSD count
+    localSsdCount: 0
+    
+    # Preemptible nodes
+    preemptible: false
+    
+    # Spot instances
+    spot: false
+  
+  # Autopilot mode (disabled for standard cluster)
+  autopilot:
+    enabled: false
+  
+  # Cost management
+  costManagementConfig:
+    enabled: true
+  
+  # Security posture
+  securityPostureConfig:
+    mode: BASIC
+    vulnerabilityMode: VULNERABILITY_BASIC

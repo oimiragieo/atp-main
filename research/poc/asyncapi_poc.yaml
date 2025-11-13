@@ -1,0 +1,23 @@
+asyncapi: '2.6.0'
+info:
+  title: ATP Router WS API
+  version: '0.1.0'
+channels:
+  ws:
+    subscribe:
+      message:
+        name: Frame
+        payload:
+          type: object
+          required: [v, session_id, stream_id, msg_seq, payload]
+          properties:
+            v: { type: integer }
+            session_id: { type: string }
+            stream_id: { type: string }
+            msg_seq: { type: integer }
+            payload:
+              type: object
+              properties:
+                type: { type: string }
+                content: { type: object }
+

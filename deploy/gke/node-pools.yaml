@@ -1,0 +1,421 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Node Pool Configurations for ATP GKE Cluster
+
+---
+# System Node Pool - For system components and small workloads
+apiVersion: container.v1
+kind: NodePool
+metadata:
+  name: system-pool
+  cluster: atp-production-cluster
+spec:
+  initialNodeCount: 2
+  
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minNodeCount: 2
+    maxNodeCount: 10
+    locationPolicy: BALANCED
+  
+  # Node configuration
+  config:
+    machineType: e2-standard-2
+    diskSizeGb: 50
+    diskType: pd-standard
+    
+    # OAuth scopes
+    oauthScopes:
+    - https://www.googleapis.com/auth/cloud-platform
+    
+    # Service account
+    serviceAccount: atp-gke-nodes@PROJECT_ID.iam.gserviceaccount.com
+    
+    # Metadata
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    # Image type
+    imageType: COS_CONTAINERD
+    
+    # Shielded instance config
+    shieldedInstanceConfig:
+      enableSecureBoot: true
+      enableIntegrityMonitoring: true
+    
+    # Workload metadata config
+    workloadMetadataConfig:
+      mode: GKE_METADATA
+    
+    # Node taints for system workloads
+    taints:
+    - key: "node-type"
+      value: "system"
+      effect: NO_SCHEDULE
+    
+    # Node labels
+    labels:
+      node-type: system
+      environment: production
+      cluster: atp-production
+    
+    # Preemptible nodes for cost optimization
+    preemptible: false
+    spot: false
+  
+  # Management configuration
+  management:
+    autoUpgrade: true
+    autoRepair: true
+  
+  # Upgrade settings
+  upgradeSettings:
+    maxSurge: 1
+    maxUnavailable: 0
+    strategy: SURGE
+  
+  # Network configuration
+  networkConfig:
+    podRange: atp-pods
+    podIpv4CidrBlock: 10.1.0.0/16
+
+---
+# Application Node Pool - For ATP application workloads
+apiVersion: container.v1
+kind: NodePool
+metadata:
+  name: app-pool
+  cluster: atp-production-cluster
+spec:
+  initialNodeCount: 3
+  
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minNodeCount: 3
+    maxNodeCount: 50
+    locationPolicy: BALANCED
+  
+  # Node configuration
+  config:
+    machineType: e2-standard-4
+    diskSizeGb: 100
+    diskType: pd-ssd
+    
+    # OAuth scopes
+    oauthScopes:
+    - https://www.googleapis.com/auth/cloud-platform
+    
+    # Service account
+    serviceAccount: atp-gke-nodes@PROJECT_ID.iam.gserviceaccount.com
+    
+    # Metadata
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    # Image type
+    imageType: COS_CONTAINERD
+    
+    # Shielded instance config
+    shieldedInstanceConfig:
+      enableSecureBoot: true
+      enableIntegrityMonitoring: true
+    
+    # Workload metadata config
+    workloadMetadataConfig:
+      mode: GKE_METADATA
+    
+    # Node labels
+    labels:
+      node-type: application
+      environment: production
+      cluster: atp-production
+    
+    # No taints - allow all workloads
+    taints: []
+    
+    # Preemptible nodes for cost optimization
+    preemptible: false
+    spot: false
+  
+  # Management configuration
+  management:
+    autoUpgrade: true
+    autoRepair: true
+  
+  # Upgrade settings
+  upgradeSettings:
+    maxSurge: 2
+    maxUnavailable: 0
+    strategy: SURGE
+  
+  # Network configuration
+  networkConfig:
+    podRange: atp-pods
+    podIpv4CidrBlock: 10.1.0.0/16
+
+---
+# Compute Node Pool - For compute-intensive workloads (AI model inference)
+apiVersion: container.v1
+kind: NodePool
+metadata:
+  name: compute-pool
+  cluster: atp-production-cluster
+spec:
+  initialNodeCount: 0  # Start with 0, scale up as needed
+  
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minNodeCount: 0
+    maxNodeCount: 20
+    locationPolicy: BALANCED
+  
+  # Node configuration
+  config:
+    machineType: c2-standard-8  # Compute-optimized
+    diskSizeGb: 200
+    diskType: pd-ssd
+    
+    # OAuth scopes
+    oauthScopes:
+    - https://www.googleapis.com/auth/cloud-platform
+    
+    # Service account
+    serviceAccount: atp-gke-nodes@PROJECT_ID.iam.gserviceaccount.com
+    
+    # Metadata
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    # Image type
+    imageType: COS_CONTAINERD
+    
+    # Shielded instance config
+    shieldedInstanceConfig:
+      enableSecureBoot: true
+      enableIntegrityMonitoring: true
+    
+    # Workload metadata config
+    workloadMetadataConfig:
+      mode: GKE_METADATA
+    
+    # Node taints for compute workloads
+    taints:
+    - key: "node-type"
+      value: "compute"
+      effect: NO_SCHEDULE
+    
+    # Node labels
+    labels:
+      node-type: compute
+      workload-type: cpu-intensive
+      environment: production
+      cluster: atp-production
+    
+    # Local SSD for temporary storage
+    localSsdCount: 1
+    
+    # Preemptible nodes for cost optimization
+    preemptible: false
+    spot: true  # Use spot instances for cost savings
+  
+  # Management configuration
+  management:
+    autoUpgrade: true
+    autoRepair: true
+  
+  # Upgrade settings
+  upgradeSettings:
+    maxSurge: 1
+    maxUnavailable: 0
+    strategy: SURGE
+  
+  # Network configuration
+  networkConfig:
+    podRange: atp-pods
+    podIpv4CidrBlock: 10.1.0.0/16
+
+---
+# GPU Node Pool - For GPU-accelerated workloads (optional)
+apiVersion: container.v1
+kind: NodePool
+metadata:
+  name: gpu-pool
+  cluster: atp-production-cluster
+spec:
+  initialNodeCount: 0  # Start with 0, scale up as needed
+  
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minNodeCount: 0
+    maxNodeCount: 10
+    locationPolicy: BALANCED
+  
+  # Node configuration
+  config:
+    machineType: n1-standard-4
+    diskSizeGb: 100
+    diskType: pd-ssd
+    
+    # GPU configuration
+    accelerators:
+    - acceleratorCount: 1
+      acceleratorType: nvidia-tesla-t4
+      gpuPartitionSize: ""
+      gpuSharingConfig:
+        maxSharedClientsPerGpu: 2
+        gpuSharingStrategy: TIME_SHARING
+    
+    # OAuth scopes
+    oauthScopes:
+    - https://www.googleapis.com/auth/cloud-platform
+    
+    # Service account
+    serviceAccount: atp-gke-nodes@PROJECT_ID.iam.gserviceaccount.com
+    
+    # Metadata
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    # Image type (GPU-enabled)
+    imageType: COS_CONTAINERD
+    
+    # Shielded instance config
+    shieldedInstanceConfig:
+      enableSecureBoot: true
+      enableIntegrityMonitoring: true
+    
+    # Workload metadata config
+    workloadMetadataConfig:
+      mode: GKE_METADATA
+    
+    # Node taints for GPU workloads
+    taints:
+    - key: "nvidia.com/gpu"
+      value: "present"
+      effect: NO_SCHEDULE
+    - key: "node-type"
+      value: "gpu"
+      effect: NO_SCHEDULE
+    
+    # Node labels
+    labels:
+      node-type: gpu
+      accelerator: nvidia-tesla-t4
+      workload-type: gpu-intensive
+      environment: production
+      cluster: atp-production
+    
+    # Preemptible nodes for cost optimization
+    preemptible: false
+    spot: true  # Use spot instances for cost savings
+  
+  # Management configuration
+  management:
+    autoUpgrade: true
+    autoRepair: true
+  
+  # Upgrade settings
+  upgradeSettings:
+    maxSurge: 1
+    maxUnavailable: 0
+    strategy: SURGE
+  
+  # Network configuration
+  networkConfig:
+    podRange: atp-pods
+    podIpv4CidrBlock: 10.1.0.0/16
+
+---
+# Memory-Optimized Node Pool - For memory-intensive workloads
+apiVersion: container.v1
+kind: NodePool
+metadata:
+  name: memory-pool
+  cluster: atp-production-cluster
+spec:
+  initialNodeCount: 0  # Start with 0, scale up as needed
+  
+  # Auto-scaling configuration
+  autoscaling:
+    enabled: true
+    minNodeCount: 0
+    maxNodeCount: 10
+    locationPolicy: BALANCED
+  
+  # Node configuration
+  config:
+    machineType: n2-highmem-4  # Memory-optimized
+    diskSizeGb: 100
+    diskType: pd-ssd
+    
+    # OAuth scopes
+    oauthScopes:
+    - https://www.googleapis.com/auth/cloud-platform
+    
+    # Service account
+    serviceAccount: atp-gke-nodes@PROJECT_ID.iam.gserviceaccount.com
+    
+    # Metadata
+    metadata:
+      disable-legacy-endpoints: "true"
+    
+    # Image type
+    imageType: COS_CONTAINERD
+    
+    # Shielded instance config
+    shieldedInstanceConfig:
+      enableSecureBoot: true
+      enableIntegrityMonitoring: true
+    
+    # Workload metadata config
+    workloadMetadataConfig:
+      mode: GKE_METADATA
+    
+    # Node taints for memory-intensive workloads
+    taints:
+    - key: "node-type"
+      value: "memory"
+      effect: NO_SCHEDULE
+    
+    # Node labels
+    labels:
+      node-type: memory
+      workload-type: memory-intensive
+      environment: production
+      cluster: atp-production
+    
+    # Preemptible nodes for cost optimization
+    preemptible: false
+    spot: true  # Use spot instances for cost savings
+  
+  # Management configuration
+  management:
+    autoUpgrade: true
+    autoRepair: true
+  
+  # Upgrade settings
+  upgradeSettings:
+    maxSurge: 1
+    maxUnavailable: 0
+    strategy: SURGE
+  
+  # Network configuration
+  networkConfig:
+    podRange: atp-pods
+    podIpv4CidrBlock: 10.1.0.0/16

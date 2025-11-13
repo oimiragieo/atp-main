@@ -1,0 +1,16 @@
+
+# Stage 1: Build
+FROM rust:1.84 as builder
+WORKDIR /src
+COPY atp-router /src
+RUN apt-get update && apt-get install -y --no-install-recommends protobuf-compiler && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/usr/local/cargo/registry     --mount=type=cache,target=/src/target     cargo build -p atp-router --release
+
+# Stage 2: Runtime
+FROM gcr.io/distroless/cc-debian12:nonroot
+WORKDIR /app
+COPY --from=builder /src/target/release/atp-router /app/atp-router
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+EXPOSE 7443
+USER nonroot
+ENTRYPOINT ["/app/atp-router"]

@@ -1,0 +1,24 @@
+{
+  "policies": {
+    "lifecycle": {
+      "max_age_days": 90,
+      "enabled": true,
+      "dry_run": false
+    },
+    "admin_audit": {
+      "max_age_days": 365,
+      "enabled": true,
+      "dry_run": false
+    },
+    "reconciliation_audit": {
+      "max_age_days": 180,
+      "enabled": true,
+      "dry_run": false
+    },
+    "slm_observations": {
+      "max_age_days": 30,
+      "enabled": true,
+      "dry_run": false
+    }
+  }
+}

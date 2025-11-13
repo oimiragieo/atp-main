@@ -1,0 +1,28 @@
+# ATP Image Registry Sync Configuration
+# This file defines the images needed for air-gapped ATP deployment
+
+source_registry: docker.io
+target_registry: registry.internal.company.com
+
+# Images required for ATP deployment
+images:
+  - atp/router:latest
+  - postgres:15-alpine
+  - redis:7-alpine
+  - prom/prometheus:latest
+  - grafana/grafana:latest
+  - nginx:1.25-alpine
+  - envoyproxy/envoy:v1.28-latest
+  - curlimages/curl:latest
+
+# Sync options
+dry_run: false
+concurrency: 3
+timeout: 300
+
+# Authentication (optional - will use docker login if needed)
+# auth:
+#   source_username: ""
+#   source_password: ""
+#   target_username: "robot$atp-sync"
+#   target_password: "token-here"

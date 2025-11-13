@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atp-project/schemas/mcp/v1.0/toolOutput.json",
+  "title": "MCP Tool Output Message Schema",
+  "description": "Schema for MCP toolOutput messages including streaming support",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "toolOutput",
+      "description": "Message type identifier"
+    },
+    "toolCallId": {
+      "type": "string",
+      "description": "Unique identifier for the tool call"
+    },
+    "content": {
+      "type": "array",
+      "description": "Array of content blocks",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["text", "image", "json"],
+            "description": "Content type"
+          },
+          "text": {
+            "type": "string",
+            "description": "Text content (for text type)"
+          },
+          "data": {
+            "type": "string",
+            "description": "Base64 encoded data (for image type)"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type (for image type)"
+          }
+        },
+        "required": ["type"],
+        "oneOf": [
+          {
+            "properties": {
+              "type": {"const": "text"}
+            },
+            "required": ["text"]
+          },
+          {
+            "properties": {
+              "type": {"const": "image"}
+            },
+            "required": ["data", "mimeType"]
+          },
+          {
+            "properties": {
+              "type": {"const": "json"}
+            },
+            "required": ["data"]
+          }
+        ]
+      }
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Sequence number for streaming messages"
+    },
+    "cumulative_tokens": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total tokens consumed so far"
+    },
+    "is_partial": {
+      "type": "boolean",
+      "description": "Whether this is a partial message in a stream"
+    },
+    "final": {
+      "type": "boolean",
+      "description": "Whether this is the final message in a stream"
+    },
+    "dp_metrics_emitted": {
+      "type": "boolean",
+      "description": "Whether differential privacy metrics have been emitted"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata about the response",
+      "properties": {
+        "model_used": {
+          "type": "string",
+          "description": "The model that generated this response"
+        },
+        "latency_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Response latency in milliseconds"
+        },
+        "tokens_used": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total tokens used for this response"
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Cost of this response in USD"
+        }
+      }
+    }
+  },
+  "required": ["type", "toolCallId", "content"],
+  "oneOf": [
+    {
+      "required": ["is_partial"],
+      "properties": {
+        "is_partial": {"const": true}
+      }
+    },
+    {
+      "required": ["final"],
+      "properties": {
+        "final": {"const": true}
+      }
+    }
+  ]
+}

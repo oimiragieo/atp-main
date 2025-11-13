@@ -1,0 +1,37 @@
+[
+  {
+    "model_name": "premium-model",
+    "cost_per_1k_tokens_usd": 0.03,
+    "capabilities": [
+      "reasoning",
+      "code",
+      "dialog"
+    ],
+    "last_updated": 1757359070
+  },
+  {
+    "model_name": "openrouter:anthropic/claude-3.5-sonnet",
+    "cost_per_1k_tokens_usd": 0.002,
+    "capabilities": [
+      "reasoning"
+    ],
+    "last_updated": 1757359070
+  },
+  {
+    "model_name": "test-model",
+    "cost_per_1k_tokens_usd": 0.015,
+    "capabilities": [
+      "test",
+      "mock"
+    ],
+    "last_updated": 1757359129
+  },
+  {
+    "model_name": "persistent-model",
+    "cost_per_1k_tokens_usd": 0.025,
+    "capabilities": [
+      "persistent"
+    ],
+    "last_updated": 1757359129
+  }
+]

@@ -1,0 +1,214 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Production environment configuration
+global:
+  environment: production
+  domain: atp.company.com
+  projectId: "atp-production-project"
+
+# Router configuration for production
+router:
+  replicaCount: 5
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 50
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
+
+# Memory gateway configuration for production
+memoryGateway:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+
+# Admin dashboard configuration for production
+adminDashboard:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+
+# Database configuration for production
+database:
+  external: true
+  connectionName: "atp-production-project:us-central1:atp-production-db"
+  credentials:
+    secretName: atp-production-database-credentials
+  pooling:
+    enabled: true
+    maxConnections: 200
+    minConnections: 20
+
+# Redis configuration for production
+redis:
+  external: true
+  host: "10.1.0.100"  # Production Redis IP
+  credentials:
+    secretName: atp-production-redis-credentials
+
+# Ingress configuration for production
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "atp-production-ip"
+    networking.gke.io/managed-certificates: "atp-production-ssl-cert"
+    cloud.google.com/armor-config: '{"atp-security-policy": "atp-production-waf-policy"}'
+  hosts:
+    - host: api.atp.company.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: atp-router
+    - host: admin.atp.company.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: atp-admin-dashboard
+
+# SSL certificates for production
+certificates:
+  enabled: true
+  domains:
+    - api.atp.company.com
+    - admin.atp.company.com
+
+# Pod Disruption Budget for production
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3
+
+# Monitoring configuration for production
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+  alerts:
+    enabled: true
+    rules:
+      - name: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected in production"
+      - name: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected in production"
+
+# Security configuration for production
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Network policies enabled in production
+networkPolicies:
+  enabled: true
+  defaultDenyIngress: true
+
+# Development features disabled in production
+development:
+  enabled: false
+  debug: false
+  seedData: false
+
+# Full security for production
+costOptimization:
+  spotInstances: false
+  clusterAutoscaling: true
+  verticalPodAutoscaling: true
+
+# All features enabled in production
+features:
+  tracing: true
+  metrics: true
+  auditLogging: true
+  rateLimiting: true
+  caching: true
+  circuitBreaker: true
+
+# Full compliance for production
+compliance:
+  soc2: true
+  gdpr: true
+  pciDss: false
+  hipaa: false
+
+# Backup configuration for production
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  retention: 90
+  storage:
+    bucket: "atp-production-backups"
+
+# Istio service mesh for production
+externalServices:
+  istio:
+    enabled: true
+    virtualService:
+      enabled: true
+    destinationRule:
+      enabled: true
+    gateway:
+      enabled: true
+
+# Resource quotas for production
+costOptimization:
+  resourceQuotas:
+    enabled: true
+    limits:
+      cpu: "500"
+      memory: "1000Gi"
+      persistentvolumeclaims: "100"

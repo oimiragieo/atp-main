@@ -1,0 +1,63 @@
+[
+  {
+    "model": "cheap-model",
+    "params_b": 1.5,
+    "context_len": 8192,
+    "license": "Apache-2.0",
+    "capabilities": [
+      "summarize",
+      "extract",
+      "classify"
+    ],
+    "safety_grade": "A",
+    "status": "active"
+  },
+  {
+    "model": "exp-model",
+    "params_b": 3.0,
+    "context_len": 8192,
+    "license": "Apache-2.0",
+    "capabilities": [
+      "summarize",
+      "classify"
+    ],
+    "safety_grade": "A",
+    "status": "shadow"
+  },
+  {
+    "model": "mid-model",
+    "params_b": 4.0,
+    "context_len": 16384,
+    "license": "Apache-2.0",
+    "capabilities": [
+      "code",
+      "summarize"
+    ],
+    "safety_grade": "A",
+    "status": "shadow"
+  },
+  {
+    "model": "openrouter:anthropic/claude-3.5-sonnet",
+    "provider": "openrouter",
+    "status": "active",
+    "safety_grade": "B",
+    "est_latency_ms": 1200,
+    "est_cost_per_1k_tokens_usd": 0.002,
+    "tags": [
+      "reasoning"
+    ]
+  },
+  {
+    "model": "premium-model",
+    "params_b": 12.0,
+    "context_len": 32768,
+    "license": "Proprietary",
+    "capabilities": [
+      "reasoning",
+      "code",
+      "dialog"
+    ],
+    "safety_grade": "A",
+    "status": "fallback"
+  }
+]

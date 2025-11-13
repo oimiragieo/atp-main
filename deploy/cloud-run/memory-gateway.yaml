@@ -1,0 +1,187 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: atp-memory-gateway
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/execution-environment: gen2
+    run.googleapis.com/cpu-throttling: "false"
+    run.googleapis.com/vpc-access-connector: projects/PROJECT_ID/locations/REGION/connectors/atp-vpc-connector
+    run.googleapis.com/vpc-access-egress: private-ranges-only
+spec:
+  template:
+    metadata:
+      annotations:
+        # Scaling configuration
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "500"
+        autoscaling.knative.dev/target: "70"
+        
+        # Resource configuration
+        run.googleapis.com/memory: "2Gi"
+        run.googleapis.com/cpu: "1"
+        
+        # Timeout configuration
+        run.googleapis.com/timeout: "300s"
+        
+        # Security configuration
+        run.googleapis.com/service-account: atp-memory-gateway@PROJECT_ID.iam.gserviceaccount.com
+        
+        # Networking
+        run.googleapis.com/network-tags: atp-memory-gateway
+        
+        # Observability
+        run.googleapis.com/cloudsql-instances: PROJECT_ID:REGION:atp-postgres
+    spec:
+      containerConcurrency: 500
+      timeoutSeconds: 300
+      containers:
+      - name: atp-memory-gateway
+        image: gcr.io/PROJECT_ID/atp-memory-gateway:latest
+        ports:
+        - name: http1
+          containerPort: 8000
+        
+        # Environment variables
+        env:
+        # Database configuration
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: atp-database-secret
+              key: url
+        
+        # Redis configuration
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: atp-redis-secret
+              key: url
+        
+        # Service configuration
+        - name: PORT
+          value: "8000"
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          value: "INFO"
+        
+        # PII detection configuration
+        - name: PII_DETECTION_ENABLED
+          value: "true"
+        - name: PII_REDACTION_ENABLED
+          value: "true"
+        - name: PII_AUDIT_ENABLED
+          value: "true"
+        
+        # Audit configuration
+        - name: AUDIT_LOG_ENABLED
+          value: "true"
+        - name: AUDIT_HASH_CHAIN_ENABLED
+          value: "true"
+        
+        # Quota configuration
+        - name: QUOTA_ENABLED
+          value: "true"
+        - name: DEFAULT_QUOTA_LIMIT
+          value: "1000000"  # 1M tokens per day
+        
+        # Observability
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "https://cloudtrace.googleapis.com/v1/traces"
+        - name: OTEL_RESOURCE_ATTRIBUTES
+          value: "service.name=atp-memory-gateway,service.version=1.0.0"
+        
+        # Security
+        - name: CORS_ORIGINS
+          value: "https://atp.example.com,https://admin.atp.example.com"
+        
+        # Encryption keys
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: atp-encryption-secret
+              key: memory-encryption-key
+        
+        # Resource limits
+        resources:
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Startup probe
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        
+        # Security context
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # Volume mounts
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: var-tmp
+          mountPath: /var/tmp
+        - name: pii-audit-logs
+          mountPath: /app/pii_audit_logs
+      
+      # Volumes
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: var-tmp
+        emptyDir: {}
+      - name: pii-audit-logs
+        emptyDir: {}
+      
+      # Service account
+      serviceAccountName: atp-memory-gateway@PROJECT_ID.iam.gserviceaccount.com

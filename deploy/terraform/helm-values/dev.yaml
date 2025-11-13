@@ -1,0 +1,236 @@
+# ATP Development Helm Values
+# Development environment configuration for local testing
+
+global:
+  environment: ${environment}
+  imageTag: ${image_tag}
+  
+# Application configuration
+app:
+  name: atp
+  version: "2.0.0"
+  
+  # Single replica for development
+  replicaCount: ${replicas}
+  
+  image:
+    repository: atp/router-service
+    tag: ${image_tag}
+    pullPolicy: Always  # Always pull latest for development
+  
+  # Minimal resource limits for development
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  
+  # Health checks
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5  # More lenient for development
+  
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8000
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 5  # More lenient for development
+  
+  # Environment variables
+  env:
+    - name: ATP_ENV
+      value: ${environment}
+    - name: ATP_LOG_LEVEL
+      value: "DEBUG"  # Verbose logging for development
+    - name: ATP_DATABASE_URL
+      value: "postgresql://atp_user:$(DATABASE_PASSWORD)@${database_host}:5432/atp"
+    - name: ATP_REDIS_URL
+      value: "redis://${redis_host}:6379/0"
+    - name: ATP_DEBUG_MODE
+      value: "true"
+    - name: DATABASE_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: atp-secrets
+          key: database-password
+  
+  # Relaxed security context for development
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: false  # Allow writes for development
+    allowPrivilegeEscalation: false
+
+# Service configuration
+service:
+  type: NodePort  # NodePort for easy local access
+  port: 80
+  targetPort: 8000
+  nodePort: 30080
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # No SSL for development
+  hosts:
+    - host: dev-api.atp.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Horizontal Pod Autoscaler (disabled for development)
+autoscaling:
+  enabled: false
+
+# Pod Disruption Budget (disabled for development)
+podDisruptionBudget:
+  enabled: false
+
+# Network Policy (disabled for development)
+networkPolicy:
+  enabled: false
+
+# Service Monitor for Prometheus
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  path: /metrics
+  labels:
+    app: atp
+    environment: ${environment}
+
+# Resource Quota (minimal for development)
+resourceQuota:
+  enabled: true
+  hard:
+    requests.cpu: "2"
+    requests.memory: "4Gi"
+    limits.cpu: "4"
+    limits.memory: "8Gi"
+    persistentvolumeclaims: "2"
+
+# Limit Range
+limitRange:
+  enabled: true
+  limits:
+    - default:
+        cpu: "500m"
+        memory: "1Gi"
+      defaultRequest:
+        cpu: "100m"
+        memory: "256Mi"
+      type: Container
+
+# External Secrets (simplified for development)
+externalSecrets:
+  enabled: false  # Use simple secrets for development
+
+# Simple secrets for development
+secrets:
+  - name: atp-secrets
+    data:
+      database-password: ZGV2LXBhc3N3b3Jk  # base64 encoded "dev-password"
+      redis-password: ZGV2LXJlZGlz  # base64 encoded "dev-redis"
+      jwt-secret: ZGV2LWp3dC1zZWNyZXQ=  # base64 encoded "dev-jwt-secret"
+
+# Prometheus Rules (relaxed for development)
+prometheusRules:
+  enabled: true
+  rules:
+    - alert: ATPHighErrorRate
+      expr: rate(atp_requests_total{status=~"5.."}[5m]) > 0.5
+      for: 15m
+      labels:
+        severity: warning
+      annotations:
+        summary: "ATP high error rate in development"
+        description: "ATP error rate is above 50% for 15 minutes"
+
+# Admin Dashboard
+adminDashboard:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: atp/admin-dashboard
+    tag: ${image_tag}
+    pullPolicy: Always
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 3000
+    nodePort: 30081
+  
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    hosts:
+      - host: dev-admin.atp.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+# Memory Gateway
+memoryGateway:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: atp/memory-gateway
+    tag: ${image_tag}
+    pullPolicy: Always
+  
+  resources:
+    limits:
+      cpu: 200m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Development tools
+devTools:
+  enabled: true
+  
+  # Debug container
+  debugContainer:
+    enabled: true
+    image: nicolaka/netshoot
+    command: ["sleep", "3600"]
+  
+  # Port forwarding helper
+  portForward:
+    enabled: true
+    ports:
+      - name: app
+        port: 8000
+      - name: admin
+        port: 3000
+      - name: metrics
+        port: 9090

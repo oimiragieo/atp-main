@@ -1,0 +1,3 @@
+agents:
+  summarizer.local: { model: qwen2.5-7b, qos: bronze }
+  reviewer.gemini: { model: gemini-pro, qos: gold }

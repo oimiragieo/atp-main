@@ -1,0 +1,18 @@
+# Load testing container with k6
+FROM grafana/k6:latest
+
+# Create non-root user
+RUN adduser -D -s /bin/sh k6user
+
+# Set work directory
+WORKDIR /scripts
+
+# Copy k6 scripts
+COPY tools/k6_script.js /scripts/
+
+# Set proper permissions
+RUN chown -R k6user:k6user /scripts
+USER k6user
+
+# Default command
+CMD ["run", "/scripts/k6_script.js"]

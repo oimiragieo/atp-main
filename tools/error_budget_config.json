@@ -1,0 +1,22 @@
+{
+  "slos": [
+    {
+      "name": "api_availability",
+      "target_percentage": 99.9,
+      "window_days": 30,
+      "error_budget_percentage": 5.0
+    },
+    {
+      "name": "p95_latency",
+      "target_percentage": 95.0,
+      "window_days": 7,
+      "error_budget_percentage": 10.0
+    },
+    {
+      "name": "error_rate",
+      "target_percentage": 99.0,
+      "window_days": 30,
+      "error_budget_percentage": 3.0
+    }
+  ]
+}

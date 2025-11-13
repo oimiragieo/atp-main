@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atp-project/schemas/mcp/v1.0/callTool.json",
+  "title": "MCP Call Tool Message Schema",
+  "description": "Schema for MCP callTool request messages",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "callTool",
+      "description": "Message type identifier"
+    },
+    "toolCallId": {
+      "type": "string",
+      "description": "Unique identifier for this tool call"
+    },
+    "tool": {
+      "type": "string",
+      "description": "Name of the tool to call"
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Parameters to pass to the tool",
+      "additionalProperties": true
+    },
+    "stream": {
+      "type": "boolean",
+      "description": "Whether to stream the response",
+      "default": false
+    },
+    "timeout_seconds": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 300,
+      "description": "Timeout for tool execution in seconds",
+      "default": 30
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "urgent"],
+      "description": "Execution priority",
+      "default": "normal"
+    }
+  },
+  "required": ["type", "toolCallId", "tool"]
+}

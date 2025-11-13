@@ -1,0 +1,114 @@
+# Dockerignore for production builds
+# Exclude development and non-essential files
+
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Development tools
+research/
+tools/dev/
+tools/cleanup/
+backup/
+
+# Documentation drafts
+docs/drafts/
+
+# Temporary files
+*.tmp
+temp_*
+
+# Development configurations
+.env.local
+.env.development
+docker-compose.override.yml
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Cache directories
+.cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+
+# Node modules (if any)
+node_modules/
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Database files
+*.db
+*.sqlite
+
+# Secrets (should never be in repo anyway)
+*.key
+*.pem
+secrets/
+
+# Large data files
+data/
+*.csv
+*.json.gz
+
+# Performance reports
+performance_reports/
+reports/
+test_artifacts/
+
+# Backup files
+*.bak
+*.backup

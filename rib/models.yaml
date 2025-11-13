@@ -1,0 +1,4 @@
+models:
+  qwen2.5-7b: { provider: ollama, ctx: 32k }
+  gemini-pro: { provider: google, ctx: 2M }
+  gpt5: { provider: openai, ctx: 1M }

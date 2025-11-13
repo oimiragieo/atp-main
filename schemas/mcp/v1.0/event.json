@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atp-project/schemas/mcp/v1.0/event.json",
+  "title": "MCP Event Message Schema",
+  "description": "Schema for MCP event messages",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "event",
+      "description": "Message type identifier"
+    },
+    "event": {
+      "type": "string",
+      "description": "Event type identifier",
+      "enum": [
+        "challenger_selected",
+        "escalate",
+        "model_switch",
+        "session_start",
+        "session_end",
+        "tool_execution_start",
+        "tool_execution_end"
+      ]
+    },
+    "model": {
+      "type": "string",
+      "description": "Model name associated with the event"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of the event"
+    },
+    "data": {
+      "type": "object",
+      "description": "Additional event-specific data",
+      "additionalProperties": true
+    }
+  },
+  "required": ["type", "event"]
+}

@@ -1,0 +1,615 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ATP Deployment Pipeline Configuration
+# Comprehensive CI/CD pipeline with blue-green and canary deployment strategies
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: atp-deployment-pipeline
+  namespace: atp-system
+data:
+  pipeline.yaml: |
+    name: ATP Deployment Pipeline
+    version: "2.0.0"
+    
+    # Global pipeline configuration
+    global:
+      timeout: 3600  # 1 hour timeout
+      retry_attempts: 3
+      notification_channels:
+        - slack: "#atp-deployments"
+        - email: "atp-team@company.com"
+    
+    # Environment definitions
+    environments:
+      development:
+        cluster: dev-cluster
+        namespace: atp-dev
+        replicas: 1
+        resources:
+          cpu: "500m"
+          memory: "1Gi"
+        deployment_strategy: rolling
+        auto_deploy: true
+        quality_gates:
+          unit_tests: required
+          integration_tests: required
+          security_scan: required
+      
+      staging:
+        cluster: staging-cluster
+        namespace: atp-staging
+        replicas: 2
+        resources:
+          cpu: "1000m"
+          memory: "2Gi"
+        deployment_strategy: blue_green
+        auto_deploy: false
+        quality_gates:
+          unit_tests: required
+          integration_tests: required
+          security_scan: required
+          performance_tests: required
+          e2e_tests: required
+      
+      production:
+        cluster: prod-cluster
+        namespace: atp-prod
+        replicas: 5
+        resources:
+          cpu: "2000m"
+          memory: "4Gi"
+        deployment_strategy: canary
+        auto_deploy: false
+        quality_gates:
+          unit_tests: required
+          integration_tests: required
+          security_scan: required
+          performance_tests: required
+          e2e_tests: required
+          load_tests: required
+          security_audit: required
+    
+    # Pipeline stages
+    stages:
+      # Stage 1: Build and Test
+      - name: build_and_test
+        parallel: false
+        steps:
+          - name: checkout_code
+            action: git_checkout
+            parameters:
+              repository: "https://github.com/company/atp"
+              branch: "${BRANCH_NAME}"
+          
+          - name: build_images
+            action: docker_build
+            parameters:
+              dockerfiles:
+                - path: "deploy/docker/router-service.Dockerfile"
+                  image: "atp/router-service"
+                  context: "."
+                - path: "deploy/docker/memory-gateway.Dockerfile"
+                  image: "atp/memory-gateway"
+                  context: "."
+                - path: "admin-dashboard/Dockerfile"
+                  image: "atp/admin-dashboard"
+                  context: "admin-dashboard"
+              registry: "${CONTAINER_REGISTRY}"
+              tag: "${BUILD_NUMBER}"
+          
+          - name: run_unit_tests
+            action: test_execution
+            parameters:
+              command: "python run_comprehensive_tests.py --suites unit --ci"
+              timeout: 600
+              artifacts:
+                - "tests/reports/unit-results.xml"
+                - "htmlcov/"
+          
+          - name: run_security_scan
+            action: security_scan
+            parameters:
+              tools: ["bandit", "safety", "semgrep"]
+              fail_on: ["critical", "high"]
+              report_format: "json"
+              output: "security-report.json"
+          
+          - name: run_integration_tests
+            action: test_execution
+            parameters:
+              command: "python run_comprehensive_tests.py --suites integration --ci"
+              timeout: 900
+              artifacts:
+                - "tests/reports/integration-results.xml"
+      
+      # Stage 2: Deploy to Development
+      - name: deploy_development
+        condition: "branch == 'main' || branch == 'develop'"
+        parallel: false
+        steps:
+          - name: deploy_infrastructure
+            action: terraform_apply
+            parameters:
+              working_directory: "deploy/terraform"
+              var_file: "environments/development/terraform.tfvars"
+              auto_approve: true
+          
+          - name: deploy_application
+            action: helm_deploy
+            parameters:
+              chart: "deploy/helm/atp"
+              namespace: "atp-dev"
+              values_file: "deploy/terraform/helm-values/dev.yaml"
+              wait: true
+              timeout: 600
+          
+          - name: smoke_tests
+            action: test_execution
+            parameters:
+              command: "python run_comprehensive_tests.py --suites e2e --ci"
+              timeout: 300
+              environment: "development"
+      
+      # Stage 3: Deploy to Staging
+      - name: deploy_staging
+        condition: "branch == 'main'"
+        approval_required: true
+        approvers: ["atp-team"]
+        parallel: false
+        steps:
+          - name: deploy_infrastructure
+            action: terraform_apply
+            parameters:
+              working_directory: "deploy/terraform"
+              var_file: "environments/staging/terraform.tfvars"
+              auto_approve: false
+          
+          - name: blue_green_deployment
+            action: blue_green_deploy
+            parameters:
+              chart: "deploy/helm/atp"
+              namespace: "atp-staging"
+              values_file: "deploy/terraform/helm-values/staging.yaml"
+              health_check_url: "https://staging-api.atp.company.com/health"
+              rollback_on_failure: true
+          
+          - name: comprehensive_tests
+            action: test_execution
+            parameters:
+              command: "python run_comprehensive_tests.py --exclude mutation --ci"
+              timeout: 1800
+              environment: "staging"
+          
+          - name: performance_validation
+            action: performance_test
+            parameters:
+              tool: "k6"
+              script: "tests/performance/k6_load_tests.js"
+              environment: "staging"
+              thresholds:
+                response_time_p95: 2000
+                error_rate: 0.05
+      
+      # Stage 4: Deploy to Production
+      - name: deploy_production
+        condition: "tag =~ '^v[0-9]+\\.[0-9]+\\.[0-9]+$'"
+        approval_required: true
+        approvers: ["atp-leads", "platform-team"]
+        parallel: false
+        steps:
+          - name: pre_deployment_checks
+            action: pre_deployment_validation
+            parameters:
+              checks:
+                - infrastructure_drift_detection
+                - security_compliance_scan
+                - dependency_vulnerability_scan
+                - backup_verification
+          
+          - name: deploy_infrastructure
+            action: terraform_apply
+            parameters:
+              working_directory: "deploy/terraform"
+              var_file: "environments/production/terraform.tfvars"
+              auto_approve: false
+              plan_review_required: true
+          
+          - name: canary_deployment
+            action: canary_deploy
+            parameters:
+              chart: "deploy/helm/atp"
+              namespace: "atp-prod"
+              values_file: "deploy/terraform/helm-values/production.yaml"
+              canary_percentage: 10
+              success_criteria:
+                error_rate_threshold: 0.01
+                response_time_p95_threshold: 1000
+                duration_minutes: 15
+              rollback_on_failure: true
+          
+          - name: production_validation
+            action: production_validation
+            parameters:
+              tests:
+                - smoke_tests
+                - api_contract_tests
+                - security_tests
+              monitoring_duration: 300  # 5 minutes
+          
+          - name: full_rollout
+            action: canary_promote
+            parameters:
+              canary_percentage: 100
+              rollout_duration: 600  # 10 minutes
+              monitoring_duration: 900  # 15 minutes
+          
+          - name: post_deployment_validation
+            action: post_deployment_validation
+            parameters:
+              tests:
+                - full_e2e_tests
+                - load_tests
+                - security_audit
+              slo_validation: true
+              duration_minutes: 30
+    
+    # Deployment strategies
+    deployment_strategies:
+      rolling:
+        type: RollingUpdate
+        rollingUpdate:
+          maxUnavailable: 25%
+          maxSurge: 25%
+      
+      blue_green:
+        type: BlueGreen
+        scaleDownDelaySeconds: 30
+        prePromotionAnalysis:
+          templates:
+            - templateName: success-rate
+            - templateName: response-time
+          args:
+            - name: service-name
+              value: atp-service
+        postPromotionAnalysis:
+          templates:
+            - templateName: success-rate
+            - templateName: response-time
+          args:
+            - name: service-name
+              value: atp-service
+      
+      canary:
+        type: Canary
+        canaryService: atp-canary
+        stableService: atp-stable
+        steps:
+          - setWeight: 10
+          - pause: {duration: 5m}
+          - analysis:
+              templates:
+                - templateName: success-rate
+                - templateName: response-time
+              args:
+                - name: service-name
+                  value: atp-canary
+          - setWeight: 25
+          - pause: {duration: 10m}
+          - analysis:
+              templates:
+                - templateName: success-rate
+                - templateName: response-time
+              args:
+                - name: service-name
+                  value: atp-canary
+          - setWeight: 50
+          - pause: {duration: 15m}
+          - analysis:
+              templates:
+                - templateName: success-rate
+                - templateName: response-time
+              args:
+                - name: service-name
+                  value: atp-canary
+          - setWeight: 100
+    
+    # Quality gates
+    quality_gates:
+      unit_tests:
+        command: "python run_comprehensive_tests.py --suites unit --ci"
+        success_criteria:
+          exit_code: 0
+          coverage_threshold: 80
+        timeout: 600
+      
+      integration_tests:
+        command: "python run_comprehensive_tests.py --suites integration --ci"
+        success_criteria:
+          exit_code: 0
+        timeout: 900
+      
+      security_scan:
+        command: "python run_comprehensive_tests.py --suites security --ci"
+        success_criteria:
+          exit_code: 0
+          max_critical_issues: 0
+          max_high_issues: 0
+        timeout: 900
+      
+      performance_tests:
+        command: "k6 run tests/performance/k6_load_tests.js"
+        success_criteria:
+          exit_code: 0
+          response_time_p95: 2000
+          error_rate: 0.05
+        timeout: 1200
+      
+      e2e_tests:
+        command: "python run_comprehensive_tests.py --suites e2e --ci"
+        success_criteria:
+          exit_code: 0
+        timeout: 1800
+      
+      load_tests:
+        command: "k6 run --env K6_VUS=100 --env K6_DURATION=10m tests/performance/k6_load_tests.js"
+        success_criteria:
+          exit_code: 0
+          response_time_p95: 3000
+          error_rate: 0.02
+        timeout: 1800
+      
+      security_audit:
+        command: "python run_comprehensive_tests.py --suites compliance --ci"
+        success_criteria:
+          exit_code: 0
+        timeout: 600
+    
+    # Rollback configuration
+    rollback:
+      automatic: true
+      triggers:
+        - error_rate_threshold: 0.1
+        - response_time_p95_threshold: 5000
+        - availability_threshold: 0.99
+      
+      manual_approval_required: true
+      approvers: ["atp-leads"]
+      
+      rollback_steps:
+        - name: stop_traffic
+          action: traffic_split
+          parameters:
+            canary_weight: 0
+            stable_weight: 100
+        
+        - name: scale_down_canary
+          action: scale_deployment
+          parameters:
+            deployment: atp-canary
+            replicas: 0
+        
+        - name: verify_rollback
+          action: health_check
+          parameters:
+            url: "https://api.atp.company.com/health"
+            expected_status: 200
+            timeout: 300
+    
+    # Monitoring and observability
+    monitoring:
+      enabled: true
+      
+      metrics:
+        - name: deployment_success_rate
+          query: "rate(atp_deployments_total{status='success'}[5m]) / rate(atp_deployments_total[5m])"
+          threshold: 0.95
+        
+        - name: deployment_duration
+          query: "histogram_quantile(0.95, rate(atp_deployment_duration_seconds_bucket[5m]))"
+          threshold: 1800  # 30 minutes
+        
+        - name: rollback_rate
+          query: "rate(atp_rollbacks_total[1h])"
+          threshold: 0.1
+      
+      alerts:
+        - name: DeploymentFailure
+          condition: "deployment_success_rate < 0.95"
+          severity: critical
+          notification_channels: ["slack", "email"]
+        
+        - name: DeploymentTooSlow
+          condition: "deployment_duration > 1800"
+          severity: warning
+          notification_channels: ["slack"]
+        
+        - name: HighRollbackRate
+          condition: "rollback_rate > 0.1"
+          severity: warning
+          notification_channels: ["slack", "email"]
+    
+    # Security configuration
+    security:
+      image_scanning:
+        enabled: true
+        registries: ["gcr.io", "docker.io"]
+        fail_on_critical: true
+        fail_on_high: true
+      
+      secret_scanning:
+        enabled: true
+        tools: ["gitleaks", "truffleHog"]
+        fail_on_secrets: true
+      
+      compliance_checks:
+        enabled: true
+        standards: ["soc2", "gdpr", "iso27001"]
+        fail_on_violations: true
+      
+      network_policies:
+        enabled: true
+        default_deny: true
+        allow_list:
+          - namespace: atp-monitoring
+          - namespace: ingress-nginx
+    
+    # Disaster recovery
+    disaster_recovery:
+      enabled: true
+      
+      backup_strategy:
+        database:
+          frequency: "0 2 * * *"  # Daily at 2 AM
+          retention: "30d"
+          encryption: true
+        
+        application_state:
+          frequency: "0 */6 * * *"  # Every 6 hours
+          retention: "7d"
+          encryption: true
+      
+      recovery_procedures:
+        rto: 4h  # Recovery Time Objective
+        rpo: 1h  # Recovery Point Objective
+        
+        automated_failover:
+          enabled: true
+          health_check_failures: 3
+          health_check_interval: 60s
+        
+        manual_procedures:
+          - name: "Database Recovery"
+            documentation: "docs/runbooks/database-recovery.md"
+          - name: "Application Recovery"
+            documentation: "docs/runbooks/application-recovery.md"
+    
+    # Cost optimization
+    cost_optimization:
+      enabled: true
+      
+      strategies:
+        - name: spot_instances
+          environments: ["development", "staging"]
+          savings_target: 60
+        
+        - name: right_sizing
+          enabled: true
+          analysis_period: "7d"
+          adjustment_threshold: 20
+        
+        - name: idle_resource_cleanup
+          enabled: true
+          idle_threshold: "24h"
+          environments: ["development"]
+      
+      budgets:
+        development:
+          monthly_limit: 500
+          alert_thresholds: [50, 80, 95]
+        
+        staging:
+          monthly_limit: 1000
+          alert_thresholds: [50, 80, 95]
+        
+        production:
+          monthly_limit: 5000
+          alert_thresholds: [70, 85, 95]
+    
+    # Feature flags
+    feature_flags:
+      enabled: true
+      provider: "launchdarkly"  # or "flagsmith", "split"
+      
+      flags:
+        - name: "new_routing_algorithm"
+          environments:
+            development: true
+            staging: true
+            production: false
+        
+        - name: "advanced_analytics"
+          environments:
+            development: true
+            staging: true
+            production: true
+        
+        - name: "experimental_features"
+          environments:
+            development: true
+            staging: false
+            production: false
+    
+    # Notification configuration
+    notifications:
+      slack:
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channels:
+          success: "#atp-deployments"
+          failure: "#atp-alerts"
+          approval: "#atp-approvals"
+      
+      email:
+        smtp_server: "smtp.company.com"
+        from: "atp-ci@company.com"
+        recipients:
+          success: ["atp-team@company.com"]
+          failure: ["atp-team@company.com", "oncall@company.com"]
+          approval: ["atp-leads@company.com"]
+      
+      teams:
+        webhook_url: "${TEAMS_WEBHOOK_URL}"
+        enabled: true
+    
+    # Compliance and governance
+    governance:
+      change_management:
+        enabled: true
+        approval_required_for: ["staging", "production"]
+        approval_timeout: "24h"
+        
+        approval_matrix:
+          development: []
+          staging: ["team_lead"]
+          production: ["team_lead", "platform_lead", "security_lead"]
+      
+      audit_trail:
+        enabled: true
+        retention: "2y"
+        immutable: true
+        
+        events_to_log:
+          - deployment_started
+          - deployment_completed
+          - deployment_failed
+          - rollback_initiated
+          - rollback_completed
+          - approval_requested
+          - approval_granted
+          - approval_denied
+      
+      compliance_validation:
+        enabled: true
+        
+        pre_deployment:
+          - security_scan
+          - vulnerability_assessment
+          - compliance_check
+        
+        post_deployment:
+          - security_validation
+          - compliance_verification
+          - audit_log_verification

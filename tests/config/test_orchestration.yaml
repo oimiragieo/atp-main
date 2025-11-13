@@ -1,0 +1,300 @@
+# ATP Test Orchestration Configuration
+# Comprehensive configuration for enterprise test execution
+
+test_suites:
+  unit:
+    name: "Unit Tests"
+    description: "Fast unit tests for individual components"
+    enabled: true
+    priority: 1
+    timeout: 300
+    parallel: true
+    dependencies: []
+    environment:
+      PYTHONPATH: "."
+      ATP_ENV: "test"
+      ATP_LOG_LEVEL: "WARNING"
+    parameters:
+      coverage_threshold: 80
+      test_pattern: "test_*.py"
+      markers: "not slow and not integration"
+      max_workers: 4
+
+  integration:
+    name: "Integration Tests"
+    description: "Integration tests with external dependencies"
+    enabled: true
+    priority: 2
+    timeout: 600
+    parallel: false
+    dependencies: ["unit"]
+    environment:
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      ATP_ENV: "test"
+      ATP_DATABASE_URL: "postgresql://test:test@localhost:5432/test_db"
+      ATP_REDIS_URL: "redis://localhost:6379/0"
+    parameters:
+      use_testcontainers: true
+      cleanup_containers: true
+      container_timeout: 60
+
+  security:
+    name: "Security Tests"
+    description: "Security and penetration tests"
+    enabled: true
+    priority: 3
+    timeout: 900
+    parallel: false
+    dependencies: ["unit"]
+    environment:
+      ATP_ENV: "test"
+      SECURITY_SCAN_DEPTH: "comprehensive"
+    parameters:
+      scan_depth: "comprehensive"
+      include_owasp_top10: true
+      include_compliance: true
+      vulnerability_threshold: "medium"
+
+  performance:
+    name: "Performance Tests"
+    description: "K6 performance and load tests"
+    enabled: true
+    priority: 4
+    timeout: 1200
+    parallel: false
+    dependencies: ["unit", "integration"]
+    environment:
+      K6_VUS: "50"
+      K6_DURATION: "5m"
+      K6_RAMP_UP: "30s"
+      K6_RAMP_DOWN: "30s"
+      ATP_BASE_URL: "http://localhost:8000"
+      ATP_API_KEY: "test-api-key"
+    parameters:
+      scenarios: ["baseline", "stress", "spike"]
+      thresholds:
+        http_req_duration: "p(95)<2000"
+        http_req_failed: "rate<0.05"
+      output_formats: ["json", "html"]
+
+  e2e:
+    name: "End-to-End Tests"
+    description: "End-to-end tests using Playwright"
+    enabled: true
+    priority: 5
+    timeout: 1800
+    parallel: false
+    dependencies: ["unit", "integration"]
+    environment:
+      PLAYWRIGHT_BROWSERS_PATH: "0"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      ATP_ADMIN_URL: "http://localhost:3000"
+      ATP_API_URL: "http://localhost:8000"
+    parameters:
+      browser: "chromium"
+      headless: true
+      viewport_width: 1920
+      viewport_height: 1080
+      timeout: 30000
+      screenshot_on_failure: true
+
+  mutation:
+    name: "Mutation Tests"
+    description: "Mutation testing to validate test quality"
+    enabled: false  # Disabled by default due to long runtime
+    priority: 6
+    timeout: 3600
+    parallel: false
+    dependencies: ["unit"]
+    environment:
+      PYTHONPATH: "."
+      ATP_ENV: "test"
+    parameters:
+      mutation_score_threshold: 80
+      paths_to_mutate: ["router_service", "metrics", "observability"]
+      test_command: "python -m pytest tests/ -x --tb=short"
+      max_mutations: 1000
+
+  compliance:
+    name: "Compliance Tests"
+    description: "GDPR, SOC 2, and ISO 27001 compliance tests"
+    enabled: true
+    priority: 7
+    timeout: 600
+    parallel: false
+    dependencies: ["security"]
+    environment:
+      ATP_ENV: "test"
+      COMPLIANCE_MODE: "strict"
+    parameters:
+      standards: ["gdpr", "soc2", "iso27001"]
+      audit_level: "comprehensive"
+      generate_evidence: true
+
+global_settings:
+  max_parallel_suites: 3
+  continue_on_failure: true
+  generate_reports: true
+  cleanup_artifacts: false
+  notification_webhook: null
+  retry_failed_tests: false
+  max_retries: 2
+  artifact_retention_days: 30
+
+reporting:
+  formats: ["html", "json", "junit"]
+  output_directory: "tests/reports"
+  include_coverage: true
+  include_performance_metrics: true
+  include_security_findings: true
+  include_compliance_evidence: true
+  generate_trends: true
+  compare_with_baseline: true
+
+quality_gates:
+  minimum_coverage: 80.0
+  maximum_failure_rate: 5.0
+  maximum_security_issues: 0
+  minimum_performance_score: 85.0
+  required_compliance_standards: ["gdpr", "soc2"]
+
+notifications:
+  slack:
+    enabled: false
+    webhook_url: null
+    channels: ["#atp-ci", "#atp-alerts"]
+    mention_on_failure: ["@atp-team"]
+  
+  email:
+    enabled: false
+    smtp_server: null
+    recipients: ["atp-team@company.com"]
+    send_on_failure: true
+    send_summary: true
+  
+  teams:
+    enabled: false
+    webhook_url: null
+
+environments:
+  development:
+    base_url: "http://localhost:8000"
+    admin_url: "http://localhost:3000"
+    database_url: "postgresql://dev:dev@localhost:5432/atp_dev"
+    redis_url: "redis://localhost:6379/0"
+    
+  staging:
+    base_url: "https://staging-api.atp.company.com"
+    admin_url: "https://staging-admin.atp.company.com"
+    database_url: "${STAGING_DATABASE_URL}"
+    redis_url: "${STAGING_REDIS_URL}"
+    
+  production:
+    base_url: "https://api.atp.company.com"
+    admin_url: "https://admin.atp.company.com"
+    database_url: "${PRODUCTION_DATABASE_URL}"
+    redis_url: "${PRODUCTION_REDIS_URL}"
+
+test_data:
+  factories:
+    user_factory:
+      default_role: "user"
+      default_permissions: ["read", "write"]
+    
+    provider_factory:
+      default_type: "openai"
+      default_priority: 100
+    
+    request_factory:
+      default_model: "gpt-4"
+      default_temperature: 0.7
+
+ci_cd_integration:
+  github_actions:
+    enabled: true
+    workflow_file: ".github/workflows/test.yml"
+    trigger_on: ["push", "pull_request"]
+    
+  jenkins:
+    enabled: false
+    pipeline_file: "Jenkinsfile"
+    
+  gitlab_ci:
+    enabled: false
+    config_file: ".gitlab-ci.yml"
+
+monitoring:
+  test_execution_metrics: true
+  performance_trends: true
+  coverage_trends: true
+  failure_analysis: true
+  
+  dashboards:
+    grafana:
+      enabled: false
+      dashboard_id: "atp-test-metrics"
+    
+    datadog:
+      enabled: false
+      dashboard_url: null
+
+security_scanning:
+  static_analysis:
+    bandit:
+      enabled: true
+      config_file: ".bandit"
+      severity_threshold: "medium"
+    
+    safety:
+      enabled: true
+      ignore_vulnerabilities: []
+    
+    semgrep:
+      enabled: false
+      config: "auto"
+  
+  dynamic_analysis:
+    zap:
+      enabled: false
+      target_url: "http://localhost:8000"
+    
+    nuclei:
+      enabled: false
+      templates: ["cves", "vulnerabilities"]
+
+performance_baselines:
+  api_response_time:
+    p50: 500  # ms
+    p95: 2000  # ms
+    p99: 5000  # ms
+  
+  throughput:
+    requests_per_second: 100
+    concurrent_users: 50
+  
+  resource_usage:
+    max_memory_mb: 1024
+    max_cpu_percent: 80
+
+compliance_requirements:
+  gdpr:
+    data_retention_policy: true
+    consent_management: true
+    right_to_erasure: true
+    data_portability: true
+    privacy_by_design: true
+  
+  soc2:
+    access_controls: true
+    encryption_at_rest: true
+    encryption_in_transit: true
+    audit_logging: true
+    incident_response: true
+  
+  iso27001:
+    risk_assessment: true
+    security_policies: true
+    asset_management: true
+    business_continuity: true
+    supplier_management: true

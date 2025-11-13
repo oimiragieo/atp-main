@@ -1,0 +1,11 @@
+line-length = 120
+
+[lint]
+select = ["E","F","I","B","UP","N","ASYNC","S","A","C4"]
+ignore = ["E203","E266","E501","S101","S311","N802","S603","S607","S108","E902"] # S311 (non-crypto RNG) acceptable in POCs, N802 (generated gRPC), S603/S607 (controlled subprocess), S108 (test temp dirs), E902 (UTF-8 encoding)
+
+[lint.per-file-ignores]
+"adapters/python/*/adapter_pb2_grpc.py" = ["N802"]
+"tools/adapter_pb2_grpc.py" = ["N802"]
+"tests/test_adapter_certification.py" = ["E902"]
+"memory-gateway/__init__.py" = ["N999"]

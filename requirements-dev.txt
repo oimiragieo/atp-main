@@ -1,0 +1,47 @@
+# ATP System Development Dependencies
+# Tools for testing, linting, formatting, and development
+# Install with: pip install -r requirements-dev.txt
+
+# Testing Framework
+pytest==8.3.2
+pytest-asyncio==1.1.0
+pytest-cov==6.2.1
+coverage==7.10.6
+hypothesis==6.103.1
+
+# Code Quality & Linting
+ruff==0.9.10
+mypy==1.17.1
+black==25.1.0
+isort==6.0.1
+flake8==7.3.0
+pylint==3.3.8
+bandit==1.8.6
+
+# Pre-commit & Git Hooks
+pre-commit==4.3.0
+
+# Security Scanning
+safety==3.6.1
+pip-audit==2.9.0
+
+# Development Tools
+autopep8==2.3.2
+semgrep==1.128.1
+
+# Build & Packaging
+build==1.3.0
+setuptools==80.9.0
+wheel==0.45.1
+
+# Environment Management
+virtualenv==20.34.0
+pip-requirements-parser==32.0.1
+
+# Documentation
+sphinx
+mkdocs
+
+# Development Server Tools
+watchfiles==1.1.0
+watchdog==6.0.0

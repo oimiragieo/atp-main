@@ -1,0 +1,15 @@
+rules:
+  - match:
+      tenant: "acme"
+      task_type: "qa"
+      data_scope_forbidden: ["secrets", "pci"]
+    effect: "allow"
+  - match:
+      tenant: "*"
+      task_type: "code_review"
+      data_scope_forbidden: ["pii"]
+    effect: "allow"
+  - match:
+      tenant: "*"
+    effect: "deny"
+

@@ -1,0 +1,3 @@
+- match: { task_type: qa }
+  fanout: [summarizer.local, reviewer.gemini]
+  budget: { usd: 1.50, tokens: 400000 }

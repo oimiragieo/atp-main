@@ -1,0 +1,191 @@
+{
+  "id": null,
+  "uid": "atp-kpi-overview",
+  "title": "ATP Platform KPIs",
+  "tags": [
+    "ATP",
+    "KPI",
+    "Platform"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Active Connections",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(router_active_connections)",
+          "legendFormat": "Connections",
+          "refId": "A"
+        }
+      ],
+      "description": "Current active connections to the ATP router"
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Request Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(router_requests_total[5m]))",
+          "legendFormat": "Requests/sec",
+          "refId": "A"
+        }
+      ],
+      "description": "Request rate over the last 5 minutes"
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Error Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(router_errors_total[5m])) / sum(rate(router_requests_total[5m])) * 100",
+          "legendFormat": "Error %",
+          "refId": "A"
+        }
+      ],
+      "description": "Error rate as percentage of total requests"
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Response Time P95",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(router_request_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "P95",
+          "refId": "A"
+        }
+      ],
+      "description": "95th percentile response time"
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Throughput",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(router_requests_total[5m]))",
+          "legendFormat": "Throughput",
+          "refId": "A"
+        }
+      ],
+      "description": "System throughput in requests per second"
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Cost per Request",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(cost_total_usd[5m])) / sum(rate(router_requests_total[5m]))",
+          "legendFormat": "Cost/USD",
+          "refId": "A"
+        }
+      ],
+      "description": "Average cost per request in USD"
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Budget Burn Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(cost_total_usd[1h])) * 24",
+          "legendFormat": "Daily Burn",
+          "refId": "A"
+        }
+      ],
+      "description": "Daily budget burn rate in USD"
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Consensus Agreement Rate",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(agreement_pct_bucket[5m])) by (le))",
+          "legendFormat": "Agreement %",
+          "refId": "A"
+        }
+      ],
+      "description": "Median consensus agreement percentage"
+    },
+    {
+      "id": 9,
+      "type": "barchart",
+      "title": "Adapter Predictability",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(adapter_predictability_score[5m])) by (adapter)",
+          "legendFormat": "{{adapter}}",
+          "refId": "A"
+        }
+      ],
+      "description": "Predictability scores by adapter"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+
+[workspace]
+members = [
+    "crates/atp-schema",
+    "crates/atp-adapter-proto",
+    "crates/atp-router",
+]
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true

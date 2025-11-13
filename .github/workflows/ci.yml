@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        python-version: ['3.11']
+        component: ['router', 'memory-gateway', 'adapters']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f memory-gateway/requirements.txt ]; then pip install -r memory-gateway/requirements.txt; fi
+          if [ -f adapters/python/persona_adapter/requirements.txt ]; then pip install -r adapters/python/persona_adapter/requirements.txt; fi
+          if [ -f adapters/python/ollama_adapter/requirements.txt ]; then pip install -r adapters/python/ollama_adapter/requirements.txt; fi
+          pip install mypy ruff pytest pytest-cov
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Type check
+        run: |
+          mypy --config-file mypy.ini .
+
+      - name: Security scan
+        uses: github/super-linter/slim@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_PYTHON: true
+          VALIDATE_DOCKERFILE: true
+          VALIDATE_YAML: true
+
+      - name: Tests (component-specific)
+        env:
+          ROUTER_ADMIN_API_KEY: test-admin-key
+        run: |
+          case ${{ matrix.component }} in
+            router)
+              pytest tests/test_frame_model.py tests/test_window_update_emitter_poc.py -v
+              ;;
+            memory-gateway)
+              pytest tests/test_memory_gateway.py -v
+              ;;
+            adapters)
+              pytest tests/test_adapter_conformance_poc.py -v
+              ;;
+          esac
+
+      - name: Aggregator unit tests
+        env:
+          ROUTER_ADMIN_API_KEY: test-admin-key
+        run: |
+          pytest tests/test_admin_aggregator.py -q
+
+      - name: Coverage
+        env:
+          ROUTER_ADMIN_API_KEY: test-admin-key
+        run: |
+          pytest --cov=router_service --cov-report=term-missing --cov-fail-under=60
+
+  docker-compose-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and start services
+        run: |
+          docker-compose up -d --build
+          docker-compose ps
+
+      - name: Wait for services to be healthy
+        run: |
+          timeout 300 bash -c 'until docker-compose ps | grep -q "healthy"; do sleep 10; done'
+
+      - name: Run integration tests
+        run: |
+          docker-compose exec -T pytest pytest tests/test_memory_gateway.py -v
+
+      - name: Run load test
+        run: |
+          docker-compose exec -T k6 run /scripts/k6_script.js --vus 5 --duration 30s
+
+      - name: Clean up
+        run: |
+          docker-compose down -v

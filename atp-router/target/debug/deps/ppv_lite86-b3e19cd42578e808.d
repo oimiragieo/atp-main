@@ -1,0 +1,11 @@
+C:\dev\projects\atp-main\atp-router\target\debug\deps\libppv_lite86-b3e19cd42578e808.rmeta: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\soft.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\types.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\mod.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\sse2.rs
+
+C:\dev\projects\atp-main\atp-router\target\debug\deps\libppv_lite86-b3e19cd42578e808.rlib: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\soft.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\types.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\mod.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\sse2.rs
+
+C:\dev\projects\atp-main\atp-router\target\debug\deps\ppv_lite86-b3e19cd42578e808.d: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\soft.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\types.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\mod.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\sse2.rs
+
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\lib.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\soft.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\types.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\mod.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\ppv-lite86-0.2.21\src\x86_64\sse2.rs:

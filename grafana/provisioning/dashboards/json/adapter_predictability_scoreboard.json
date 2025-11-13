@@ -1,0 +1,41 @@
+{
+  "title": "Adapter Predictability Scoreboard",
+  "panels": [
+    {
+      "type": "table",
+      "title": "Adapter MAPE (Tokens, 5m avg)",
+      "targets": [
+        {
+          "expr": "avg_over_time(adapter_estimate_mape_tokens_sum[5m]) / avg_over_time(adapter_estimate_mape_tokens_count[5m])"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "bargauge",
+      "title": "Adapter MAPE (USD, 5m avg)",
+      "targets": [
+        {
+          "expr": "avg_over_time(adapter_estimate_mape_usd_sum[5m]) / avg_over_time(adapter_estimate_mape_usd_count[5m])"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "timeseries",
+      "title": "Under-Estimation (tokens)",
+      "targets": [
+        {
+          "expr": "sum(increase(router_estimate_under_rate_tokens_total[5m])) by (adapter)"
+        }
+      ],
+      "id": 3
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  }
+}

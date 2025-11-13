@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AuditEvent",
+  "type": "object",
+  "required": ["ts","tenant","actor","action","resource","result"],
+  "properties": {
+    "ts": {"type":"string"},
+    "tenant": {"type":"string"},
+    "actor": {"type":"string"},
+    "action": {"type":"string"},
+    "resource": {"type":"string"},
+    "result": {"type":"string", "enum":["allow","deny","error"]},
+    "details": {"type":"object"}
+  },
+  "additionalProperties": true
+}
+

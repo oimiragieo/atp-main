@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atp-project/schemas/mcp/v1.0/index.json",
+  "title": "MCP Protocol Schema Index",
+  "description": "Index of all MCP protocol message schemas",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Schema version"
+    },
+    "schemas": {
+      "type": "object",
+      "description": "Available message schemas",
+      "properties": {
+        "base": {
+          "$ref": "base.json",
+          "description": "Base message schema"
+        },
+        "toolOutput": {
+          "$ref": "toolOutput.json",
+          "description": "Tool output message schema"
+        },
+        "error": {
+          "$ref": "error.json",
+          "description": "Error message schema"
+        },
+        "event": {
+          "$ref": "event.json",
+          "description": "Event message schema"
+        },
+        "plan": {
+          "$ref": "plan.json",
+          "description": "Plan message schema"
+        },
+        "final": {
+          "$ref": "final.json",
+          "description": "Final message schema"
+        },
+        "heartbeat": {
+          "$ref": "heartbeat.json",
+          "description": "Heartbeat message schema"
+        },
+        "listTools": {
+          "$ref": "listTools.json",
+          "description": "List tools message schema"
+        },
+        "callTool": {
+          "$ref": "callTool.json",
+          "description": "Call tool message schema"
+        }
+      },
+      "required": ["base", "toolOutput", "error", "event", "plan", "final", "heartbeat", "listTools", "callTool"]
+    },
+    "features": {
+      "type": "object",
+      "description": "Supported protocol features",
+      "properties": {
+        "streaming": {
+          "type": "boolean",
+          "const": true,
+          "description": "Streaming responses supported"
+        },
+        "partial_messages": {
+          "type": "boolean",
+          "const": true,
+          "description": "Partial message streaming supported"
+        },
+        "experiment_metadata": {
+          "type": "boolean",
+          "const": true,
+          "description": "Champion/challenger experiment metadata supported"
+        },
+        "differential_privacy": {
+          "type": "boolean",
+          "const": true,
+          "description": "Differential privacy metrics supported"
+        },
+        "heartbeats": {
+          "type": "boolean",
+          "const": true,
+          "description": "Connection heartbeat monitoring supported"
+        }
+      }
+    }
+  },
+  "required": ["version", "schemas"]
+}

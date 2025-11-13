@@ -1,0 +1,472 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Istio Service Mesh Configuration for ATP Platform
+
+---
+# Istio Gateway for external traffic
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: atp-gateway
+  namespace: atp-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "atp.example.com"
+    - "api.atp.example.com"
+    - "admin.atp.example.com"
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    hosts:
+    - "atp.example.com"
+    - "api.atp.example.com"
+    - "admin.atp.example.com"
+    tls:
+      mode: SIMPLE
+      credentialName: atp-tls-secret
+
+---
+# Virtual Service for routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: atp-routes
+  namespace: atp-system
+spec:
+  hosts:
+  - "atp.example.com"
+  - "api.atp.example.com"
+  - "admin.atp.example.com"
+  gateways:
+  - atp-gateway
+  http:
+  # API routes
+  - match:
+    - uri:
+        prefix: "/api/v1/"
+    - headers:
+        host:
+          exact: "api.atp.example.com"
+    route:
+    - destination:
+        host: atp-router-service.atp-system.svc.cluster.local
+        port:
+          number: 8080
+    timeout: 300s
+    retries:
+      attempts: 3
+      perTryTimeout: 30s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+  
+  # Memory gateway routes
+  - match:
+    - uri:
+        prefix: "/memory/"
+    route:
+    - destination:
+        host: atp-memory-gateway.atp-system.svc.cluster.local
+        port:
+          number: 8000
+    timeout: 300s
+    retries:
+      attempts: 3
+      perTryTimeout: 30s
+  
+  # Admin routes
+  - match:
+    - uri:
+        prefix: "/admin/"
+    - headers:
+        host:
+          exact: "admin.atp.example.com"
+    route:
+    - destination:
+        host: atp-admin-dashboard.atp-system.svc.cluster.local
+        port:
+          number: 3000
+    timeout: 60s
+  
+  # Default route to router service
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: atp-router-service.atp-system.svc.cluster.local
+        port:
+          number: 8080
+    timeout: 300s
+
+---
+# Destination Rule for router service
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: atp-router-service
+  namespace: atp-system
+spec:
+  host: atp-router-service.atp-system.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30s
+        tcpKeepalive:
+          time: 7200s
+          interval: 75s
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+        consecutiveGatewayErrors: 5
+        interval: 30s
+        baseEjectionTime: 30s
+        maxEjectionPercent: 50
+        minHealthPercent: 50
+    loadBalancer:
+      simple: LEAST_CONN
+    outlierDetection:
+      consecutiveGatewayErrors: 5
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+  portLevelSettings:
+  - port:
+      number: 8080
+    connectionPool:
+      tcp:
+        maxConnections: 50
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 5
+
+---
+# Destination Rule for memory gateway
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: atp-memory-gateway
+  namespace: atp-system
+spec:
+  host: atp-memory-gateway.atp-system.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 50
+        connectTimeout: 30s
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 500
+        maxRequestsPerConnection: 5
+        maxRetries: 3
+    loadBalancer:
+      simple: ROUND_ROBIN
+    outlierDetection:
+      consecutiveGatewayErrors: 3
+      consecutive5xxErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 30
+
+---
+# Service Entry for external AI providers
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: openai-api
+  namespace: atp-system
+spec:
+  hosts:
+  - api.openai.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: anthropic-api
+  namespace: atp-system
+spec:
+  hosts:
+  - api.anthropic.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: google-ai-api
+  namespace: atp-system
+spec:
+  hosts:
+  - generativelanguage.googleapis.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+# Authorization Policy for ATP services
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: atp-authz
+  namespace: atp-system
+spec:
+  selector:
+    matchLabels:
+      app: atp-router-service
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/atp-system/sa/atp-router-service"]
+    - source:
+        namespaces: ["istio-system"]
+  - to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/*", "/health", "/ready", "/metrics"]
+  - when:
+    - key: request.headers[authorization]
+      values: ["Bearer *"]
+
+---
+# PeerAuthentication for mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: atp-system
+spec:
+  mtls:
+    mode: STRICT
+
+---
+# Request Authentication for JWT validation
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: atp-jwt
+  namespace: atp-system
+spec:
+  selector:
+    matchLabels:
+      app: atp-router-service
+  jwtRules:
+  - issuer: "https://atp.example.com"
+    jwksUri: "https://atp.example.com/.well-known/jwks.json"
+    audiences:
+    - "atp-api"
+    forwardOriginalToken: true
+
+---
+# Telemetry configuration
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: atp-telemetry
+  namespace: atp-system
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+  - overrides:
+    - match:
+        metric: ALL_METRICS
+      tagOverrides:
+        request_protocol:
+          value: "%{REQUEST_PROTOCOL}"
+        response_code:
+          value: "%{RESPONSE_CODE}"
+        source_app:
+          value: "%{SOURCE_APP}"
+        destination_service_name:
+          value: "%{DESTINATION_SERVICE_NAME}"
+  tracing:
+  - providers:
+    - name: jaeger
+  accessLogging:
+  - providers:
+    - name: otel
+
+---
+# Envoy Filter for custom headers
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: atp-headers
+  namespace: atp-system
+spec:
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.lua
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          inline_code: |
+            function envoy_on_request(request_handle)
+              -- Add custom headers
+              request_handle:headers():add("x-atp-cluster", "gke-production")
+              request_handle:headers():add("x-atp-version", "1.0.0")
+              
+              -- Add request ID if not present
+              if not request_handle:headers():get("x-request-id") then
+                request_handle:headers():add("x-request-id", request_handle:headers():get(":authority") .. "-" .. os.time())
+              end
+            end
+            
+            function envoy_on_response(response_handle)
+              -- Add security headers
+              response_handle:headers():add("x-content-type-options", "nosniff")
+              response_handle:headers():add("x-frame-options", "DENY")
+              response_handle:headers():add("x-xss-protection", "1; mode=block")
+              response_handle:headers():add("strict-transport-security", "max-age=31536000; includeSubDomains")
+            end
+
+---
+# Wasm Plugin for rate limiting
+apiVersion: extensions.istio.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: atp-rate-limit
+  namespace: atp-system
+spec:
+  selector:
+    matchLabels:
+      app: atp-router-service
+  url: oci://gcr.io/PROJECT_ID/atp-rate-limiter:latest
+  phase: AUTHN
+  pluginConfig:
+    rules:
+    - match:
+        headers:
+        - name: ":path"
+          prefix: "/api/v1/"
+      actions:
+      - quota:
+          name: "api_requests"
+          max_amount: 1000
+          valid_duration: "3600s"
+    - match:
+        headers:
+        - name: ":path"
+          prefix: "/api/v1/stream"
+      actions:
+      - quota:
+          name: "streaming_requests"
+          max_amount: 100
+          valid_duration: "3600s"
+
+---
+# Service Monitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: atp-services
+  namespace: atp-system
+  labels:
+    app: atp-platform
+spec:
+  selector:
+    matchLabels:
+      app: atp-router-service
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    honorLabels: true
+  - port: istio-proxy
+    interval: 30s
+    path: /stats/prometheus
+    honorLabels: true
+
+---
+# Network Policy for additional security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: atp-network-policy
+  namespace: atp-system
+spec:
+  podSelector:
+    matchLabels:
+      app: atp-router-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    - podSelector:
+        matchLabels:
+          app: atp-memory-gateway
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 15090  # Envoy admin
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to: []  # Allow all egress for external API calls
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis

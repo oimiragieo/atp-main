@@ -1,0 +1,11 @@
+C:\dev\projects\atp-main\atp-router\target\debug\deps\libbitflags-15810041c4d2020d.rmeta: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\iter.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\parser.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\traits.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\public.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\internal.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\external.rs
+
+C:\dev\projects\atp-main\atp-router\target\debug\deps\bitflags-15810041c4d2020d.d: C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\lib.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\iter.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\parser.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\traits.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\public.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\internal.rs C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\external.rs
+
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\lib.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\iter.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\parser.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\traits.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\public.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\internal.rs:
+C:\Users\oimir\.cargo\registry\src\index.crates.io-6f17d22bba15001f\bitflags-2.9.4\src\external.rs:

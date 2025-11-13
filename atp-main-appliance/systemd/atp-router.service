@@ -1,0 +1,17 @@
+[Unit]
+Description=ATP Router Service
+After=network.target
+
+[Service]
+User=atp
+Group=atp
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+EnvironmentFile=/etc/atp/atp.env
+ExecStart=/opt/atp/current/venv/bin/python -m router_service.service
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

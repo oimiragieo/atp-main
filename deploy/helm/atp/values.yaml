@@ -1,0 +1,216 @@
+# Default values for ATP Enterprise AI Platform
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Image configuration
+image:
+  registry: gcr.io
+  repository: PROJECT_ID/atp
+  tag: "latest"
+  pullPolicy: Always
+
+# Service configuration
+services:
+  router:
+    enabled: true
+    replicaCount: 3
+    port: 8080
+    resources:
+      requests:
+        cpu: 200m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+      targetMemoryUtilizationPercentage: 80
+
+  auth:
+    enabled: true
+    replicaCount: 2
+    port: 8081
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  policy:
+    enabled: true
+    replicaCount: 2
+    port: 8082
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  costOptimizer:
+    enabled: true
+    replicaCount: 2
+    port: 8083
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+  memoryGateway:
+    enabled: true
+    replicaCount: 2
+    port: 8084
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: atp.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: router
+        - path: /auth
+          pathType: Prefix
+          service: auth
+        - path: /policy
+          pathType: Prefix
+          service: policy
+        - path: /cost
+          pathType: Prefix
+          service: cost-optimizer
+        - path: /memory
+          pathType: Prefix
+          service: memory-gateway
+  tls:
+    - secretName: atp-tls
+      hosts:
+        - atp.yourdomain.com
+
+# Security configuration
+security:
+  podSecurityPolicy:
+    enabled: true
+  networkPolicy:
+    enabled: true
+  serviceAccount:
+    create: true
+    annotations: {}
+    name: ""
+
+# Database configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "CHANGE_ME"
+    username: "atp"
+    password: "CHANGE_ME"
+    database: "atp"
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 256Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "CHANGE_ME"
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# Monitoring configuration
+monitoring:
+  prometheus:
+    enabled: true
+    server:
+      persistentVolume:
+        enabled: true
+        size: 20Gi
+  grafana:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 10Gi
+    adminPassword: "CHANGE_ME"
+
+# Configuration
+config:
+  environment: production
+  logLevel: INFO
+  
+  # Rate limiting
+  rateLimiting:
+    enabled: true
+    requestsPerMinute: 1000
+    burstSize: 100
+  
+  # Security
+  security:
+    corsEnabled: true
+    corsOrigins: ["https://yourdomain.com"]
+    csrfProtection: true
+  
+  # AI Provider API Keys (use external secret management in production)
+  apiKeys:
+    openai: "CHANGE_ME"
+    anthropic: "CHANGE_ME"
+    google: "CHANGE_ME"
+
+# Secrets (use external secret management in production)
+secrets:
+  jwtSecret: "CHANGE_ME_TO_RANDOM_STRING"
+  encryptionKey: "CHANGE_ME_TO_32_BYTE_KEY"
+
+# Node selector and tolerations
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

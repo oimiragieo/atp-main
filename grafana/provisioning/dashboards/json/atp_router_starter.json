@@ -1,0 +1,41 @@
+{
+  "title": "ATP Router Starter",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Admits",
+      "targets": [
+        {
+          "expr": "router_windows_admit_total"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Rejects",
+      "targets": [
+        {
+          "expr": "router_windows_reject_total"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Bronze Drops",
+      "targets": [
+        {
+          "expr": "router_qos_drops_bronze_total"
+        }
+      ],
+      "id": 3
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  }
+}

@@ -1,0 +1,66 @@
+# Copyright 2025 ATP Project Contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "atp.fullname" . }}-config
+  labels:
+    {{- include "atp.labels" . | nindent 4 }}
+data:
+  # Application configuration
+  ATP_ENVIRONMENT: {{ .Values.global.environment | quote }}
+  ATP_REGION: {{ .Values.global.region | quote }}
+  ATP_PROJECT_ID: {{ .Values.global.projectId | quote }}
+  
+  # Database configuration
+  DATABASE_SSL_MODE: {{ .Values.router.config.database.sslMode | quote }}
+  DATABASE_MAX_CONNECTIONS: {{ .Values.database.pooling.maxConnections | quote }}
+  DATABASE_MIN_CONNECTIONS: {{ .Values.database.pooling.minConnections | quote }}
+  
+  # Redis configuration
+  REDIS_DB: {{ .Values.router.config.redis.db | quote }}
+  
+  # Provider endpoints
+  OPENAI_ENDPOINT: {{ .Values.router.config.providers.openai.endpoint | quote }}
+  ANTHROPIC_ENDPOINT: {{ .Values.router.config.providers.anthropic.endpoint | quote }}
+  
+  # Feature flags
+  TRACING_ENABLED: {{ .Values.features.tracing | quote }}
+  METRICS_ENABLED: {{ .Values.features.metrics | quote }}
+  AUDIT_LOGGING_ENABLED: {{ .Values.features.auditLogging | quote }}
+  RATE_LIMITING_ENABLED: {{ .Values.features.rateLimiting | quote }}
+  CACHING_ENABLED: {{ .Values.features.caching | quote }}
+  CIRCUIT_BREAKER_ENABLED: {{ .Values.features.circuitBreaker | quote }}
+  
+  # Monitoring configuration
+  {{- if .Values.monitoring.enabled }}
+  PROMETHEUS_ENABLED: "true"
+  METRICS_PORT: "8080"
+  METRICS_PATH: "/metrics"
+  {{- end }}
+  
+  # Security configuration
+  {{- if .Values.compliance.gdpr }}
+  GDPR_COMPLIANCE_ENABLED: "true"
+  {{- end }}
+  {{- if .Values.compliance.soc2 }}
+  SOC2_COMPLIANCE_ENABLED: "true"
+  {{- end }}
+  
+  # Development configuration
+  {{- if .Values.development.enabled }}
+  DEBUG_MODE: {{ .Values.development.debug | quote }}
+  HOT_RELOAD: {{ .Values.development.hotReload | quote }}
+  {{- end }}

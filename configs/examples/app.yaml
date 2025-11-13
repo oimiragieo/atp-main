@@ -1,0 +1,270 @@
+# Example Configuration for ATP Enterprise AI Platform
+# Copy this file and customize for your environment
+
+# Application settings
+app:
+  name: "ATP Enterprise AI Platform"
+  version: "1.0.0"
+  environment: "development"  # development, staging, production
+  debug: true
+
+# Server configuration
+server:
+  host: "0.0.0.0"
+  port: 8080
+  workers: 2
+  timeout: 300
+  keepalive: 2
+
+# Database configuration
+database:
+  # For development, you can use a local PostgreSQL instance
+  url: "postgresql://atp:password@localhost:5432/atp"
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  pool_recycle: 3600
+  echo: false  # Set to true for SQL debugging
+  
+  # Connection retry settings
+  retry_attempts: 3
+  retry_delay: 1
+
+# Redis configuration
+redis:
+  url: "redis://localhost:6379"
+  max_connections: 50
+  retry_on_timeout: true
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  
+  # Cluster settings (disable for single Redis instance)
+  cluster_enabled: false
+  max_connections_per_node: 25
+
+# Logging configuration
+logging:
+  level: "DEBUG"  # DEBUG, INFO, WARNING, ERROR
+  format: "text"  # text, json
+  
+  # Log rotation
+  max_bytes: 10485760  # 10MB
+  backup_count: 3
+  
+  # Structured logging fields
+  include_fields:
+    - timestamp
+    - level
+    - message
+    - request_id
+    - tenant_id
+    - user_id
+    - service
+    - component
+
+# Security configuration
+security:
+  # CORS settings
+  cors:
+    enabled: true
+    origins:
+      - "http://localhost:3000"
+      - "http://localhost:8080"
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    headers: ["Content-Type", "Authorization", "X-Request-ID"]
+    credentials: true
+  
+  # CSRF protection (disable for development)
+  csrf:
+    enabled: false
+    secret_key: "your-csrf-secret-key-here"
+  
+  # Rate limiting (relaxed for development)
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 10000
+    burst_size: 1000
+    
+    # Per-endpoint limits
+    endpoints:
+      "/api/v1/chat": 1000
+      "/api/v1/auth": 100
+  
+  # Authentication
+  auth:
+    jwt_secret: "your-jwt-secret-key-here-change-in-production"
+    jwt_expiry: 3600  # 1 hour
+    refresh_token_expiry: 604800  # 7 days
+    
+    # OIDC settings (optional)
+    oidc:
+      enabled: false
+      issuer: "https://your-oidc-provider.com"
+      client_id: "your-client-id"
+      client_secret: "your-client-secret"
+
+# AI Provider configuration
+providers:
+  openai:
+    enabled: true
+    api_key: "your-openai-api-key-here"
+    base_url: "https://api.openai.com/v1"
+    timeout: 60
+    max_retries: 3
+    
+    # Model configuration
+    models:
+      - name: "gpt-4"
+        max_tokens: 8192
+        cost_per_1k_tokens: 0.03
+      - name: "gpt-3.5-turbo"
+        max_tokens: 4096
+        cost_per_1k_tokens: 0.002
+  
+  anthropic:
+    enabled: false  # Enable when you have an API key
+    api_key: "your-anthropic-api-key-here"
+    base_url: "https://api.anthropic.com"
+    timeout: 60
+    max_retries: 3
+    
+    models:
+      - name: "claude-3-opus"
+        max_tokens: 4096
+        cost_per_1k_tokens: 0.015
+      - name: "claude-3-sonnet"
+        max_tokens: 4096
+        cost_per_1k_tokens: 0.003
+  
+  google:
+    enabled: false  # Enable when you have an API key
+    api_key: "your-google-api-key-here"
+    base_url: "https://generativelanguage.googleapis.com/v1"
+    timeout: 60
+    max_retries: 3
+    
+    models:
+      - name: "gemini-pro"
+        max_tokens: 2048
+        cost_per_1k_tokens: 0.0005
+
+# Monitoring configuration
+monitoring:
+  # Metrics
+  metrics:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+    
+    # Custom metrics
+    custom_metrics:
+      - name: "request_duration"
+        type: "histogram"
+        description: "Request duration in seconds"
+      - name: "active_connections"
+        type: "gauge"
+        description: "Number of active connections"
+  
+  # Health checks
+  health:
+    enabled: true
+    path: "/health"
+    checks:
+      - name: "database"
+        timeout: 5
+      - name: "redis"
+        timeout: 3
+      - name: "providers"
+        timeout: 10
+  
+  # Tracing (optional for development)
+  tracing:
+    enabled: false
+    service_name: "atp-router"
+    jaeger_endpoint: "http://localhost:14268/api/traces"
+    sample_rate: 1.0  # Sample all requests in development
+
+# Cost optimization
+cost_optimization:
+  enabled: true
+  
+  # Budget settings (relaxed for development)
+  budgets:
+    default_daily_limit: 10.0  # USD
+    default_monthly_limit: 300.0  # USD
+    
+    # Per-tenant limits
+    tenant_limits:
+      enabled: true
+      default_daily: 5.0
+      default_monthly: 150.0
+  
+  # Cost tracking
+  tracking:
+    enabled: true
+    granularity: "request"  # request, hour, day
+    
+  # Optimization strategies
+  strategies:
+    - name: "cost_aware_routing"
+      enabled: true
+      weight: 0.5
+    - name: "quality_threshold"
+      enabled: true
+      min_quality_score: 0.7
+
+# Caching configuration
+caching:
+  # Response caching
+  response_cache:
+    enabled: true
+    ttl: 1800  # 30 minutes
+    max_size: 100
+    
+  # Route caching
+  route_cache:
+    enabled: true
+    ttl: 300  # 5 minutes
+    max_size: 50
+  
+  # Policy caching
+  policy_cache:
+    enabled: true
+    ttl: 60  # 1 minute
+    max_size: 20
+
+# Compliance configuration
+compliance:
+  # Data retention (shorter for development)
+  data_retention:
+    default_days: 30
+    audit_logs_days: 90
+    
+  # PII handling
+  pii:
+    detection_enabled: true
+    redaction_enabled: true
+    
+    # Redaction patterns
+    patterns:
+      - name: "email"
+        pattern: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
+        replacement: "[EMAIL]"
+      - name: "phone"
+        pattern: "\\b\\d{3}[-.]?\\d{3}[-.]?\\d{4}\\b"
+        replacement: "[PHONE]"
+  
+  # Audit logging
+  audit:
+    enabled: true
+    log_all_requests: false  # Disable for development to reduce noise
+    include_request_body: true
+    include_response_body: true
+
+# Feature flags
+features:
+  streaming_responses: true
+  function_calling: true
+  multi_modal: false  # Disable complex features for development
+  consensus_routing: false
+  adaptive_rate_limiting: false

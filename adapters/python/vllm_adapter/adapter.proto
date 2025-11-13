@@ -1,0 +1,26 @@
+syntax = "proto3";
+package atp.adapter.v1;
+
+message EstimateRequest { string stream_id = 1; string task_type = 2; string prompt_json = 3; }
+message EstimateResponse {
+  uint64 in_tokens = 1; uint64 out_tokens = 2; uint64 usd_micros = 3;
+  uint64 p95_tokens = 4; uint64 p95_usd_micros = 5; double variance_tokens = 6; double variance_usd = 7;
+  double confidence = 8; string tool_cost_breakdown_json = 9; repeated string assumptions = 10;
+  string token_estimates_json = 11;
+}
+
+message StreamRequest { string stream_id = 1; string prompt_json = 2; }
+message StreamChunk {
+  string type = 1; string content_json = 2; double confidence = 3;
+  uint64 partial_in_tokens = 4; uint64 partial_out_tokens = 5; uint64 partial_usd_micros = 6;
+  bool more = 7;
+}
+
+message HealthRequest {}
+message HealthResponse { double p95_ms = 1; double error_rate = 2; }
+
+service AdapterService {
+  rpc Estimate(EstimateRequest) returns (EstimateResponse);
+  rpc Stream(StreamRequest) returns (stream StreamChunk);
+  rpc Health(HealthRequest) returns (HealthResponse);
+}

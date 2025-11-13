@@ -1,0 +1,57 @@
+# ATP Router Service Dockerfile - Multi-stage build
+# Stage 1: Build stage with all dependencies
+FROM python:3.11-slim as builder
+
+# Install system build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy requirements and install all dependencies
+WORKDIR /app
+COPY requirements_all.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements_all.txt
+
+# Stage 2: Runtime stage with only production dependencies
+FROM python:3.11-slim
+
+# Install only runtime system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app
+
+# Copy virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Set work directory
+WORKDIR /app
+
+# Copy source code
+COPY . .
+
+# Set proper permissions
+RUN chown -R app:app /app
+USER app
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Expose port
+EXPOSE 7443
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:7443/healthz || exit 1
+
+# Default command
+CMD ["python", "-m", "router_service"]

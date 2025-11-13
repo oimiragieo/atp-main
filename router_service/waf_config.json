@@ -1,0 +1,107 @@
+{
+  "enabled": true,
+  "log_all_requests": false,
+  "block_on_high_threat": true,
+  "sanitize_on_medium_threat": true,
+  "rate_limit_window": 60,
+  "rate_limit_max_requests": 100,
+  "custom_rules_path": "waf_custom_rules.json",
+  "blocked_ips_path": "waf_blocked_ips.txt",
+  "audit_log_path": "waf_audit.log",
+  
+  "threat_levels": {
+    "critical": {
+      "action": "block",
+      "alert_immediately": true,
+      "quarantine_duration": 3600
+    },
+    "high": {
+      "action": "block",
+      "alert_immediately": true,
+      "quarantine_duration": 1800
+    },
+    "medium": {
+      "action": "sanitize",
+      "alert_immediately": false,
+      "quarantine_duration": 0
+    },
+    "low": {
+      "action": "log_only",
+      "alert_immediately": false,
+      "quarantine_duration": 0
+    }
+  },
+  
+  "rate_limiting": {
+    "enabled": true,
+    "global_limit": 1000,
+    "per_ip_limit": 100,
+    "per_user_limit": 200,
+    "window_seconds": 60,
+    "burst_allowance": 10
+  },
+  
+  "ip_blocking": {
+    "enabled": true,
+    "auto_block_on_critical": true,
+    "auto_block_threshold": 5,
+    "block_duration": 3600,
+    "whitelist": [
+      "127.0.0.1",
+      "::1"
+    ]
+  },
+  
+  "detection_modules": {
+    "prompt_injection": {
+      "enabled": true,
+      "sensitivity": "high",
+      "custom_patterns_enabled": true
+    },
+    "code_injection": {
+      "enabled": true,
+      "sensitivity": "high",
+      "languages": ["python", "javascript", "sql", "shell"]
+    },
+    "secret_scanning": {
+      "enabled": true,
+      "scan_input": true,
+      "scan_output": true,
+      "sensitivity": "medium"
+    },
+    "xss_protection": {
+      "enabled": true,
+      "auto_encode": true,
+      "strict_mode": false
+    }
+  },
+  
+  "sanitization": {
+    "enabled": true,
+    "preserve_structure": true,
+    "replacement_tokens": {
+      "secret": "[REDACTED-SECRET]",
+      "code": "[BLOCKED-CODE]",
+      "injection": "[BLOCKED-INJECTION]",
+      "xss": "[SANITIZED-HTML]"
+    }
+  },
+  
+  "alerting": {
+    "enabled": true,
+    "webhook_url": null,
+    "email_alerts": false,
+    "slack_webhook": null,
+    "alert_threshold": "high",
+    "batch_alerts": true,
+    "batch_interval": 300
+  },
+  
+  "performance": {
+    "max_text_length": 100000,
+    "timeout_seconds": 5,
+    "cache_results": true,
+    "cache_ttl": 300,
+    "parallel_processing": true
+  }
+}

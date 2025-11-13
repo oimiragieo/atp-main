@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://atp-project/schemas/mcp/v1.0/listTools.json",
+  "title": "MCP List Tools Message Schema",
+  "description": "Schema for MCP listTools request messages",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "listTools",
+      "description": "Message type identifier"
+    },
+    "request_id": {
+      "type": "string",
+      "description": "Unique identifier for this request"
+    },
+    "filter": {
+      "type": "object",
+      "description": "Optional filter criteria for tool listing",
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Tool category filter"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tag-based filtering"
+        },
+        "capability": {
+          "type": "string",
+          "description": "Required capability filter"
+        }
+      }
+    }
+  },
+  "required": ["type"]
+}

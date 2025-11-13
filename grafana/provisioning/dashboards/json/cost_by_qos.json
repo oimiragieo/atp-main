@@ -1,0 +1,20 @@
+{
+  "title": "Cost by QoS",
+  "uid": "cost-by-qos",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Cost USD/min by QoS (5m rate)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "rate(cost_usd_total_qos_gold[5m])", "legendFormat": "gold", "refId": "A" },
+        { "expr": "rate(cost_usd_total_qos_silver[5m])", "legendFormat": "silver", "refId": "B" },
+        { "expr": "rate(cost_usd_total_qos_bronze[5m])", "legendFormat": "bronze", "refId": "C" }
+      ]
+    }
+  ]
+}
+

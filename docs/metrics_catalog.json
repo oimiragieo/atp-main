@@ -1,0 +1,186 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "metrics": [
+    {
+      "name": "atp_router_active_connections",
+      "type": "gauge",
+      "description": "Number of active connections",
+      "unit": "connections",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "atp_router_budget_burn_rate_usd_per_min",
+      "type": "gauge",
+      "description": "Current budget burn rate",
+      "unit": "usd_per_minute",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "atp_router_consensus_agreement_pct",
+      "type": "gauge",
+      "description": "Percentage of consensus agreement",
+      "unit": "percent",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "atp_router_cpu_usage_percent",
+      "type": "gauge",
+      "description": "CPU usage percentage",
+      "unit": "percent",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "atp_router_errors_total",
+      "type": "counter",
+      "description": "Total number of errors",
+      "unit": "errors",
+      "buckets": [],
+      "labels": [
+        "type",
+        "component"
+      ]
+    },
+    {
+      "name": "atp_router_evidence_score",
+      "type": "histogram",
+      "description": "Evidence scores for consensus",
+      "unit": "score",
+      "buckets": [
+        0.0,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1.0
+      ],
+      "labels": []
+    },
+    {
+      "name": "atp_router_federation_updates_total",
+      "type": "counter",
+      "description": "Total federation route updates",
+      "unit": "updates",
+      "buckets": [],
+      "labels": [
+        "peer",
+        "type"
+      ]
+    },
+    {
+      "name": "atp_router_memory_usage_bytes",
+      "type": "gauge",
+      "description": "Memory usage in bytes",
+      "unit": "bytes",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "atp_router_model_selections_total",
+      "type": "counter",
+      "description": "Total model selections by algorithm",
+      "unit": "selections",
+      "buckets": [],
+      "labels": [
+        "algorithm",
+        "model"
+      ]
+    },
+    {
+      "name": "atp_router_pii_redactions_total",
+      "type": "counter",
+      "description": "Total PII redactions performed",
+      "unit": "redactions",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "atp_router_request_duration_seconds",
+      "type": "histogram",
+      "description": "Request duration in seconds",
+      "unit": "seconds",
+      "buckets": [
+        0.1,
+        0.5,
+        1.0,
+        2.0,
+        5.0,
+        10.0
+      ],
+      "labels": []
+    },
+    {
+      "name": "atp_router_requests_total",
+      "type": "counter",
+      "description": "Total number of requests processed",
+      "unit": "requests",
+      "buckets": [],
+      "labels": [
+        "method",
+        "status"
+      ]
+    },
+    {
+      "name": "atp_router_ucb_score",
+      "type": "gauge",
+      "description": "Upper Confidence Bound score for model selection",
+      "unit": "score",
+      "buckets": [],
+      "labels": [
+        "model",
+        "cluster"
+      ]
+    },
+    {
+      "name": "atp_router_waf_blocks_total",
+      "type": "counter",
+      "description": "Total WAF blocks",
+      "unit": "blocks",
+      "buckets": [],
+      "labels": [
+        "rule",
+        "severity"
+      ]
+    },
+    {
+      "name": "atp_router_window_tokens_remaining",
+      "type": "gauge",
+      "description": "Remaining tokens in current window",
+      "unit": "tokens",
+      "buckets": [],
+      "labels": [
+        "tier"
+      ]
+    },
+    {
+      "name": "slm_carbon_savings_co2e_grams_total",
+      "type": "counter",
+      "description": "Total CO2e savings from SLM vs large model usage",
+      "unit": "grams",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "slm_energy_efficiency_ratio",
+      "type": "gauge",
+      "description": "Ratio of SLM energy use vs large model (lower is better)",
+      "unit": "ratio",
+      "buckets": [],
+      "labels": []
+    },
+    {
+      "name": "slm_energy_savings_kwh_total",
+      "type": "counter",
+      "description": "Total energy savings from SLM vs large model usage",
+      "unit": "kWh",
+      "buckets": [],
+      "labels": []
+    }
+  ],
+  "version": "1.0.0",
+  "generated_at": "2025-09-06T20:40:34.108421",
+  "total_metrics": 18
+}
