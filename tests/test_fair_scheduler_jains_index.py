@@ -25,7 +25,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # Single session with some served count
         FAIR_SCHED._served["session1"] = 10
 
@@ -44,7 +44,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # Two sessions with equal served counts
         FAIR_SCHED._served["session1"] = 10
         FAIR_SCHED._served["session2"] = 10
@@ -64,7 +64,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # Two sessions, one gets all the service
         FAIR_SCHED._served["session1"] = 100
         FAIR_SCHED._served["session2"] = 0
@@ -85,7 +85,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # Three sessions with different served counts
         FAIR_SCHED._served["session1"] = 30
         FAIR_SCHED._served["session2"] = 20
@@ -114,7 +114,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # No served counts
         index = FAIR_SCHED.compute_jains_index()
         assert index == 1.0
@@ -131,7 +131,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # One session with served count, one with zero
         FAIR_SCHED._served["active"] = 10
         FAIR_SCHED._served["inactive"] = 0
@@ -151,7 +151,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # Create a scenario that might produce out-of-bounds values
         FAIR_SCHED._served["session1"] = 1
         FAIR_SCHED._served["session2"] = 1000000  # Very unequal distribution
@@ -174,7 +174,7 @@ class TestJainsIndex:
             FAIR_SCHED._queue.clear()
             FAIR_SCHED._qos.clear()
             FAIR_SCHED._jains_index_g.set(0.0)
-        
+
         # Set up served counts
         FAIR_SCHED._served["session1"] = 10
         FAIR_SCHED._served["session2"] = 10

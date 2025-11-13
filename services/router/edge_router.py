@@ -22,7 +22,6 @@ import secrets
 import threading
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -54,14 +53,19 @@ try:
 except ImportError:
     # Fallback if metrics not available
     class MockCounter:
-        def inc(self): pass
-        def labels(self, **kwargs): return self
+        def inc(self):
+            pass
+
+        def labels(self, **kwargs):
+            return self
 
     class MockHistogram:
-        def observe(self, value): pass
+        def observe(self, value):
+            pass
 
     class MockGauge:
-        def set(self, value): pass
+        def set(self, value):
+            pass
 
     class MockRegistry:
         pass
@@ -106,7 +110,7 @@ class EdgeConfig:
     cache_default_ttl_seconds: int = 300  # Default TTL (5 minutes)
     # Carbon-aware routing settings
     enable_carbon_aware_routing: bool = True  # Enable carbon-aware routing
-    carbon_api_key: Optional[str] = None  # API key for carbon intensity service
+    carbon_api_key: str | None = None  # API key for carbon intensity service
     carbon_cache_ttl_seconds: int = 3600  # Carbon data cache TTL (1 hour)
 
 
@@ -150,7 +154,7 @@ class PromptCompressor:
         summary_parts = []
 
         # Look for keyword-containing sentences in middle section
-        sentences = middle_part.replace('\n', ' ').split('. ')
+        sentences = middle_part.replace("\n", " ").split(". ")
         for sentence in sentences:
             if any(keyword in sentence.lower() for keyword in keywords):
                 summary_parts.append(sentence.strip())
@@ -159,7 +163,7 @@ class PromptCompressor:
         if not summary_parts:
             summary_parts = sentences[:3]  # First 3 sentences
 
-        middle_summary = '. '.join(summary_parts[:5])  # Limit to 5 key sentences
+        middle_summary = ". ".join(summary_parts[:5])  # Limit to 5 key sentences
 
         # Combine parts
         compressed = f"{start_part}\n\n[SUMMARY: {middle_summary}]\n\n{end_part}"
@@ -174,11 +178,10 @@ class PromptCompressor:
             "original_length": total_length,
             "compressed_length": len(compressed),
             "compression_ratio": len(compressed) / total_length,
-            "method": "truncation_summarization"
+            "method": "truncation_summarization",
         }
 
-        self.logger.info(f"Compressed prompt: {total_length} -> {len(compressed)} chars "
-                        ".2f")
+        self.logger.info(f"Compressed prompt: {total_length} -> {len(compressed)} chars .2f")
 
         return compressed, metadata
 
@@ -224,6 +227,7 @@ class EdgeSLM:
 
         # Simulate processing time and cost savings
         import time
+
         start_time = time.time()
 
         # Mock response generation (simplified)
@@ -252,7 +256,7 @@ class EdgeSLM:
             "escalation_count": 0,
             "quality_score": 0.75,  # SLM quality score
             "processing_time_ms": processing_time * 1000,
-            "edge_processed": True
+            "edge_processed": True,
         }
 
         # Update metrics
@@ -288,7 +292,7 @@ class PredictivePrewarmingScheduler:
 
         # Background task
         self.running = False
-        self.scheduler_thread: Optional[threading.Thread] = None
+        self.scheduler_thread: threading.Thread | None = None
 
     def record_request(self, request_data: dict):
         """Record a request for demand pattern analysis."""
@@ -341,10 +345,7 @@ class PredictivePrewarmingScheduler:
             sorted_times = sorted(timestamps)
 
             # Calculate inter-arrival times
-            inter_arrivals = [
-                sorted_times[i+1] - sorted_times[i]
-                for i in range(len(sorted_times) - 1)
-            ]
+            inter_arrivals = [sorted_times[i + 1] - sorted_times[i] for i in range(len(sorted_times) - 1)]
 
             if inter_arrivals:
                 # Use median inter-arrival time for robustness
@@ -478,21 +479,14 @@ class TokenManager:
             "edge_id": self.config.edge_id,
             "timestamp": timestamp,
             "nonce": nonce,
-            "request_hash": self._hash_request(request_data)
+            "request_hash": self._hash_request(request_data),
         }
 
         # Sign the payload
         payload_str = json.dumps(payload, sort_keys=True)
-        signature = hmac.new(
-            self.config.shared_secret.encode(),
-            payload_str.encode(),
-            hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(self.config.shared_secret.encode(), payload_str.encode(), hashlib.sha256).hexdigest()
 
-        token = {
-            "payload": payload,
-            "signature": signature
-        }
+        token = {"payload": payload, "signature": signature}
 
         return json.dumps(token)
 
@@ -504,9 +498,7 @@ class TokenManager:
             # Verify signature
             payload_str = json.dumps(token["payload"], sort_keys=True)
             expected_signature = hmac.new(
-                self.config.shared_secret.encode(),
-                payload_str.encode(),
-                hashlib.sha256
+                self.config.shared_secret.encode(), payload_str.encode(), hashlib.sha256
             ).hexdigest()
 
             if not hmac.compare_digest(token["signature"], expected_signature):
@@ -558,7 +550,8 @@ class TokenManager:
         """Remove expired nonces from replay cache."""
         current_time = time.time()
         expired_nonces = [
-            nonce for nonce, timestamp in self._replay_cache.items()
+            nonce
+            for nonce, timestamp in self._replay_cache.items()
             if current_time - timestamp > self.config.replay_window_seconds
         ]
         for nonce in expired_nonces:
@@ -579,19 +572,19 @@ class EdgeRouter:
         # Initialize edge cache if enabled
         if config.enable_cache:
             self.cache = AsyncEdgeCache(
-                max_size=config.cache_max_size,
-                default_ttl_seconds=config.cache_default_ttl_seconds
+                max_size=config.cache_max_size, default_ttl_seconds=config.cache_default_ttl_seconds
             )
             self.cache.start()
-            self.logger.info(f"Edge cache initialized: max_size={config.cache_max_size}, ttl={config.cache_default_ttl_seconds}s")
+            self.logger.info(
+                f"Edge cache initialized: max_size={config.cache_max_size}, ttl={config.cache_default_ttl_seconds}s"
+            )
         else:
             self.cache = None
 
         # Initialize carbon intensity tracker if enabled
         if config.enable_carbon_aware_routing:
             self.carbon_tracker = CarbonIntensityTracker(
-                api_key=config.carbon_api_key,
-                cache_ttl_seconds=config.carbon_cache_ttl_seconds
+                api_key=config.carbon_api_key, cache_ttl_seconds=config.carbon_cache_ttl_seconds
             )
             self.logger.info("Carbon-aware routing enabled")
         else:
@@ -599,8 +592,7 @@ class EdgeRouter:
 
         # HTTP client for core communication
         self.client = httpx.AsyncClient(
-            timeout=30.0,
-            verify=not os.getenv("DISABLE_SSL_VERIFY", "").lower() not in ("true", "1")
+            timeout=30.0, verify=not os.getenv("DISABLE_SSL_VERIFY", "").lower() not in ("true", "1")
         )
 
         # Start prewarming scheduler if enabled
@@ -628,7 +620,7 @@ class EdgeRouter:
                     cached_result["edge_processing"] = {
                         "method": "cache_hit",
                         "latency_ms": latency * 1000,
-                        "cached": True
+                        "cached": True,
                     }
                     return cached_result
 
@@ -660,7 +652,7 @@ class EdgeRouter:
                     "method": "slm_fallback",
                     "latency_ms": latency * 1000,
                     "savings_pct": result.get("savings_pct", 0),
-                    "cached": False
+                    "cached": False,
                 }
 
                 return result
@@ -682,21 +674,14 @@ class EdgeRouter:
             headers = {
                 "Authorization": f"Bearer {token}",
                 "X-Edge-ID": self.config.edge_id,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
             }
 
             # Step 5: Relay the request to core
-            response = await self.client.post(
-                f"{self.config.core_endpoint}/ask",
-                json=request_data,
-                headers=headers
-            )
+            response = await self.client.post(f"{self.config.core_endpoint}/ask", json=request_data, headers=headers)
 
             if response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"Core router error: {response.text}"
-                )
+                raise HTTPException(status_code=response.status_code, detail=f"Core router error: {response.text}")
 
             # Step 6: Get the response
             result = response.json()
@@ -714,14 +699,10 @@ class EdgeRouter:
                     "method": "compression_relay",
                     "latency_ms": latency * 1000,
                     "compression_metadata": compression_metadata,
-                    "cached": False
+                    "cached": False,
                 }
             else:
-                result["edge_processing"] = {
-                    "method": "direct_relay",
-                    "latency_ms": latency * 1000,
-                    "cached": False
-                }
+                result["edge_processing"] = {"method": "direct_relay", "latency_ms": latency * 1000, "cached": False}
 
             return result
 
@@ -753,13 +734,15 @@ class EdgeRouter:
                     "intensity_gco2_per_kwh": carbon_data.intensity_gco2_per_kwh,
                     "timestamp": carbon_data.timestamp.isoformat(),
                     "source": carbon_data.source,
-                    "confidence": carbon_data.confidence
+                    "confidence": carbon_data.confidence,
                 }
 
                 # Increment carbon-aware routing metric
                 CARBON_AWARE_ROUTING_DECISIONS_TOTAL.inc()
 
-                self.logger.info(f"Applied carbon-aware routing for region {region}: {carbon_data.intensity_gco2_per_kwh} gCO2/kWh")
+                self.logger.info(
+                    f"Applied carbon-aware routing for region {region}: {carbon_data.intensity_gco2_per_kwh} gCO2/kWh"
+                )
             else:
                 self.logger.warning(f"Could not get carbon intensity data for region {region}")
 
@@ -770,11 +753,11 @@ class EdgeRouter:
     async def close(self):
         """Clean up resources."""
         # Stop prewarming scheduler
-        if hasattr(self, 'prewarming_scheduler'):
+        if hasattr(self, "prewarming_scheduler"):
             self.prewarming_scheduler.stop()
 
         # Stop cache
-        if hasattr(self, 'cache') and self.cache:
+        if hasattr(self, "cache") and self.cache:
             self.cache.stop()
 
         await self.client.aclose()
@@ -782,15 +765,16 @@ class EdgeRouter:
 
 # FastAPI app
 app = FastAPI(title="ATP Edge Router", version="1.0.0")
-edge_router: Optional[EdgeRouter] = None
+edge_router: EdgeRouter | None = None
 
 
 class AskRequest(BaseModel):
     """Request model for ask endpoint."""
+
     prompt: str
-    quality: Optional[str] = "balanced"
-    latency_slo_ms: Optional[int] = 2000
-    max_tokens: Optional[int] = 1000
+    quality: str | None = "balanced"
+    latency_slo_ms: int | None = 2000
+    max_tokens: int | None = 1000
 
 
 @app.post("/ask")
@@ -870,17 +854,10 @@ def main():
         return 1
 
     # Setup logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     # Create configuration
-    config = EdgeConfig(
-        core_endpoint=args.core_endpoint,
-        edge_id=args.edge_id,
-        shared_secret=shared_secret
-    )
+    config = EdgeConfig(core_endpoint=args.core_endpoint, edge_id=args.edge_id, shared_secret=shared_secret)
 
     # Create edge router
     global edge_router
@@ -888,6 +865,7 @@ def main():
 
     # Start server
     import uvicorn
+
     uvicorn.run(app, host=args.host, port=args.port)
 
 

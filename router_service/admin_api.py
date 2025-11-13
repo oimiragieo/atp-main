@@ -15,21 +15,11 @@
 Administrative API and Security
 This module provides comprehensive administrative API endpoints with role-based access control.
 """
-import asyncio
-import json
-import logging
-import time
-from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
-from enum import Enum
-import uuid
 
-from fastapi import FastAPI, HTTPException, Depends, WebSocket, WebSocketDisconnect, BackgroundTasks
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-import jwt
+import logging
+from enum import Enum
+
+from fastapi.security import HTTPBearer
 from passlib.context import CryptContext
 
 # Configure logging
@@ -42,25 +32,29 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 SECRET_KEY = "your-secret-key-here"  # Should be from environment
 ALGORITHM = "HS256"
 
+
 class UserRole(Enum):
     """User roles for RBAC."""
+
     SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     OPERATOR = "operator"
     VIEWER = "viewer"
 
+
 class Permission(Enum):
     """System permissions."""
+
     # System management
     SYSTEM_READ = "system:read"
     SYSTEM_WRITE = "system:write"
     SYSTEM_ADMIN = "system:admin"
-    
+
     # Provider management
     PROVIDER_READ = "provider:read"
     PROVIDER_WRITE = "provider:write"
     PROVIDER_DELETE = "provider:delete"
-    
+
     # Policy management
     POLICY_READ = "policy:read"
-    POLICY_WRITE 
+    POLICY_WRITE = "policy:write"

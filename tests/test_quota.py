@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from quota import HybridQuotaManager, QuotaManager
 
 # Configure test logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -30,10 +30,7 @@ def test_legacy_quota():
 
 def test_hybrid_quota_burst_allowed():
     """Test hybrid quota manager allows bursts within limits."""
-    qm = HybridQuotaManager(
-        max_items=10, max_bytes=100,
-        window_size_s=60.0, sustained_rps=2.0, burst_rps=10.0
-    )
+    qm = HybridQuotaManager(max_items=10, max_bytes=100, window_size_s=60.0, sustained_rps=2.0, burst_rps=10.0)
 
     now = time.time()
 
@@ -51,10 +48,7 @@ def test_hybrid_quota_burst_allowed():
 
 def test_hybrid_quota_sustained_throttling():
     """Test hybrid quota manager throttles sustained high rate."""
-    qm = HybridQuotaManager(
-        max_items=100, max_bytes=1000,
-        window_size_s=1.0, sustained_rps=2.0, burst_rps=5.0
-    )
+    qm = HybridQuotaManager(max_items=100, max_bytes=1000, window_size_s=1.0, sustained_rps=2.0, burst_rps=5.0)
 
     now = time.time()
     allowed_count = 0
@@ -77,10 +71,7 @@ def test_hybrid_quota_sustained_throttling():
 
 def test_hybrid_quota_quota_exceeded():
     """Test hybrid quota manager handles quota exceeded."""
-    qm = HybridQuotaManager(
-        max_items=2, max_bytes=5,
-        window_size_s=60.0, sustained_rps=10.0, burst_rps=20.0
-    )
+    qm = HybridQuotaManager(max_items=2, max_bytes=5, window_size_s=60.0, sustained_rps=10.0, burst_rps=20.0)
 
     now = time.time()
 

@@ -51,6 +51,7 @@ async def test_session_cleanup_mechanism():
 
 def test_session_structure():
     """Test that session data structure includes required fields."""
+
     async def _test():
         session_id = "test_session"
         session_data = {"count": 3, "last_activity": time.time()}

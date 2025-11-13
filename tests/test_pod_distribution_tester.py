@@ -12,7 +12,7 @@ class TestPodDistributionTester:
         """Test successful pod distribution retrieval."""
         tester = PodDistributionTester()
 
-        mock_output = '''{
+        mock_output = """{
             "items": [
                 {
                     "metadata": {"name": "atp-router-123"},
@@ -25,12 +25,12 @@ class TestPodDistributionTester:
                     "spec": {"nodeName": "node-2"}
                 }
             ]
-        }'''
+        }"""
 
-        with patch.object(tester, 'run_kubectl_command') as mock_kubectl:
+        with patch.object(tester, "run_kubectl_command") as mock_kubectl:
             mock_kubectl.return_value = mock_output
 
-            with patch.object(tester, 'get_node_zone') as mock_zone:
+            with patch.object(tester, "get_node_zone") as mock_zone:
                 mock_zone.return_value = "us-west1-a"
 
                 pods = tester.get_pod_distribution()
@@ -45,7 +45,7 @@ class TestPodDistributionTester:
         """Test handling when no pods are found."""
         tester = PodDistributionTester()
 
-        with patch.object(tester, 'run_kubectl_command') as mock_kubectl:
+        with patch.object(tester, "run_kubectl_command") as mock_kubectl:
             mock_kubectl.return_value = '{"items": []}'
 
             pods = tester.get_pod_distribution()
@@ -55,7 +55,7 @@ class TestPodDistributionTester:
         """Test successful node zone retrieval."""
         tester = PodDistributionTester()
 
-        with patch.object(tester, 'run_kubectl_command') as mock_kubectl:
+        with patch.object(tester, "run_kubectl_command") as mock_kubectl:
             mock_kubectl.return_value = "us-central1-b\n"
 
             zone = tester.get_node_zone("node-1")
@@ -107,7 +107,7 @@ class TestPodDistributionTester:
             pods_per_node={"node-1": 2, "node-2": 1, "node-3": 1},
             pods_per_zone={"zone-a": 2, "zone-b": 2},
             zone_spread_score=0.5,
-            node_spread_score=0.8
+            node_spread_score=0.8,
         )
 
         success = tester.test_distribution_constraints(metrics)
@@ -124,27 +124,26 @@ class TestPodDistributionTester:
             pods_per_node={"node-1": 4},
             pods_per_zone={"zone-a": 4},
             zone_spread_score=0.0,
-            node_spread_score=0.0
+            node_spread_score=0.0,
         )
 
         success = tester.test_distribution_constraints(metrics)
         assert success is False
 
-    @patch('tools.pod_distribution_tester.PodDistributionTester.get_pod_distribution')
-    @patch('tools.pod_distribution_tester.PodDistributionTester.calculate_distribution_metrics')
-    @patch('tools.pod_distribution_tester.PodDistributionTester.print_distribution_report')
-    @patch('tools.pod_distribution_tester.PodDistributionTester.test_distribution_constraints')
-    @patch('sys.exit')
+    @patch("tools.pod_distribution_tester.PodDistributionTester.get_pod_distribution")
+    @patch("tools.pod_distribution_tester.PodDistributionTester.calculate_distribution_metrics")
+    @patch("tools.pod_distribution_tester.PodDistributionTester.print_distribution_report")
+    @patch("tools.pod_distribution_tester.PodDistributionTester.test_distribution_constraints")
+    @patch("sys.exit")
     def test_main_flow(self, mock_exit, mock_test_constraints, mock_print_report, mock_calc_metrics, mock_get_pods):
         """Test the main execution flow."""
-        mock_get_pods.return_value = [
-            PodInfo("pod-1", "node-1", "zone-a", "Running")
-        ]
+        mock_get_pods.return_value = [PodInfo("pod-1", "node-1", "zone-a", "Running")]
         mock_calc_metrics.return_value = DistributionMetrics(1, 1, 1, {}, {}, 0.0, 0.0)
         mock_test_constraints.return_value = True
 
-        with patch('sys.argv', ['pod_distribution_tester.py', '--test-only']):
+        with patch("sys.argv", ["pod_distribution_tester.py", "--test-only"]):
             from tools.pod_distribution_tester import main
+
             main()
 
         mock_get_pods.assert_called_once()

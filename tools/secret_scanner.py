@@ -13,7 +13,6 @@ import argparse
 import json
 import re
 from pathlib import Path
-from typing import Optional
 
 # Secret detection patterns
 SECRET_PATTERNS = {
@@ -30,21 +29,44 @@ SECRET_PATTERNS = {
 
 # File extensions to scan
 SCAN_EXTENSIONS = {
-    ".py", ".js", ".ts", ".json", ".yaml", ".yml", ".env", ".config",
-    ".txt", ".md", ".sh", ".bash", ".ps1", ".sql", ".xml", ".html"
+    ".py",
+    ".js",
+    ".ts",
+    ".json",
+    ".yaml",
+    ".yml",
+    ".env",
+    ".config",
+    ".txt",
+    ".md",
+    ".sh",
+    ".bash",
+    ".ps1",
+    ".sql",
+    ".xml",
+    ".html",
 }
 
 # Files/directories to exclude
 EXCLUDE_PATTERNS = {
-    ".git", "__pycache__", "node_modules", ".venv", "venv", "env",
-    "build", "dist", "target", ".pytest_cache", ".mypy_cache"
+    ".git",
+    "__pycache__",
+    "node_modules",
+    ".venv",
+    "venv",
+    "env",
+    "build",
+    "dist",
+    "target",
+    ".pytest_cache",
+    ".mypy_cache",
 }
 
 
 class SecretScanner:
     """Scans files for potential secret leaks."""
 
-    def __init__(self, exclude_patterns: Optional[list[str]] = None):
+    def __init__(self, exclude_patterns: list[str] | None = None):
         self.exclude_patterns = set(EXCLUDE_PATTERNS)
         if exclude_patterns:
             self.exclude_patterns.update(exclude_patterns)
@@ -68,7 +90,7 @@ class SecretScanner:
         findings = []
 
         try:
-            with open(file_path, encoding='utf-8', errors='ignore') as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
 
             lines = content.splitlines()
@@ -77,13 +99,17 @@ class SecretScanner:
                     matches = pattern.findall(line)
                     if matches:
                         for match in matches:
-                            findings.append({
-                                "file": str(file_path),
-                                "line": line_num,
-                                "pattern": pattern_name,
-                                "match": match[:50] + "..." if len(match) > 50 else match,
-                                "severity": "high" if pattern_name in ["private_key", "aws_secret_key"] else "medium"
-                            })
+                            findings.append(
+                                {
+                                    "file": str(file_path),
+                                    "line": line_num,
+                                    "pattern": pattern_name,
+                                    "match": match[:50] + "..." if len(match) > 50 else match,
+                                    "severity": "high"
+                                    if pattern_name in ["private_key", "aws_secret_key"]
+                                    else "medium",
+                                }
+                            )
 
         except Exception as e:
             print(f"Error scanning {file_path}: {e}")
@@ -129,8 +155,7 @@ def main():
     parser = argparse.ArgumentParser(description="Scan for potential secret leaks")
     parser.add_argument("path", nargs="?", default=".", help="Path to scan")
     parser.add_argument("--exclude", action="append", help="Additional exclude patterns")
-    parser.add_argument("--report", choices=["text", "json"], default="text",
-                       help="Output format")
+    parser.add_argument("--report", choices=["text", "json"], default="text", help="Output format")
     parser.add_argument("--output", help="Output file (default: stdout)")
 
     args = parser.parse_args()
@@ -146,7 +171,7 @@ def main():
     report = scanner.generate_report(findings, args.report)
 
     if args.output:
-        with open(args.output, 'w') as f:
+        with open(args.output, "w") as f:
             f.write(report)
     else:
         print(report)

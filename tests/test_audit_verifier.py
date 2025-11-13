@@ -25,7 +25,7 @@ class TestAuditVerifier:
 
     def test_verify_single_log_valid(self):
         """Test verifying a valid audit log."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             temp_file = f.name
 
         try:
@@ -34,7 +34,7 @@ class TestAuditVerifier:
             events = [
                 {"event_type": "test1", "data": "value1"},
                 {"event_type": "test2", "data": "value2"},
-                {"event_type": "test3", "data": "value3"}
+                {"event_type": "test3", "data": "value3"},
             ]
 
             prev_hash = None
@@ -50,7 +50,7 @@ class TestAuditVerifier:
 
     def test_verify_single_log_invalid_secret(self):
         """Test verifying a log with wrong secret fails."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             temp_file = f.name
 
         try:
@@ -68,7 +68,7 @@ class TestAuditVerifier:
 
     def test_verify_single_log_tampered(self):
         """Test that tampered log is detected."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             temp_file = f.name
 
         try:
@@ -82,8 +82,8 @@ class TestAuditVerifier:
                 lines = f.readlines()
             tampered_record = json.loads(lines[0])
             tampered_record["event"]["data"] = "tampered"
-            with open(temp_file, 'w') as f:
-                f.write(json.dumps(tampered_record) + '\n')
+            with open(temp_file, "w") as f:
+                f.write(json.dumps(tampered_record) + "\n")
 
             # Verify should fail
             verifier = AuditVerifier(secret)
@@ -107,7 +107,7 @@ class TestAuditVerifier:
 
             # Create one invalid log file
             invalid_log = os.path.join(temp_dir, "invalid.jsonl")
-            with open(invalid_log, 'w') as f:
+            with open(invalid_log, "w") as f:
                 f.write('{"invalid": "json"}\n')
 
             # Verify batch
@@ -115,7 +115,7 @@ class TestAuditVerifier:
             verified, failed = verifier.verify_batch_logs(temp_dir)
 
             assert verified == 3  # 3 valid files
-            assert failed == 1   # 1 invalid file
+            assert failed == 1  # 1 invalid file
 
     def test_verify_single_log_file_not_found(self):
         """Test handling of non-existent file."""
@@ -133,7 +133,7 @@ class TestAuditVerifier:
         """Test batch verification with no log files."""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create a non-log file
-            with open(os.path.join(temp_dir, "not_a_log.txt"), 'w') as f:
+            with open(os.path.join(temp_dir, "not_a_log.txt"), "w") as f:
                 f.write("not a log file")
 
             verifier = AuditVerifier()
@@ -141,10 +141,10 @@ class TestAuditVerifier:
             assert verified == 0
             assert failed == 0
 
-    @patch('builtins.print')
+    @patch("builtins.print")
     def test_print_log_stats(self, mock_print):
         """Test that log statistics are printed correctly."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
             temp_file = f.name
 
         try:
@@ -153,7 +153,7 @@ class TestAuditVerifier:
             events = [
                 {"event_type": "test1", "data": "value1"},
                 {"event_type": "test2", "data": "value2"},
-                {"event_type": "test3", "data": "value3"}
+                {"event_type": "test3", "data": "value3"},
             ]
 
             prev_hash = None

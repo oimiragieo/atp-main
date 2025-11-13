@@ -25,6 +25,7 @@ from policy_approval_workflow import ApprovalState, PolicyApprovalWorkflow, Poli
 
 class MockPolicySystem:
     """Mock policy system for testing."""
+
     def __init__(self):
         self.policies = {}
 
@@ -49,7 +50,7 @@ def test_request_creation():
             proposed_policy={"allow_ingestion": False, "max_size_bytes": 1024},
             justification="Security hardening",
             requester="alice",
-            required_approvers=["bob", "charlie"]
+            required_approvers=["bob", "charlie"],
         )
 
         assert request_id.startswith("PCR-")
@@ -78,7 +79,7 @@ def test_approval_workflow():
             proposed_policy={"permissions": ["read", "write", "admin"]},
             justification="New admin role for compliance team",
             requester="alice",
-            required_approvers=["bob", "charlie"]
+            required_approvers=["bob", "charlie"],
         )
 
         request = workflow.get_request(request_id)
@@ -112,7 +113,7 @@ def test_rejection_workflow():
             proposed_policy={"allow_ingestion": False},
             justification="Test rejection",
             requester="alice",
-            required_approvers=["bob"]
+            required_approvers=["bob"],
         )
 
         # Reject the request
@@ -136,7 +137,7 @@ def test_cancellation_workflow():
             proposed_policy={"permissions": ["read"]},
             justification="Test cancellation",
             requester="alice",
-            required_approvers=["bob"]
+            required_approvers=["bob"],
         )
 
         # Cancel the request
@@ -161,7 +162,7 @@ def test_expiration_handling():
             justification="Test expiration",
             requester="alice",
             required_approvers=["bob"],
-            expiry_hours=1/3600  # 1 second
+            expiry_hours=1 / 3600,  # 1 second
         )
 
         request = workflow.get_request(request_id)
@@ -264,7 +265,7 @@ def test_policy_change_gating():
             proposed_policy={"allow_ingestion": False},
             justification="Security enhancement",
             requester="alice",
-            required_approvers=["bob"]
+            required_approvers=["bob"],
         )
 
         # Verify request was created
@@ -297,20 +298,20 @@ def test_audit_trail_completeness():
 
         # Check initial audit trail
         assert len(request.audit_trail) == 1
-        assert request.audit_trail[0]['action'] == 'creation'
-        assert request.audit_trail[0]['user'] == 'alice'
+        assert request.audit_trail[0]["action"] == "creation"
+        assert request.audit_trail[0]["user"] == "alice"
 
         # Add approval
         workflow.approve_request(request_id, "bob", "Approved for security reasons")
         assert len(request.audit_trail) == 2
-        assert request.audit_trail[1]['action'] == 'approval'
-        assert request.audit_trail[1]['user'] == 'bob'
-        assert 'security reasons' in request.audit_trail[1]['details']
+        assert request.audit_trail[1]["action"] == "approval"
+        assert request.audit_trail[1]["user"] == "bob"
+        assert "security reasons" in request.audit_trail[1]["details"]
 
         # Add second approval (completes request)
         workflow.approve_request(request_id, "charlie", "Compliance approved")
         assert len(request.audit_trail) == 4  # creation + approval + approval + final_approval
-        assert request.audit_trail[-1]['action'] == 'final_approval'
+        assert request.audit_trail[-1]["action"] == "final_approval"
 
 
 def test_metrics_tracking():
@@ -322,15 +323,11 @@ def test_metrics_tracking():
         assert workflow.get_pending_count() == 0
 
         # Create a request
-        request_id1 = workflow.create_request(
-            "policy1", "id1", "create", None, {}, "test", "alice", ["bob"]
-        )
+        request_id1 = workflow.create_request("policy1", "id1", "create", None, {}, "test", "alice", ["bob"])
         assert workflow.get_pending_count() == 1
 
         # Create another request
-        request_id2 = workflow.create_request(
-            "policy2", "id2", "update", {}, {}, "test", "alice", ["charlie"]
-        )
+        request_id2 = workflow.create_request("policy2", "id2", "update", {}, {}, "test", "alice", ["charlie"])
         assert workflow.get_pending_count() == 2
 
         # Approve first request

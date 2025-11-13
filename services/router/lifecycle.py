@@ -1,7 +1,8 @@
 """Model lifecycle (promotion/demotion) helpers extracted from service."""
 
 import time
-from typing import Any, Callable, TypedDict
+from collections.abc import Callable
+from typing import Any, TypedDict
 
 from .config import settings
 from .logging_utils import log_event

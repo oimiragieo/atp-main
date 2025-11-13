@@ -30,8 +30,8 @@ async def test_weighted_contention_distribution():
         results = await asyncio.gather(*batch)
         # Count successes per session in this wave
         # We re-run until queues emptied, so also do a small drain loop
-        grants["X"] += sum(r for r, sess in zip(results, ["X"] * 4 + ["Y"]) if sess == "X")
-        grants["Y"] += sum(r for r, sess in zip(results, ["X"] * 4 + ["Y"]) if sess == "Y")
+        grants["X"] += sum(r for r, sess in zip(results, ["X"] * 4 + ["Y"], strict=False) if sess == "X")
+        grants["Y"] += sum(r for r, sess in zip(results, ["X"] * 4 + ["Y"], strict=False) if sess == "Y")
 
     # Expect X to have at least 1.8x Y (looser than 4x due to small sample & tie effects)
     if grants["Y"] == 0:

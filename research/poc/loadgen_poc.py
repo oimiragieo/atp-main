@@ -1,5 +1,5 @@
 import time
-from typing import Callable
+from collections.abc import Callable
 
 
 def run_load(op: Callable[[], None], n: int = 50) -> tuple[float, float, float]:

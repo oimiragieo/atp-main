@@ -18,7 +18,7 @@ import statistics
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -112,7 +112,7 @@ class VectorBenchmarkHarness:
                     "id": f"{namespace}_item_{i}",
                     "category": f"cat_{i % 10}",
                     "timestamp": time.time() + i,
-                    "tags": [f"tag_{j}" for j in range(i % 5)]
+                    "tags": [f"tag_{j}" for j in range(i % 5)],
                 }
 
                 vectors.append((f"key_{i}", embedding, metadata))
@@ -156,7 +156,7 @@ class VectorBenchmarkHarness:
             return 0.0
 
         # Extract the category from the query key
-        query_parts = query_key.split('_')
+        query_parts = query_key.split("_")
         if len(query_parts) < 3:
             return 0.0
 
@@ -205,16 +205,18 @@ class VectorBenchmarkHarness:
         upsert_avg_latency = statistics.mean(upsert_latencies) if upsert_latencies else 0
         upsert_throughput = len(upsert_latencies) / (time.time() - start_time)
 
-        results.append(BenchmarkResult(
-            backend=backend_name,
-            namespace=namespace,
-            operation="upsert",
-            latency_ms=upsert_avg_latency,
-            throughput_qps=upsert_throughput,
-            recall_at_k={},
-            error_count=len(self.test_data[namespace]) - len(upsert_latencies),
-            total_queries=len(self.test_data[namespace])
-        ))
+        results.append(
+            BenchmarkResult(
+                backend=backend_name,
+                namespace=namespace,
+                operation="upsert",
+                latency_ms=upsert_avg_latency,
+                throughput_qps=upsert_throughput,
+                recall_at_k={},
+                error_count=len(self.test_data[namespace]) - len(upsert_latencies),
+                total_queries=len(self.test_data[namespace]),
+            )
+        )
 
         # Benchmark query operations
         query_latencies = []
@@ -252,23 +254,26 @@ class VectorBenchmarkHarness:
                 else:
                     avg_recall_at_k[k] = 0.0
 
-            results.append(BenchmarkResult(
-                backend=backend_name,
-                namespace=namespace,
-                operation="query",
-                latency_ms=query_avg_latency,
-                throughput_qps=query_throughput,
-                recall_at_k=avg_recall_at_k,
-                error_count=error_count,
-                total_queries=len(queries)
-            ))
+            results.append(
+                BenchmarkResult(
+                    backend=backend_name,
+                    namespace=namespace,
+                    operation="query",
+                    latency_ms=query_avg_latency,
+                    throughput_qps=query_throughput,
+                    recall_at_k=avg_recall_at_k,
+                    error_count=error_count,
+                    total_queries=len(queries),
+                )
+            )
 
         return results
 
-    def _create_mock_backend(self, backend_type: str) -> Optional[VectorBackend]:
+    def _create_mock_backend(self, backend_type: str) -> VectorBackend | None:
         """Create a mock backend for testing unsupported backends."""
         if backend_type == "in_memory":
             from tools.vector_backend import InMemoryVectorBackend
+
             return InMemoryVectorBackend({"metrics_callback": self.metrics_collector.record_metrics})
         else:
             logger.warning(f"Backend {backend_type} not implemented, using in-memory fallback")
@@ -324,9 +329,7 @@ class VectorBenchmarkHarness:
 
             if query_results:
                 avg_latency = statistics.mean(r.latency_ms for r in query_results)
-                avg_recall = statistics.mean(
-                    statistics.mean(list(r.recall_at_k.values())) for r in query_results
-                )
+                avg_recall = statistics.mean(statistics.mean(list(r.recall_at_k.values())) for r in query_results)
 
                 # Determine certification status
                 if avg_latency < 100 and avg_recall > 0.8:
@@ -342,16 +345,20 @@ class VectorBenchmarkHarness:
                 if status == "CERTIFIED":
                     recommendations[backend_name] = "Excellent performance and recall. Recommended for production use."
                 elif status == "QUALIFIED":
-                    recommendations[backend_name] = "Good performance but may need optimization for high-throughput scenarios."
+                    recommendations[backend_name] = (
+                        "Good performance but may need optimization for high-throughput scenarios."
+                    )
                 else:
-                    recommendations[backend_name] = "Performance or recall below acceptable thresholds. Consider alternatives."
+                    recommendations[backend_name] = (
+                        "Performance or recall below acceptable thresholds. Consider alternatives."
+                    )
 
         return CertificationReport(
             timestamp=time.time(),
             config=self.config,
             results=results,
             recommendations=recommendations,
-            certification_status=certification_status
+            certification_status=certification_status,
         )
 
     def save_report(self, report: CertificationReport, output_path: Path) -> None:
@@ -366,7 +373,7 @@ class VectorBenchmarkHarness:
                 "embedding_dim": report.config.embedding_dim,
                 "k_values": report.config.k_values,
                 "namespaces": report.config.namespaces,
-                "backends": report.config.backends
+                "backends": report.config.backends,
             },
             "results": [
                 {
@@ -377,15 +384,15 @@ class VectorBenchmarkHarness:
                     "throughput_qps": r.throughput_qps,
                     "recall_at_k": r.recall_at_k,
                     "error_count": r.error_count,
-                    "total_queries": r.total_queries
+                    "total_queries": r.total_queries,
                 }
                 for r in report.results
             ],
             "recommendations": report.recommendations,
-            "certification_status": report.certification_status
+            "certification_status": report.certification_status,
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(report_data, f, indent=2)
 
         logger.info(f"Certification report saved to {output_path}")
@@ -400,8 +407,12 @@ async def main():
     parser.add_argument("--query-count", type=int, default=100, help="Number of queries to run")
     parser.add_argument("--embedding-dim", type=int, default=384, help="Embedding dimension")
     parser.add_argument("--backends", nargs="+", default=["in_memory"], help="Backends to test")
-    parser.add_argument("--output", type=Path, default=Path("data/vector_certification_report.json"),
-                       help="Output path for certification report")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("data/vector_certification_report.json"),
+        help="Output path for certification report",
+    )
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
@@ -414,7 +425,7 @@ async def main():
         dataset_size=args.dataset_size,
         query_count=args.query_count,
         embedding_dim=args.embedding_dim,
-        backends=args.backends
+        backends=args.backends,
     )
 
     # Run benchmarks

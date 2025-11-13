@@ -15,21 +15,18 @@
 ATP Control CLI (atpctl)
 Enterprise command-line interface for managing ATP platform.
 """
-import typer
-from typing import Optional
-import sys
+
 import os
+import sys
+
+import typer
 
 # Add the parent directory to the path to import other modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-from .commands import cluster, providers, policies, system, config
+from .commands import cluster, config, policies, providers, system
 
-app = typer.Typer(
-    name="atpctl",
-    help="ATP Control - Enterprise AI Text Processing Platform CLI",
-    no_args_is_help=True
-)
+app = typer.Typer(name="atpctl", help="ATP Control - Enterprise AI Text Processing Platform CLI", no_args_is_help=True)
 
 # Add command groups
 app.add_typer(cluster.app, name="cluster", help="Cluster management commands")
@@ -43,6 +40,7 @@ app.add_typer(config.app, name="config", help="Configuration management commands
 def status():
     """Get ATP platform status"""
     from .commands.system import get_system_status
+
     get_system_status()
 
 
@@ -50,34 +48,20 @@ def status():
 def version():
     """Show ATP platform version information"""
     from .commands.system import show_version
+
     show_version()
 
 
 @app.callback()
 def main(
     ctx: typer.Context,
-    config_file: Optional[str] = typer.Option(
-        None,
-        "--config",
-        "-c",
-        help="Path to configuration file"
-    ),
-    verbose: bool = typer.Option(
-        False,
-        "--verbose",
-        "-v",
-        help="Enable verbose output"
-    ),
-    output_format: str = typer.Option(
-        "table",
-        "--output",
-        "-o",
-        help="Output format (table, json, yaml)"
-    )
+    config_file: str | None = typer.Option(None, "--config", "-c", help="Path to configuration file"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable verbose output"),
+    output_format: str = typer.Option("table", "--output", "-o", help="Output format (table, json, yaml)"),
 ):
     """
     ATP Control CLI - Manage your ATP platform deployment.
-    
+
     Examples:
         atpctl status                    # Get platform status
         atpctl cluster list              # List cluster nodes
@@ -86,10 +70,10 @@ def main(
     """
     # Store global options in context
     ctx.ensure_object(dict)
-    ctx.obj['config_file'] = config_file
-    ctx.obj['verbose'] = verbose
-    ctx.obj['output_format'] = output_format
+    ctx.obj["config_file"] = config_file
+    ctx.obj["verbose"] = verbose
+    ctx.obj["output_format"] = output_format
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app()

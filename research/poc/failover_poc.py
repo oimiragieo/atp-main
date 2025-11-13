@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -19,7 +18,7 @@ class RegionRouter:
         self._sticky: dict[str, str] = {}  # session_id -> region
         self.replica_log: list[tuple[str, str, dict]] = []  # (src_region, dst_region, op)
 
-    def set_health(self, region: str, healthy: bool, latency_ms: Optional[int] = None):
+    def set_health(self, region: str, healthy: bool, latency_ms: int | None = None):
         s = self.regions[region]
         s.healthy = healthy
         if latency_ms is not None:

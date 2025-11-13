@@ -16,7 +16,6 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Optional
 
 # Add the memory-gateway directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "memory-gateway"))
@@ -28,7 +27,7 @@ import audit_log
 class AuditVerifier:
     """CLI tool for verifying audit log integrity."""
 
-    def __init__(self, secret: Optional[bytes] = None):
+    def __init__(self, secret: bytes | None = None):
         """Initialize verifier with optional secret."""
         self.secret = secret or b"default-audit-secret"  # Use default if not provided
 
@@ -91,7 +90,7 @@ class AuditVerifier:
             if event_count > 0:
                 # Parse the last line to get the latest hash
                 last_record = json.loads(lines[-1].strip())
-                latest_hash = last_record.get('hash', 'unknown')[:16] + "..."
+                latest_hash = last_record.get("hash", "unknown")[:16] + "..."
 
                 print(f"   📝 Events: {event_count}")
                 print(f"   🔗 Latest hash: {latest_hash}")
@@ -117,35 +116,21 @@ Examples:
 
   # Verify and show detailed output
   python audit_verifier.py /path/to/audit.log --verbose
-        """
+        """,
     )
 
-    parser.add_argument(
-        'log_path',
-        nargs='?',
-        help='Path to audit log file to verify'
-    )
+    parser.add_argument("log_path", nargs="?", help="Path to audit log file to verify")
 
-    parser.add_argument(
-        '--secret',
-        help='Secret key for HMAC verification (default: default-audit-secret)'
-    )
+    parser.add_argument("--secret", help="Secret key for HMAC verification (default: default-audit-secret)")
 
-    parser.add_argument(
-        '--batch',
-        help='Directory containing audit log files to verify'
-    )
+    parser.add_argument("--batch", help="Directory containing audit log files to verify")
 
-    parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Show detailed verification information'
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed verification information")
 
     args = parser.parse_args()
 
     # Handle secret
-    secret = args.secret.encode('utf-8') if args.secret else None
+    secret = args.secret.encode("utf-8") if args.secret else None
     verifier = AuditVerifier(secret)
 
     # Handle batch mode

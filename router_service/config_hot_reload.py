@@ -9,8 +9,9 @@ import asyncio
 import hashlib
 import json
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +19,9 @@ logger = logging.getLogger(__name__)
 class ConfigHotReloader:
     """Hot-reloading configuration manager with file watching."""
 
-    def __init__(self, config_file: str, reload_callback: Callable[[dict[str, Any]], None],
-                 check_interval: float = 5.0):
+    def __init__(
+        self, config_file: str, reload_callback: Callable[[dict[str, Any]], None], check_interval: float = 5.0
+    ):
         """
         Initialize hot-reloader.
 
@@ -31,23 +33,23 @@ class ConfigHotReloader:
         self.config_file = Path(config_file)
         self.reload_callback = reload_callback
         self.check_interval = check_interval
-        self._last_hash: Optional[str] = None
-        self._last_mtime: Optional[float] = None
+        self._last_hash: str | None = None
+        self._last_mtime: float | None = None
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
-    def _get_file_hash(self) -> Optional[str]:
+    def _get_file_hash(self) -> str | None:
         """Get SHA256 hash of config file."""
         try:
             if not self.config_file.exists():
                 return None
-            content = self.config_file.read_text(encoding='utf-8')
+            content = self.config_file.read_text(encoding="utf-8")
             return hashlib.sha256(content.encode()).hexdigest()
         except Exception as e:
             logger.error(f"Failed to read config file {self.config_file}: {e}")
             return None
 
-    def _get_file_mtime(self) -> Optional[float]:
+    def _get_file_mtime(self) -> float | None:
         """Get modification time of config file."""
         try:
             if not self.config_file.exists():
@@ -57,12 +59,12 @@ class ConfigHotReloader:
             logger.error(f"Failed to get mtime for {self.config_file}: {e}")
             return None
 
-    def _load_config(self) -> Optional[dict[str, Any]]:
+    def _load_config(self) -> dict[str, Any] | None:
         """Load configuration from file."""
         try:
             if not self.config_file.exists():
                 return None
-            with open(self.config_file, encoding='utf-8') as f:
+            with open(self.config_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load config from {self.config_file}: {e}")
@@ -78,9 +80,7 @@ class ConfigHotReloader:
                 current_mtime = self._get_file_mtime()
                 current_hash = self._get_file_hash()
 
-                if (current_mtime != self._last_mtime or
-                    current_hash != self._last_hash):
-
+                if current_mtime != self._last_mtime or current_hash != self._last_hash:
                     if current_hash is not None:
                         logger.info(f"Config file {self.config_file} changed, reloading...")
 
@@ -146,12 +146,12 @@ class ConfigHotReloader:
 
 
 # Global instance for easy access
-_hot_reloader: Optional[ConfigHotReloader] = None
+_hot_reloader: ConfigHotReloader | None = None
 
 
-def init_config_hot_reload(config_file: str,
-                          reload_callback: Callable[[dict[str, Any]], None],
-                          check_interval: float = 5.0) -> ConfigHotReloader:
+def init_config_hot_reload(
+    config_file: str, reload_callback: Callable[[dict[str, Any]], None], check_interval: float = 5.0
+) -> ConfigHotReloader:
     """
     Initialize global config hot-reloader.
 
@@ -168,7 +168,7 @@ def init_config_hot_reload(config_file: str,
     return _hot_reloader
 
 
-def get_config_hot_reloader() -> Optional[ConfigHotReloader]:
+def get_config_hot_reloader() -> ConfigHotReloader | None:
     """Get the global config hot-reloader instance."""
     return _hot_reloader
 

@@ -20,40 +20,37 @@ class EnvValidator:
         self.warnings: list[str] = []
         self.required_vars = {
             # Critical security variables
-            'ROUTER_ADMIN_API_KEY': self._validate_admin_key,
-            'AUDIT_SECRET': self._validate_secret,
-
+            "ROUTER_ADMIN_API_KEY": self._validate_admin_key,
+            "AUDIT_SECRET": self._validate_secret,
             # Data paths
-            'ROUTER_DATA_DIR': self._validate_path,
-
+            "ROUTER_DATA_DIR": self._validate_path,
             # Tracing configuration
-            'ROUTER_ENABLE_TRACING': self._validate_boolean,
-            'ROUTER_TEST_TRACING_MODE': self._validate_tracing_mode,
-
+            "ROUTER_ENABLE_TRACING": self._validate_boolean,
+            "ROUTER_TEST_TRACING_MODE": self._validate_tracing_mode,
             # Specialist selection
-            'SPECIALIST_MAX_COST_PER_1K': self._validate_float,
-            'SPECIALIST_MIN_QUALITY': self._validate_quality_score,
-            'SPECIALIST_MAX_LATENCY_MS': self._validate_positive_int,
+            "SPECIALIST_MAX_COST_PER_1K": self._validate_float,
+            "SPECIALIST_MIN_QUALITY": self._validate_quality_score,
+            "SPECIALIST_MAX_LATENCY_MS": self._validate_positive_int,
         }
 
         self.optional_vars = {
             # Optional but recommended
-            'ROUTER_ADMIN_KEYS': self._validate_admin_keys_json,
-            'ROUTER_SAMPLING_QOS': self._validate_sampling_qos,
-            'ROUTER_REDIS_URL': self._validate_redis_url,
-            'ROUTER_DISABLE_OTLP_EXPORT': self._validate_boolean,
-            'SHADOW_MIN_SAMPLE_WINDOW': self._validate_positive_int,
-            'SHADOW_WIN_RATE_THRESHOLD': self._validate_percentage,
-            'SHADOW_COST_SAVINGS_THRESHOLD': self._validate_percentage,
-            'ENABLE_SHADOW_EVALUATION': self._validate_boolean,
-            'ENABLE_QOS_PRIORITY': self._validate_boolean,
-            'ROUTER_ENABLE_METRICS': self._validate_boolean,
-            'ROUTER_MAX_PROMPT_CHARS': self._validate_positive_int,
+            "ROUTER_ADMIN_KEYS": self._validate_admin_keys_json,
+            "ROUTER_SAMPLING_QOS": self._validate_sampling_qos,
+            "ROUTER_REDIS_URL": self._validate_redis_url,
+            "ROUTER_DISABLE_OTLP_EXPORT": self._validate_boolean,
+            "SHADOW_MIN_SAMPLE_WINDOW": self._validate_positive_int,
+            "SHADOW_WIN_RATE_THRESHOLD": self._validate_percentage,
+            "SHADOW_COST_SAVINGS_THRESHOLD": self._validate_percentage,
+            "ENABLE_SHADOW_EVALUATION": self._validate_boolean,
+            "ENABLE_QOS_PRIORITY": self._validate_boolean,
+            "ROUTER_ENABLE_METRICS": self._validate_boolean,
+            "ROUTER_MAX_PROMPT_CHARS": self._validate_positive_int,
         }
 
     def _validate_admin_key(self, value: str) -> bool:
         """Validate admin API key format."""
-        if not value or value == 'your-admin-api-key-here':
+        if not value or value == "your-admin-api-key-here":
             self.errors.append("ROUTER_ADMIN_API_KEY must be set to a secure value")
             return False
         if len(value) < 16:
@@ -62,7 +59,7 @@ class EnvValidator:
 
     def _validate_secret(self, value: str) -> bool:
         """Validate secret format."""
-        if not value or value == 'your-audit-secret-here':
+        if not value or value == "your-audit-secret-here":
             self.errors.append("AUDIT_SECRET must be set to a secure value")
             return False
         if len(value) < 16:
@@ -78,7 +75,7 @@ class EnvValidator:
 
     def _validate_boolean(self, value: str) -> bool:
         """Validate boolean values (1, 0, true, false)."""
-        valid_values = ['0', '1', 'true', 'false', 'yes', 'no']
+        valid_values = ["0", "1", "true", "false", "yes", "no"]
         if value.lower() not in valid_values:
             self.errors.append(f"Invalid boolean value: {value}. Must be one of {valid_values}")
             return False
@@ -86,7 +83,7 @@ class EnvValidator:
 
     def _validate_tracing_mode(self, value: str) -> bool:
         """Validate tracing mode."""
-        valid_modes = ['dummy', 'otel', '']
+        valid_modes = ["dummy", "otel", ""]
         if value not in valid_modes:
             self.errors.append(f"Invalid ROUTER_TEST_TRACING_MODE: {value}. Must be one of {valid_modes}")
             return False
@@ -145,12 +142,12 @@ class EnvValidator:
         if not value:
             return True  # Empty is valid
 
-        parts = value.split(',')
+        parts = value.split(",")
         for part in parts:
-            if ':' not in part:
+            if ":" not in part:
                 self.errors.append(f"Invalid QoS sampling format: {value}. Use tier:ratio,tier:ratio")
                 return False
-            tier, ratio_str = part.split(':', 1)
+            tier, ratio_str = part.split(":", 1)
             try:
                 ratio = float(ratio_str)
                 if not 0.0 <= ratio <= 1.0:
@@ -163,7 +160,7 @@ class EnvValidator:
 
     def _validate_redis_url(self, value: str) -> bool:
         """Validate Redis URL format."""
-        if not value.startswith(('redis://', 'rediss://', 'unix://')):
+        if not value.startswith(("redis://", "rediss://", "unix://")):
             self.warnings.append(f"Redis URL should start with redis://, rediss://, or unix://: {value}")
         return True
 
@@ -195,18 +192,20 @@ class EnvValidator:
     def _check_conflicts(self):
         """Check for conflicting configuration settings."""
         # Check tracing conflicts
-        enable_tracing = os.getenv('ROUTER_ENABLE_TRACING', '0')
-        test_mode = os.getenv('ROUTER_TEST_TRACING_MODE', '')
+        enable_tracing = os.getenv("ROUTER_ENABLE_TRACING", "0")
+        test_mode = os.getenv("ROUTER_TEST_TRACING_MODE", "")
 
-        if enable_tracing in ('1', 'true', 'yes') and test_mode == 'dummy':
+        if enable_tracing in ("1", "true", "yes") and test_mode == "dummy":
             self.warnings.append("ROUTER_ENABLE_TRACING=1 conflicts with ROUTER_TEST_TRACING_MODE=dummy")
 
         # Check admin key conflicts
-        single_key = os.getenv('ROUTER_ADMIN_API_KEY')
-        multi_keys = os.getenv('ROUTER_ADMIN_KEYS')
+        single_key = os.getenv("ROUTER_ADMIN_API_KEY")
+        multi_keys = os.getenv("ROUTER_ADMIN_KEYS")
 
         if single_key and multi_keys:
-            self.warnings.append("Both ROUTER_ADMIN_API_KEY and ROUTER_ADMIN_KEYS are set. ROUTER_ADMIN_KEYS takes precedence")
+            self.warnings.append(
+                "Both ROUTER_ADMIN_API_KEY and ROUTER_ADMIN_KEYS are set. ROUTER_ADMIN_KEYS takes precedence"
+            )
 
 
 def main():

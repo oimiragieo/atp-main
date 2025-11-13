@@ -1,22 +1,22 @@
-
 """
 Per-tool cost caps and enforcement system.
 """
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
 class CostCap:
     """Cost cap configuration for a tool."""
+
     tool_id: str
     usd_limit_micros: int
     token_limit: int
     current_usd_micros: int = 0
     current_tokens: int = 0
     enabled: bool = True
+
 
 class CostCapRegistry:
     """Registry for managing per-tool cost caps."""
@@ -31,7 +31,7 @@ class CostCapRegistry:
         self.caps[cap.tool_id] = cap
         self.logger.info(f"Registered cost cap for tool {cap.tool_id}")
 
-    def get_cap(self, tool_id: str) -> Optional[CostCap]:
+    def get_cap(self, tool_id: str) -> CostCap | None:
         """Get the cost cap for a tool."""
         return self.caps.get(tool_id)
 
@@ -65,7 +65,7 @@ class CostCapRegistry:
         """Get the total number of cap exceeded events."""
         return self._cap_exceeded_count
 
-    def get_remaining_budget(self, tool_id: str) -> Optional[dict[str, int]]:
+    def get_remaining_budget(self, tool_id: str) -> dict[str, int] | None:
         """Get remaining budget for a tool."""
         cap = self.get_cap(tool_id)
         if not cap:
@@ -73,24 +73,24 @@ class CostCapRegistry:
 
         return {
             "usd_micros_remaining": cap.usd_limit_micros - cap.current_usd_micros,
-            "tokens_remaining": cap.token_limit - cap.current_tokens
+            "tokens_remaining": cap.token_limit - cap.current_tokens,
         }
+
 
 # Global registry instance
 _cost_cap_registry = CostCapRegistry()
+
 
 def get_cost_cap_registry() -> CostCapRegistry:
     """Get the global cost cap registry."""
     return _cost_cap_registry
 
+
 def register_tool_cost_cap(tool_id: str, usd_limit_micros: int, token_limit: int) -> None:
     """Register a cost cap for a tool."""
-    cap = CostCap(
-        tool_id=tool_id,
-        usd_limit_micros=usd_limit_micros,
-        token_limit=token_limit
-    )
+    cap = CostCap(tool_id=tool_id, usd_limit_micros=usd_limit_micros, token_limit=token_limit)
     _cost_cap_registry.register_cap(cap)
+
 
 def check_tool_cost_cap(tool_id: str, usd_micros: int, tokens: int) -> bool:
     """Check if tool cost is within cap limits."""

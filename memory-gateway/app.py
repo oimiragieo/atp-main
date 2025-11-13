@@ -21,6 +21,7 @@ This service acts as the central memory fabric for the ATP (Autonomous Task Proc
 system, providing reliable storage with observability and security features.
 """
 
+import json
 import logging
 import os
 import re
@@ -32,26 +33,19 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
-from fastapi import FastAPI, Header, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from pydantic import BaseModel
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from metrics.registry import MEMORY_ACCESS_ANOMALIES_TOTAL
 
 from .audit_log import append_event
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI(
-    title="ATP Memory Gateway",
-    description="Central memory fabric service for ATP system",
-    version="1.0.0"
-)
+app = FastAPI(title="ATP Memory Gateway", description="Central memory fabric service for ATP system", version="1.0.0")
 STORE: dict[str, dict[str, Any]] = {}
 
 # Validation constants
@@ -62,9 +56,9 @@ MAX_REQUEST_SIZE = 1024 * 1024  # 1MB
 ALLOWED_CONSISTENCY_LEVELS = {"EVENTUAL", "STRONG"}
 
 # Validation patterns
-NAMESPACE_PATTERN = re.compile(r'^[a-zA-Z0-9_-]+$')
-KEY_PATTERN = re.compile(r'^[a-zA-Z0-9_.-]+$')
-TENANT_ID_PATTERN = re.compile(r'^[a-zA-Z0-9_-]+$')
+NAMESPACE_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+KEY_PATTERN = re.compile(r"^[a-zA-Z0-9_.-]+$")
+TENANT_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 
 
 def validate_namespace(namespace: str) -> str:
@@ -143,15 +137,19 @@ def validate_consistency_level(level: str) -> str:
         HTTPException: If consistency level is invalid
     """
     if level not in ALLOWED_CONSISTENCY_LEVELS:
-        raise HTTPException(status_code=400, detail=f"Invalid consistency level. Must be one of: {', '.join(ALLOWED_CONSISTENCY_LEVELS)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid consistency level. Must be one of: {', '.join(ALLOWED_CONSISTENCY_LEVELS)}",
+        )
     return level
 
 
 def validate_request_size(data: Any) -> None:
     """Validate request data size."""
     data_str = str(data)
-    if len(data_str.encode('utf-8')) > MAX_REQUEST_SIZE:
+    if len(data_str.encode("utf-8")) > MAX_REQUEST_SIZE:
         raise HTTPException(status_code=413, detail=f"Request too large (max {MAX_REQUEST_SIZE} bytes)")
+
 
 # Audit configuration
 AUDIT_SECRET = os.getenv("AUDIT_SECRET")
@@ -192,7 +190,9 @@ def _record_access(tenant_id: str, namespace: str, operation: str, key: str = No
         unique_namespaces = len(set(recent_accesses))
         if unique_namespaces > 5:  # Arbitrary threshold for cross-namespace access
             MEMORY_ACCESS_ANOMALIES_TOTAL.inc(1)
-            logger.warning(f"ANOMALY DETECTED: Tenant {tenant_id} accessing {unique_namespaces} namespaces in last minute")
+            logger.warning(
+                f"ANOMALY DETECTED: Tenant {tenant_id} accessing {unique_namespaces} namespaces in last minute"
+            )
 
 
 def _audit_event(event_type: str, tenant_id: str, namespace: str, key: str = None, details: dict = None):
@@ -205,7 +205,7 @@ def _audit_event(event_type: str, tenant_id: str, namespace: str, key: str = Non
         "tenant_id": tenant_id,
         "namespace": namespace,
         "key": key,
-        "details": details or {}
+        "details": details or {},
     }
 
     try:
@@ -221,11 +221,7 @@ def health() -> dict[str, bool]:
 
 @app.put("/v1/memory/{ns}/{key}")
 def put(
-    ns: str,
-    key: str,
-    body: Obj,
-    request: Request,
-    x_tenant_id: str = Header(..., alias="x-tenant-id")
+    ns: str, key: str, body: Obj, request: Request, x_tenant_id: str = Header(..., alias="x-tenant-id")
 ) -> dict[str, bool]:
     # Validate inputs
     ns = validate_namespace(ns)
@@ -248,7 +244,7 @@ def get(
     request: Request,
     x_session_id: str | None = Header(None, alias="x-session-id"),
     x_consistency_level: str = Header("EVENTUAL", alias="x-consistency-level"),
-    x_tenant_id: str = Header(..., alias="x-tenant-id")
+    x_tenant_id: str = Header(..., alias="x-tenant-id"),
 ) -> dict[str, Any]:
     """Get memory object with consistency level support."""
     # Validate inputs
@@ -279,28 +275,28 @@ def get_audit_log(
     tenant_id: str = Query(None, description="Filter by tenant ID"),
     event_type: str = Query(None, description="Filter by event type"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of events"),
-    x_tenant_id: str = Header(..., alias="x-tenant-id")
+    x_tenant_id: str = Header(..., alias="x-tenant-id"),
 ) -> dict[str, Any]:
     """Get audit log entries for compliance reporting."""
     x_tenant_id = validate_tenant_id(x_tenant_id)
-    
+
     try:
         events = []
-        with open(AUDIT_PATH, 'r', encoding='utf-8') as f:
+        with open(AUDIT_PATH, encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
                 if len(events) >= limit:
                     break
-                    
+
                 try:
                     record = json.loads(line.strip())
                     event = record.get("event", {})
-                    
+
                     # Apply filters
                     if tenant_id and event.get("tenant_id") != tenant_id:
                         continue
                     if event_type and event.get("event_type") != event_type:
                         continue
-                    
+
                     # Time filtering (basic implementation)
                     if start_time or end_time:
                         event_time = event.get("timestamp")
@@ -309,14 +305,14 @@ def get_audit_log(
                                 continue
                             if end_time and event_time > end_time:
                                 continue
-                    
+
                     # Add line number for reference
                     event["_line_number"] = line_num
                     events.append(event)
-                    
+
                 except json.JSONDecodeError:
                     continue
-        
+
         return {
             "events": events,
             "total_returned": len(events),
@@ -324,10 +320,10 @@ def get_audit_log(
                 "start_time": start_time,
                 "end_time": end_time,
                 "tenant_id": tenant_id,
-                "event_type": event_type
-            }
+                "event_type": event_type,
+            },
         }
-        
+
     except FileNotFoundError:
         return {"events": [], "total_returned": 0, "error": "Audit log file not found"}
     except Exception as e:
@@ -336,127 +332,108 @@ def get_audit_log(
 
 
 @app.get("/v1/compliance/audit-integrity")
-def verify_audit_integrity(
-    x_tenant_id: str = Header(..., alias="x-tenant-id")
-) -> dict[str, Any]:
+def verify_audit_integrity(x_tenant_id: str = Header(..., alias="x-tenant-id")) -> dict[str, Any]:
     """Verify audit log integrity using hash chain validation."""
     x_tenant_id = validate_tenant_id(x_tenant_id)
-    
+
     try:
         from .audit_log import verify_log
-        
+
         is_valid = verify_log(AUDIT_PATH, AUDIT_SECRET)
-        
+
         return {
             "integrity_valid": is_valid,
             "audit_path": AUDIT_PATH,
-            "verification_timestamp": datetime.now().isoformat()
+            "verification_timestamp": datetime.now().isoformat(),
         }
-        
+
     except FileNotFoundError:
-        return {
-            "integrity_valid": False,
-            "error": "Audit log file not found",
-            "audit_path": AUDIT_PATH
-        }
+        return {"integrity_valid": False, "error": "Audit log file not found", "audit_path": AUDIT_PATH}
     except Exception as e:
         logger.error(f"Failed to verify audit integrity: {e}")
         raise HTTPException(status_code=500, detail="Failed to verify audit integrity")
 
 
 @app.get("/v1/compliance/gdpr/data-subject/{subject_id}")
-def get_data_subject_info(
-    subject_id: str,
-    x_tenant_id: str = Header(..., alias="x-tenant-id")
-) -> dict[str, Any]:
+def get_data_subject_info(subject_id: str, x_tenant_id: str = Header(..., alias="x-tenant-id")) -> dict[str, Any]:
     """Get all data for a specific data subject (GDPR Article 15 - Right of Access)."""
     x_tenant_id = validate_tenant_id(x_tenant_id)
-    
+
     try:
         subject_data = {
             "subject_id": subject_id,
             "tenant_id": x_tenant_id,
             "data_collected": [],
             "audit_events": [],
-            "collection_timestamp": datetime.now().isoformat()
+            "collection_timestamp": datetime.now().isoformat(),
         }
-        
+
         # Search memory store for subject data
         for namespace, keys in STORE.items():
             for key, value in keys.items():
                 # Simple search for subject ID in stored data
                 if _contains_subject_data(value, subject_id):
-                    subject_data["data_collected"].append({
-                        "namespace": namespace,
-                        "key": key,
-                        "data": value,
-                        "storage_location": "memory_store"
-                    })
-        
+                    subject_data["data_collected"].append(
+                        {"namespace": namespace, "key": key, "data": value, "storage_location": "memory_store"}
+                    )
+
         # Search audit log for subject-related events
         try:
-            with open(AUDIT_PATH, 'r', encoding='utf-8') as f:
+            with open(AUDIT_PATH, encoding="utf-8") as f:
                 for line in f:
                     try:
                         record = json.loads(line.strip())
                         event = record.get("event", {})
-                        
+
                         # Check if event relates to this subject
                         if _event_relates_to_subject(event, subject_id, x_tenant_id):
                             subject_data["audit_events"].append(event)
-                            
+
                     except json.JSONDecodeError:
                         continue
         except FileNotFoundError:
             pass
-        
+
         return subject_data
-        
+
     except Exception as e:
         logger.error(f"Failed to retrieve data subject info: {e}")
         raise HTTPException(status_code=500, detail="Failed to retrieve data subject information")
 
 
 @app.delete("/v1/compliance/gdpr/data-subject/{subject_id}")
-def delete_data_subject_data(
-    subject_id: str,
-    x_tenant_id: str = Header(..., alias="x-tenant-id")
-) -> dict[str, Any]:
+def delete_data_subject_data(subject_id: str, x_tenant_id: str = Header(..., alias="x-tenant-id")) -> dict[str, Any]:
     """Delete all data for a specific data subject (GDPR Article 17 - Right to Erasure)."""
     x_tenant_id = validate_tenant_id(x_tenant_id)
-    
+
     try:
         deleted_items = []
-        
+
         # Remove from memory store
         for namespace in list(STORE.keys()):
             for key in list(STORE[namespace].keys()):
                 value = STORE[namespace][key]
                 if _contains_subject_data(value, subject_id):
                     del STORE[namespace][key]
-                    deleted_items.append({
-                        "namespace": namespace,
-                        "key": key,
-                        "storage_location": "memory_store"
-                    })
-                    
+                    deleted_items.append({"namespace": namespace, "key": key, "storage_location": "memory_store"})
+
                     # Audit the deletion
                     _audit_event(
                         "gdpr_data_deletion",
                         x_tenant_id,
                         namespace,
                         key,
-                        {"subject_id": subject_id, "reason": "gdpr_right_to_erasure"}
+                        {"subject_id": subject_id, "reason": "gdpr_right_to_erasure"},
                     )
-        
+
         return {
             "subject_id": subject_id,
             "tenant_id": x_tenant_id,
             "deleted_items": deleted_items,
             "deletion_timestamp": datetime.now().isoformat(),
-            "total_deleted": len(deleted_items)
+            "total_deleted": len(deleted_items),
         }
-        
+
     except Exception as e:
         logger.error(f"Failed to delete data subject data: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete data subject data")
@@ -466,19 +443,16 @@ def delete_data_subject_data(
 def get_soc2_access_report(
     start_date: str = Query(..., description="Start date (YYYY-MM-DD)"),
     end_date: str = Query(..., description="End date (YYYY-MM-DD)"),
-    x_tenant_id: str = Header(..., alias="x-tenant-id")
+    x_tenant_id: str = Header(..., alias="x-tenant-id"),
 ) -> dict[str, Any]:
     """Generate SOC 2 access control report."""
     x_tenant_id = validate_tenant_id(x_tenant_id)
-    
+
     try:
         report = {
             "report_type": "SOC2_ACCESS_CONTROL",
             "tenant_id": x_tenant_id,
-            "period": {
-                "start_date": start_date,
-                "end_date": end_date
-            },
+            "period": {"start_date": start_date, "end_date": end_date},
             "generated_at": datetime.now().isoformat(),
             "access_events": [],
             "anomalies": [],
@@ -486,53 +460,53 @@ def get_soc2_access_report(
                 "total_access_events": 0,
                 "unique_users": set(),
                 "unique_namespaces": set(),
-                "anomaly_count": 0
-            }
+                "anomaly_count": 0,
+            },
         }
-        
+
         # Analyze audit log for the specified period
         try:
-            with open(AUDIT_PATH, 'r', encoding='utf-8') as f:
+            with open(AUDIT_PATH, encoding="utf-8") as f:
                 for line in f:
                     try:
                         record = json.loads(line.strip())
                         event = record.get("event", {})
-                        
+
                         # Filter by tenant and date range
                         if event.get("tenant_id") != x_tenant_id:
                             continue
-                            
+
                         event_date = event.get("timestamp", "")[:10]  # Extract date part
                         if event_date < start_date or event_date > end_date:
                             continue
-                        
+
                         # Include access events
                         if event.get("event_type") in ["memory_get", "memory_put"]:
                             report["access_events"].append(event)
                             report["summary"]["total_access_events"] += 1
-                            
+
                             # Track unique users and namespaces
                             if "user_id" in event:
                                 report["summary"]["unique_users"].add(event["user_id"])
                             if "namespace" in event:
                                 report["summary"]["unique_namespaces"].add(event["namespace"])
-                        
+
                         # Include anomaly events
                         if "anomaly" in event.get("event_type", "").lower():
                             report["anomalies"].append(event)
                             report["summary"]["anomaly_count"] += 1
-                            
+
                     except json.JSONDecodeError:
                         continue
         except FileNotFoundError:
             pass
-        
+
         # Convert sets to lists for JSON serialization
         report["summary"]["unique_users"] = list(report["summary"]["unique_users"])
         report["summary"]["unique_namespaces"] = list(report["summary"]["unique_namespaces"])
-        
+
         return report
-        
+
     except Exception as e:
         logger.error(f"Failed to generate SOC2 access report: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate SOC2 access report")
@@ -552,7 +526,7 @@ def _contains_subject_data(data: Any, subject_id: str) -> bool:
                 return True
     elif isinstance(data, str):
         return subject_id in data
-    
+
     return False
 
 
@@ -561,7 +535,7 @@ def _event_relates_to_subject(event: dict, subject_id: str, tenant_id: str) -> b
     # Must be same tenant
     if event.get("tenant_id") != tenant_id:
         return False
-    
+
     # Check if subject ID appears in event details
     event_str = json.dumps(event)
     return subject_id in event_str

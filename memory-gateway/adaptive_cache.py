@@ -8,13 +8,15 @@ automatically detecting hot keys using frequency counting.
 import threading
 import time
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 
 @dataclass(order=True)
 class CacheEntry:
     """Cache entry with frequency and access time tracking."""
+
     key: str
     value: Any
     ttl_s: float
@@ -33,8 +35,9 @@ class CacheEntry:
         self.last_accessed = now
         self.access_count += 1
 
-    def calculate_adaptive_ttl(self, base_ttl: float, hot_multiplier: float = 3.0,
-                              frequency_threshold: int = 10) -> float:
+    def calculate_adaptive_ttl(
+        self, base_ttl: float, hot_multiplier: float = 3.0, frequency_threshold: int = 10
+    ) -> float:
         """Calculate adaptive TTL based on access frequency."""
         if self.access_count >= frequency_threshold:
             # Hot key - extend TTL
@@ -47,9 +50,14 @@ class CacheEntry:
 class LFUCache:
     """LFU Cache with adaptive TTL for hot key detection."""
 
-    def __init__(self, max_size: int = 1000, base_ttl_s: float = 300.0,
-                 hot_multiplier: float = 3.0, frequency_threshold: int = 10,
-                 cleanup_interval_s: float = 60.0):
+    def __init__(
+        self,
+        max_size: int = 1000,
+        base_ttl_s: float = 300.0,
+        hot_multiplier: float = 3.0,
+        frequency_threshold: int = 10,
+        cleanup_interval_s: float = 60.0,
+    ):
         self.max_size = max_size
         self.base_ttl_s = base_ttl_s
         self.hot_multiplier = hot_multiplier
@@ -65,7 +73,7 @@ class LFUCache:
 
         # Background cleanup
         self._cleanup_interval = cleanup_interval_s
-        self._cleanup_timer: Optional[threading.Timer] = None
+        self._cleanup_timer: threading.Timer | None = None
         self._start_cleanup_timer()
 
     def _start_cleanup_timer(self) -> None:
@@ -106,8 +114,7 @@ class LFUCache:
             return
 
         # Find entry with lowest frequency
-        lfu_key = min(self._cache.keys(),
-                     key=lambda k: self._cache[k].access_count)
+        lfu_key = min(self._cache.keys(), key=lambda k: self._cache[k].access_count)
 
         self._remove_entry(lfu_key)
 
@@ -116,7 +123,7 @@ class LFUCache:
         while len(self._cache) >= self.max_size:
             self._evict_lfu()
 
-    def get(self, key: str, now: float = None) -> Optional[Any]:
+    def get(self, key: str, now: float = None) -> Any | None:
         """Get value from cache, updating access patterns."""
         with self._lock:
             now = now or time.time()
@@ -146,8 +153,7 @@ class LFUCache:
 
             return entry.value
 
-    def put(self, key: str, value: Any, ttl_s: Optional[float] = None,
-            size_bytes: int = 0, now: float = None) -> None:
+    def put(self, key: str, value: Any, ttl_s: float | None = None, size_bytes: int = 0, now: float = None) -> None:
         """Put value in cache with adaptive TTL."""
         with self._lock:
             now = now or time.time()
@@ -163,13 +169,7 @@ class LFUCache:
             elif ttl_s is None:
                 ttl_s = self.base_ttl_s
 
-            entry = CacheEntry(
-                key=key,
-                value=value,
-                ttl_s=ttl_s,
-                size_bytes=size_bytes,
-                created_at=now
-            )
+            entry = CacheEntry(key=key, value=value, ttl_s=ttl_s, size_bytes=size_bytes, created_at=now)
 
             # Preserve access count from existing entry
             if existing_entry:
@@ -209,8 +209,7 @@ class LFUCache:
         """Get cache statistics."""
         with self._lock:
             total_accesses = sum(entry.access_count for entry in self._cache.values())
-            hot_keys = sum(1 for entry in self._cache.values()
-                          if entry.access_count >= self.frequency_threshold)
+            hot_keys = sum(1 for entry in self._cache.values() if entry.access_count >= self.frequency_threshold)
 
             return {
                 "size": len(self._cache),
@@ -218,7 +217,7 @@ class LFUCache:
                 "total_accesses": total_accesses,
                 "hot_keys": hot_keys,
                 "hit_rate": total_accesses / max(1, len(self._cache)),
-                "avg_ttl": sum(entry.ttl_s for entry in self._cache.values()) / max(1, len(self._cache))
+                "avg_ttl": sum(entry.ttl_s for entry in self._cache.values()) / max(1, len(self._cache)),
             }
 
     def __del__(self) -> None:
@@ -230,14 +229,14 @@ class LFUCache:
 class WriteThroughCache:
     """Write-through cache with backend storage."""
 
-    def __init__(self, backend_get: Callable[[str], Any],
-                 backend_put: Callable[[str, Any], None],
-                 cache: Optional[LFUCache] = None):
+    def __init__(
+        self, backend_get: Callable[[str], Any], backend_put: Callable[[str, Any], None], cache: LFUCache | None = None
+    ):
         self.backend_get = backend_get
         self.backend_put = backend_put
         self.cache = cache or LFUCache()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """Get from cache, fallback to backend."""
         # Try cache first
         value = self.cache.get(key)
@@ -252,7 +251,7 @@ class WriteThroughCache:
 
         return value
 
-    def put(self, key: str, value: Any, ttl_s: Optional[float] = None) -> None:
+    def put(self, key: str, value: Any, ttl_s: float | None = None) -> None:
         """Write through to backend and cache."""
         # Write to backend first
         self.backend_put(key, value)

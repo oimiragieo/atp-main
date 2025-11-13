@@ -4,7 +4,7 @@ import hashlib
 import hmac
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 from router_service.reputation_model import ReputationModel
 
@@ -74,8 +74,8 @@ class PersonaFederationNode:
         self.sequence_counters: dict[str, int] = {}
 
     def create_signed_stats(
-        self, persona_id: str, reputation_model: ReputationModel, constraints: Optional[dict[str, Any]] = None
-    ) -> Optional[SignedPersonaStats]:
+        self, persona_id: str, reputation_model: ReputationModel, constraints: dict[str, Any] | None = None
+    ) -> SignedPersonaStats | None:
         """Create signed persona statistics for federation."""
         stats = reputation_model.get_persona_stats(persona_id)
         if not stats or stats["reputation_score"] is None:
@@ -157,7 +157,7 @@ class PersonaFederationNode:
 
         return False
 
-    def get_consolidated_stats(self, persona_id: str) -> Optional[PersonaStats]:
+    def get_consolidated_stats(self, persona_id: str) -> PersonaStats | None:
         """Get consolidated persona statistics from all federated sources."""
         if persona_id not in self.federated_stats:
             return self.local_stats.get(persona_id)
@@ -220,7 +220,7 @@ class PersonaFederationNode:
 
     def _merge_stats(
         self, new_stats: SignedPersonaStats, existing_stats: list[SignedPersonaStats]
-    ) -> Optional[SignedPersonaStats]:
+    ) -> SignedPersonaStats | None:
         """Merge conflicting persona statistics."""
         total_samples = sum(s.stats.sample_count for s in existing_stats)
         total_samples += new_stats.stats.sample_count
@@ -258,7 +258,7 @@ class PersonaFederationNode:
             sequence_number=seq_num,
         )
 
-    def _select_best_stats(self, candidates: list[SignedPersonaStats]) -> Optional[SignedPersonaStats]:
+    def _select_best_stats(self, candidates: list[SignedPersonaStats]) -> SignedPersonaStats | None:
         """Select the best persona statistics from candidates."""
         if not candidates:
             return None

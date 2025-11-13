@@ -6,7 +6,7 @@ import random
 import sqlite3
 import threading
 from collections.abc import Sequence
-from typing import Optional, Protocol
+from typing import Protocol
 
 # Try to import contextual features, fallback to None if not available
 try:
@@ -49,8 +49,8 @@ def update_stat(
     success: bool,
     cost: float,
     latency: float,
-    prompt: Optional[str] = None,
-    latency_slo_ms: Optional[float] = None,
+    prompt: str | None = None,
+    latency_slo_ms: float | None = None,
 ) -> None:
     with _LOCK:
         conn = sqlite3.connect(DB_PATH)
@@ -115,9 +115,9 @@ def ucb_select(
     cluster: str,
     candidates: Sequence[HasName],
     explore_factor: float = 1.4,
-    prompt: Optional[str] = None,
-    latency_slo_ms: Optional[float] = None,
-) -> Optional[str]:
+    prompt: str | None = None,
+    latency_slo_ms: float | None = None,
+) -> str | None:
     """Return model name chosen by UCB on success rate / cost ratio.
     Score = (success/calls) / avg_cost + explore_factor * sqrt(log(total_calls)/calls).
     If contextual features provided, uses contextual UCB scoring.
@@ -133,7 +133,7 @@ def ucb_select(
     # Use contextual UCB if features provided
     if prompt is not None and CONTEXTUAL_FEATURE_EXTRACTOR is not None and CONTEXTUAL_UCB is not None:
         features = CONTEXTUAL_FEATURE_EXTRACTOR.get_feature_vector(prompt, latency_slo_ms)
-        best_model: Optional[str] = None
+        best_model: str | None = None
         best_score: float = -1.0
 
         for c in candidates:
@@ -164,7 +164,7 @@ def ucb_select(
         return best_model
 
     # Fallback to original UCB without contextual features
-    best_model: Optional[str] = None
+    best_model: str | None = None
     best_score: float = -1.0
     for c in candidates:
         m = c.name
@@ -184,7 +184,7 @@ def ucb_select(
 
 
 def compute_ucb_scores(
-    cluster: str, explore_factor: float = 1.4, prompt: Optional[str] = None, latency_slo_ms: Optional[float] = None
+    cluster: str, explore_factor: float = 1.4, prompt: str | None = None, latency_slo_ms: float | None = None
 ) -> dict[str, dict[str, float]]:
     """Return mapping model -> {score, exploit, explore} for cluster.
     If contextual features provided, includes contextual scoring.
@@ -223,7 +223,7 @@ def compute_ucb_scores(
     return out
 
 
-def thompson_select(cluster: str, candidates: Sequence[HasName]) -> Optional[str]:
+def thompson_select(cluster: str, candidates: Sequence[HasName]) -> str | None:
     """Simple Thompson Sampling on success probability ignoring cost for now.
     Draw Beta(success+1, fails+1); choose max; if unseen prefer exploration.
     """
@@ -233,7 +233,7 @@ def thompson_select(cluster: str, candidates: Sequence[HasName]) -> Optional[str
     unseen: list[str] = [c.name for c in candidates if c.name not in stat_map]
     if unseen:
         return random.choice(unseen)
-    best: Optional[str] = None
+    best: str | None = None
     best_draw: float = -1.0
     import random as _r
 

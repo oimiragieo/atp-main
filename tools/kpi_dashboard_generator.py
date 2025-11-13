@@ -9,7 +9,7 @@ Generates Grafana dashboard JSON and validates required panels are present.
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 try:
     from metrics.registry import REGISTRY
@@ -34,7 +34,7 @@ class DashboardPanel:
     type: str
     targets: list[dict[str, Any]]
     grid_pos: dict[str, int]
-    description: Optional[str] = None
+    description: str | None = None
 
 
 @dataclass

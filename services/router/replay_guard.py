@@ -37,10 +37,7 @@ class NonceStore:
         if nonce in self._slots:
             _CTR_REPLAY.inc(1)
             emit_rejection_event(
-                RejectionReason.REPLAY_DETECTED,
-                "replay_guard",
-                request_id,
-                {"nonce": nonce, "detected_at": t}
+                RejectionReason.REPLAY_DETECTED, "replay_guard", request_id, {"nonce": nonce, "detected_at": t}
             )
             return False
         self._slots[nonce] = t

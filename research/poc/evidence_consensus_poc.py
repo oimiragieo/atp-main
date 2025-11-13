@@ -7,7 +7,7 @@ def aggregate(responses):
     total = sum(r["confidence"] for r in responses)
     weights = [r["confidence"] / total for r in responses]
     score = {}
-    for w, r in zip(weights, responses):
+    for w, r in zip(weights, responses, strict=False):
         score[r["answer"]] = score.get(r["answer"], 0) + w
     best = max(score.items(), key=lambda x: x[1])
     # simple verifier: hash diversity of evidence

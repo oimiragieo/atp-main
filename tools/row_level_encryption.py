@@ -10,7 +10,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from tools.kms_poc import KMS
 from tools.row_encryption_metrics import get_row_encryption_metrics_collector
@@ -183,7 +183,7 @@ class RowEncryptionStore:
 
             raise
 
-    def get_row(self, row_id: str, tenant_id: str, aad: bytes = b"") -> Optional[dict[str, Any]]:
+    def get_row(self, row_id: str, tenant_id: str, aad: bytes = b"") -> dict[str, Any] | None:
         """Retrieve and decrypt a row if authorized."""
         start_time = time.time()
         metrics_collector = get_row_encryption_metrics_collector()

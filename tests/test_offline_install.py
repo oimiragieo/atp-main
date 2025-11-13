@@ -22,13 +22,14 @@ class TestOfflineInstallSimulation:
             images=["atp/router:latest", "postgres:15-alpine"],
             dry_run=True,
             concurrency=2,
-            timeout=30
+            timeout=30,
         )
 
     def teardown_method(self):
         """Clean up test environment."""
         # Clean up temp directory
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_image_sync_config_creation(self):
@@ -49,7 +50,7 @@ class TestOfflineInstallSimulation:
             "images": ["test/image:1.0", "test/image:2.0"],
             "dry_run": False,
             "concurrency": 5,
-            "timeout": 600
+            "timeout": 600,
         }
 
         with open(config_path, "w") as f:
@@ -121,7 +122,7 @@ class TestOfflineInstallSimulation:
             source_registry="docker.io",
             target_registry="registry.internal.company.com",
             images=["test/image:latest"],
-            dry_run=False
+            dry_run=False,
         )
 
         # Mock successful subprocess calls
@@ -145,7 +146,7 @@ class TestOfflineInstallSimulation:
             source_registry="docker.io",
             target_registry="registry.internal.company.com",
             images=["test/image:latest"],
-            dry_run=False
+            dry_run=False,
         )
 
         # Mock failed pull
@@ -167,7 +168,7 @@ class TestOfflineInstallSimulation:
             target_registry="registry.internal.company.com",
             images=["image1:latest", "image2:latest", "image3:latest"],
             dry_run=True,
-            concurrency=2
+            concurrency=2,
         )
 
         sync = ImageRegistrySync(config)
@@ -178,6 +179,7 @@ class TestOfflineInstallSimulation:
         async def mock_sync_image(image):
             # Simulate some processing time
             import asyncio
+
             await asyncio.sleep(0.01)
             sync_results.append(image)
             return True
@@ -276,7 +278,7 @@ class TestImageSyncConfig:
             images=["app:v1", "db:v2"],
             dry_run=True,
             concurrency=5,
-            timeout=600
+            timeout=600,
         )
 
         assert config.source_registry == "docker.io"

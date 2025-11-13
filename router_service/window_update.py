@@ -219,13 +219,7 @@ class PIDController:
         self._g_add_factor.set(self.aimd.add)
         self._g_mult_factor.set(self.aimd.mult)
 
-    def _calculate_pid_output(
-        self,
-        error: float,
-        integral: float,
-        prev_error: float,
-        dt: float
-    ) -> tuple[float, float]:
+    def _calculate_pid_output(self, error: float, integral: float, prev_error: float, dt: float) -> tuple[float, float]:
         """Calculate PID output for a single error signal."""
         # Proportional term
         proportional = self.kp * error
@@ -243,10 +237,7 @@ class PIDController:
         return output, integral
 
     def update_parameters(
-        self,
-        current_latency_ms: float,
-        current_throughput: float,
-        current_error_rate: float
+        self, current_latency_ms: float, current_throughput: float, current_error_rate: float
     ) -> None:
         """Update AIMD parameters based on current system performance."""
         now = time.time()
@@ -267,7 +258,10 @@ class PIDController:
             throughput_error, self._integral_add, self._prev_error_throughput, dt
         )
         error_output, _ = self._calculate_pid_output(
-            error_rate_error, 0.0, self._prev_error_error_rate, dt  # No integral for error rate
+            error_rate_error,
+            0.0,
+            self._prev_error_error_rate,
+            dt,  # No integral for error rate
         )
 
         # Mult factor primarily affected by latency
@@ -310,17 +304,17 @@ class PIDController:
     def get_parameters(self) -> dict[str, float]:
         """Get current PID controller parameters and state."""
         return {
-            'kp': self.kp,
-            'ki': self.ki,
-            'kd': self.kd,
-            'target_latency_ms': self.target_latency_ms,
-            'target_throughput': self.target_throughput,
-            'target_error_rate': self.target_error_rate,
-            'current_add_factor': self.aimd.add,
-            'current_mult_factor': self.aimd.mult,
-            'integral_add': self._integral_add,
-            'integral_mult': self._integral_mult,
-            'last_update_time': self._last_update_time
+            "kp": self.kp,
+            "ki": self.ki,
+            "kd": self.kd,
+            "target_latency_ms": self.target_latency_ms,
+            "target_throughput": self.target_throughput,
+            "target_error_rate": self.target_error_rate,
+            "current_add_factor": self.aimd.add,
+            "current_mult_factor": self.aimd.mult,
+            "integral_add": self._integral_add,
+            "integral_mult": self._integral_mult,
+            "last_update_time": self._last_update_time,
         }
 
     def reset(self) -> None:

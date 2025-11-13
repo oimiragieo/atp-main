@@ -13,8 +13,11 @@ from pathlib import Path
 class PreemptionReportGenerator:
     """Generates formatted reports from preemption benchmark results."""
 
-    def __init__(self, results_file: str = "preemption_benchmark_results.json",
-                 metrics_file: str = "preemption_metrics_report.json"):
+    def __init__(
+        self,
+        results_file: str = "preemption_benchmark_results.json",
+        metrics_file: str = "preemption_metrics_report.json",
+    ):
         self.results_file = results_file
         self.metrics_file = metrics_file
         self.results_data = None
@@ -48,8 +51,7 @@ class PreemptionReportGenerator:
 
         # Timestamp
         if self.results_data and "timestamp" in self.results_data:
-            timestamp = time.strftime("%Y-%m-%d %H:%M:%S",
-                                    time.localtime(self.results_data["timestamp"]))
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self.results_data["timestamp"]))
             report_lines.append(f"Generated: {timestamp}")
             report_lines.append("")
 
@@ -67,7 +69,7 @@ class PreemptionReportGenerator:
 
             # QoS Distribution
             report_lines.append("QoS Preemption Distribution:")
-            for qos, count in summary['qos_preemption_distribution'].items():
+            for qos, count in summary["qos_preemption_distribution"].items():
                 qos_name = {"g": "Gold", "s": "Silver", "b": "Bronze"}.get(qos, qos.upper())
                 report_lines.append(f"  {qos_name}: {count} preemptions")
             report_lines.append("")
@@ -104,8 +106,9 @@ class PreemptionReportGenerator:
             details = self.metrics_data["scenario_details"]
 
             # Calculate performance metrics
-            efficiencies = [s["scenario"]["preemption_efficiency"] for s in details
-                          if s["scenario"]["needed_slots"] > 0]
+            efficiencies = [
+                s["scenario"]["preemption_efficiency"] for s in details if s["scenario"]["needed_slots"] > 0
+            ]
             execution_times = [s["scenario"]["execution_time_ms"] for s in details]
 
             if efficiencies:
@@ -170,7 +173,7 @@ class PreemptionReportGenerator:
                 delta = detail["delta"]
 
                 report_lines.append(f"\nScenario {i}: {scenario['scenario_name']}")
-                report_lines.append("-" * (15 + len(scenario['scenario_name'])))
+                report_lines.append("-" * (15 + len(scenario["scenario_name"])))
 
                 # Session details
                 report_lines.append(f"Session Count: {scenario['total_sessions']}")
@@ -233,8 +236,8 @@ class PreemptionReportGenerator:
             report_lines.append("| QoS Class | Preemptions | Percentage |")
             report_lines.append("|-----------|-------------|------------|")
 
-            total_preemptions = sum(summary['qos_preemption_distribution'].values())
-            for qos, count in summary['qos_preemption_distribution'].items():
+            total_preemptions = sum(summary["qos_preemption_distribution"].values())
+            for qos, count in summary["qos_preemption_distribution"].items():
                 qos_name = {"g": "Gold", "s": "Silver", "b": "Bronze"}.get(qos, qos.upper())
                 percentage = (count / total_preemptions * 100) if total_preemptions > 0 else 0
                 report_lines.append(f"| {qos_name} | {count} | {percentage:.1f}% |")
@@ -283,19 +286,19 @@ class PreemptionReportGenerator:
 
         # Summary report
         summary_path = Path(output_dir) / "preemption_summary_report.txt"
-        with open(summary_path, 'w') as f:
+        with open(summary_path, "w") as f:
             f.write(self.generate_summary_report())
         print(f"Summary report saved to {summary_path}")
 
         # Detailed report
         detailed_path = Path(output_dir) / "preemption_detailed_report.txt"
-        with open(detailed_path, 'w') as f:
+        with open(detailed_path, "w") as f:
             f.write(self.generate_detailed_report())
         print(f"Detailed report saved to {detailed_path}")
 
         # Markdown report
         markdown_path = Path(output_dir) / "preemption_report.md"
-        with open(markdown_path, 'w') as f:
+        with open(markdown_path, "w") as f:
             f.write(self.generate_markdown_report())
         print(f"Markdown report saved to {markdown_path}")
 

@@ -40,7 +40,7 @@ class TestReembedJobOrchestrator:
             vector_backend=mock_vector_backend,
             embedding_service=mock_embedding_service,
             max_concurrent_jobs=2,
-            batch_size=10
+            batch_size=10,
         )
         return orch
 
@@ -53,7 +53,7 @@ class TestReembedJobOrchestrator:
                 namespace="test_namespace",
                 source_model="old-model-v1",
                 target_model="new-model-v2",
-                priority=ReembedJobPriority.HIGH
+                priority=ReembedJobPriority.HIGH,
             )
 
             assert job_id in orchestrator.jobs
@@ -72,9 +72,7 @@ class TestReembedJobOrchestrator:
         await orchestrator.start()
         try:
             job_id = await orchestrator.submit_job(
-                namespace="test_namespace",
-                source_model="old-model",
-                target_model="new-model"
+                namespace="test_namespace", source_model="old-model", target_model="new-model"
             )
 
             job = orchestrator.get_job_status(job_id)
@@ -141,8 +139,8 @@ class TestReembedJobOrchestrator:
                 job.processed_items = 3
                 job.failed_items = 0
 
-            monkeypatch.setattr(orchestrator, '_collect_namespace_items', mock_collect_items)
-            monkeypatch.setattr(orchestrator, '_process_batches', mock_process_batches)
+            monkeypatch.setattr(orchestrator, "_collect_namespace_items", mock_collect_items)
+            monkeypatch.setattr(orchestrator, "_process_batches", mock_process_batches)
 
             job_id = await orchestrator.submit_job("test_ns", "old", "new")
 
@@ -233,8 +231,7 @@ class TestReembedJobOrchestrator:
             await asyncio.sleep(0.2)
 
             # Check that not more than max_concurrent_jobs are active
-            active_count = sum(1 for job in orchestrator.jobs.values()
-                              if job.status == ReembedJobStatus.RUNNING)
+            active_count = sum(1 for job in orchestrator.jobs.values() if job.status == ReembedJobStatus.RUNNING)
             assert active_count <= orchestrator.max_concurrent_jobs
         finally:
             await orchestrator.stop()

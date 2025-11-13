@@ -1,9 +1,8 @@
 import time
-from typing import Optional
 
 
 class Sampler:
-    def should_sample(self, trace_id: Optional[str] = None, parent_sampled: Optional[bool] = None) -> bool:
+    def should_sample(self, trace_id: str | None = None, parent_sampled: bool | None = None) -> bool:
         raise NotImplementedError
 
 
@@ -39,7 +38,7 @@ class RateLimiting(Sampler):
         return False
 
 
-def exemplar(trace_id: str, value: float, labels: Optional[dict] = None) -> dict:
+def exemplar(trace_id: str, value: float, labels: dict | None = None) -> dict:
     """Return a minimal exemplar record linking a measurement to a trace id."""
     out = {
         "trace_id": trace_id,

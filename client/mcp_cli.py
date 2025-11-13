@@ -24,7 +24,7 @@ import asyncio
 import json
 import sys
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 import websockets
 from websockets.exceptions import ConnectionClosedError
@@ -35,8 +35,9 @@ from .tool_schema_versioning import ToolSchemaVersioning
 class MCPClient:
     """MCP WebSocket client for interacting with MCP servers."""
 
-    def __init__(self, host: str = "localhost", port: int = 7443, secure: bool = False,
-                 schema_version: Optional[str] = None):
+    def __init__(
+        self, host: str = "localhost", port: int = 7443, secure: bool = False, schema_version: str | None = None
+    ):
         """Initialize MCP client.
 
         Args:
@@ -52,7 +53,7 @@ class MCPClient:
         self.websocket = None
         self.session_id = str(uuid.uuid4())[:8]
         self.schema_versioning = ToolSchemaVersioning()
-        self.negotiated_version: Optional[str] = None
+        self.negotiated_version: str | None = None
         self.requested_version = schema_version
 
     async def connect(self) -> None:
@@ -78,7 +79,7 @@ class MCPClient:
                 negotiate_msg = {
                     "type": "negotiateSchema",
                     "id": f"{self.session_id}-negotiate",
-                    "requestedVersion": requested
+                    "requestedVersion": requested,
                 }
                 await self.send_message(negotiate_msg)
 
@@ -144,9 +145,7 @@ class MCPClient:
             return  # Skip validation for messages without type
 
         try:
-            is_valid, error = self.schema_versioning.validate_message(
-                message, msg_type, self.negotiated_version
-            )
+            is_valid, error = self.schema_versioning.validate_message(message, msg_type, self.negotiated_version)
             if not is_valid:
                 print(f"⚠️  Schema validation warning for {msg_type}: {error}")
         except Exception as e:
@@ -169,9 +168,7 @@ class MCPClient:
             return True
 
         try:
-            is_valid, error = self.schema_versioning.validate_message(
-                message, msg_type, self.negotiated_version
-            )
+            is_valid, error = self.schema_versioning.validate_message(message, msg_type, self.negotiated_version)
             if not is_valid:
                 print(f"❌ Outgoing message validation failed: {error}")
                 return False
@@ -202,11 +199,8 @@ class MCPClient:
         message = {
             "type": "callTool",
             "id": tool_call_id,
-            "tool": {
-                "name": tool_name,
-                "arguments": arguments
-            },
-            "stream": stream
+            "tool": {"name": tool_name, "arguments": arguments},
+            "stream": stream,
         }
 
         await self.send_message(message)
@@ -293,7 +287,7 @@ Examples:
   %(prog)s --list-tools
   %(prog)s --call-tool route.complete --args '{"prompt": "Hello world"}'
   %(prog)s --call-tool adapter.python --args '{"code": "print(\\"hello\\")"}' --model gpt-4
-        """
+        """,
     )
 
     parser.add_argument("--host", default="localhost", help="MCP server hostname")
@@ -324,8 +318,7 @@ Examples:
             sys.exit(1)
 
     # Create client and connect
-    client = MCPClient(host=args.host, port=args.port, secure=args.secure,
-                      schema_version=args.schema_version)
+    client = MCPClient(host=args.host, port=args.port, secure=args.secure, schema_version=args.schema_version)
 
     try:
         await client.connect()

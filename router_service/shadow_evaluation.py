@@ -2,7 +2,6 @@
 
 import os
 import time
-from typing import Optional
 
 from metrics.registry import REGISTRY
 
@@ -21,7 +20,7 @@ class ShadowEvaluationTracker:
 
         # Track promotion cycles for GAP-201
         # model_name -> (first_candidate_ts, promotion_count, last_promotion_ts)
-        self.promotion_cycles: dict[str, tuple[float, int, Optional[float]]] = {}
+        self.promotion_cycles: dict[str, tuple[float, int, float | None]] = {}
 
         # Configuration
         self.min_sample_window = int(os.getenv("SHADOW_MIN_SAMPLE_WINDOW", "100"))  # Min samples before evaluation
@@ -142,7 +141,7 @@ class ShadowEvaluationTracker:
         # Clean up tracking
         self.shadow_windows.pop(model_name, None)
 
-    def get_shadow_stats(self, model_name: str) -> Optional[dict[str, float]]:
+    def get_shadow_stats(self, model_name: str) -> dict[str, float] | None:
         """Get current statistics for a shadow model."""
         if model_name not in self.shadow_windows:
             return None

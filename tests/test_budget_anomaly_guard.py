@@ -16,8 +16,8 @@ class TestBudgetAnomalyGuard:
         self.guard = BudgetAnomalyGuard(
             ewma_alpha=0.2,  # Faster adaptation for testing
             z_threshold=2.0,  # Lower threshold for testing
-            min_samples=5,    # Fewer samples needed for testing
-            max_samples=20,   # Smaller history for testing
+            min_samples=5,  # Fewer samples needed for testing
+            max_samples=20,  # Smaller history for testing
             spike_cooldown_s=1.0,  # Short cooldown for testing
         )
 
@@ -168,12 +168,12 @@ class TestBudgetAnomalyGuard:
 
         stats = self.guard.get_session_stats(session)
 
-        assert 'ewma' in stats
-        assert 'sample_count' in stats
-        assert 'last_spike_time' in stats
-        assert 'z_threshold' in stats
-        assert stats['sample_count'] == 10
-        assert stats['z_threshold'] == 2.0
+        assert "ewma" in stats
+        assert "sample_count" in stats
+        assert "last_spike_time" in stats
+        assert "z_threshold" in stats
+        assert stats["sample_count"] == 10
+        assert stats["z_threshold"] == 2.0
 
     async def test_session_reset(self):
         """Test session reset functionality."""

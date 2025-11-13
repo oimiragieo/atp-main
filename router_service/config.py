@@ -66,7 +66,9 @@ class Settings:
 
         # Fallback to individual tenant environment variables
         tenant_config = {}
-        tenant_vars = [var for var in os.environ.keys() if var.startswith("ROUTER_TENANT_") and var.endswith("_SAMPLING")]
+        tenant_vars = [
+            var for var in os.environ.keys() if var.startswith("ROUTER_TENANT_") and var.endswith("_SAMPLING")
+        ]
 
         for var in tenant_vars:
             tenant_id = var.replace("ROUTER_TENANT_", "").replace("_SAMPLING", "").lower()

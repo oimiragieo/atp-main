@@ -30,11 +30,4 @@ if __name__ == "__main__":
 
     print(f"Starting ATP Router Service on {host}:{port}")
 
-    uvicorn.run(
-        "router_service.service:app",
-        host=host,
-        port=port,
-        workers=workers,
-        reload=False,
-        log_level="info"
-    )
+    uvicorn.run("router_service.service:app", host=host, port=port, workers=workers, reload=False, log_level="info")

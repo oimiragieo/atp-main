@@ -6,13 +6,12 @@ Enhanced with GAP-206: embedding-based cluster classification.
 import hashlib
 import os
 import re
-from typing import Optional
 
 from .cluster_coverage import tracker
 from .embedding_cluster_classifier import EMBEDDING_CLUSTER_CLASSIFIER
 
 
-def _heuristic_classify(prompt: str) -> Optional[str]:
+def _heuristic_classify(prompt: str) -> str | None:
     """Heuristic classification fallback function."""
     lower = prompt.lower()
     for cluster, patterns in KEYWORD_CLUSTERS.items():
@@ -48,7 +47,7 @@ KEYWORD_CLUSTERS = {
 }
 
 
-def classify(prompt: str) -> Optional[str]:
+def classify(prompt: str) -> str | None:
     """Return a coarse cluster label using embedding-based clustering with heuristic fallback.
     Order:
       1. Embedding-based clustering (GAP-206)

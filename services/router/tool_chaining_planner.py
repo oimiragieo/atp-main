@@ -9,9 +9,10 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -138,9 +139,7 @@ class ToolChain:
                 continue
             # Check if all dependencies are completed successfully
             deps_satisfied = all(
-                self.steps[dep_id].is_successful
-                for dep_id in step.dependencies
-                if dep_id in self.steps
+                self.steps[dep_id].is_successful for dep_id in step.dependencies if dep_id in self.steps
             )
             if deps_satisfied:
                 ready.append(step)
@@ -174,11 +173,7 @@ class ToolChainingPlanner:
     def create_chain(self, goal: str, initial_input: dict[str, Any]) -> str:
         """Create a new tool chain for a goal."""
         chain_id = f"chain_{uuid.uuid4().hex[:8]}"
-        chain = ToolChain(
-            chain_id=chain_id,
-            goal=goal,
-            steps={}
-        )
+        chain = ToolChain(chain_id=chain_id, goal=goal, steps={})
         self.chains[chain_id] = chain
         self._chains_created.inc()
         self._active_chains.inc()
@@ -224,15 +219,12 @@ class ToolChainingPlanner:
             chain.steps[complete_step.step_id] = complete_step
             chain.execution_order.append(complete_step.step_id)
 
-    def _create_step(self, tool_name: str, input_data: dict[str, Any], dependencies: list[str] | None = None) -> ToolStep:
+    def _create_step(
+        self, tool_name: str, input_data: dict[str, Any], dependencies: list[str] | None = None
+    ) -> ToolStep:
         """Create a tool execution step."""
         step_id = f"step_{uuid.uuid4().hex[:8]}"
-        return ToolStep(
-            step_id=step_id,
-            tool_name=tool_name,
-            input_data=input_data,
-            dependencies=dependencies or []
-        )
+        return ToolStep(step_id=step_id, tool_name=tool_name, input_data=input_data, dependencies=dependencies or [])
 
     def start_chain(self, chain_id: str) -> None:
         """Start execution of a tool chain."""
@@ -417,10 +409,10 @@ class ToolChainingPlanner:
                     "completed_at": step.completed_at,
                     "duration": step.duration,
                     "cost_incurred": step.cost_incurred,
-                    "error": step.error
+                    "error": step.error,
                 }
                 for step_id, step in chain.steps.items()
-            }
+            },
         }
 
 

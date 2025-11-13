@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RetentionPolicy:
     """Retention policy configuration for a data type."""
+
     data_type: str
     max_age_days: int
     enabled: bool = True
@@ -56,7 +57,7 @@ class RetentionConfig:
                     data_type=data_type,
                     max_age_days=policy_config.get("max_age_days", 30),
                     enabled=policy_config.get("enabled", True),
-                    dry_run=policy_config.get("dry_run", False)
+                    dry_run=policy_config.get("dry_run", False),
                 )
 
             logger.info(f"Loaded retention policies from {config_file}")
@@ -71,16 +72,12 @@ class RetentionConfig:
         """Save current policies to configuration file."""
         config = {
             "policies": {
-                data_type: {
-                    "max_age_days": policy.max_age_days,
-                    "enabled": policy.enabled,
-                    "dry_run": policy.dry_run
-                }
+                data_type: {"max_age_days": policy.max_age_days, "enabled": policy.enabled, "dry_run": policy.dry_run}
                 for data_type, policy in self.policies.items()
             }
         }
 
-        with open(config_file, 'w') as f:
+        with open(config_file, "w") as f:
             json.dump(config, f, indent=2)
 
         logger.info(f"Saved retention policies to {config_file}")
@@ -92,12 +89,7 @@ class RetentionEnforcer:
     def __init__(self, data_dir: str, config: RetentionConfig):
         self.data_dir = Path(data_dir)
         self.config = config
-        self.stats = {
-            "files_processed": 0,
-            "records_purged": 0,
-            "bytes_freed": 0,
-            "errors": 0
-        }
+        self.stats = {"files_processed": 0, "records_purged": 0, "bytes_freed": 0, "errors": 0}
 
     def purge_old_data(self, data_type: str, dry_run: bool = False) -> dict:
         """Purge old data for a specific data type."""
@@ -109,8 +101,7 @@ class RetentionEnforcer:
         # Override with dry_run if specified
         effective_dry_run = dry_run or policy.dry_run
 
-        logger.info(f"Purging {data_type} data older than {policy.max_age_days} days "
-                   f"(dry_run={effective_dry_run})")
+        logger.info(f"Purging {data_type} data older than {policy.max_age_days} days (dry_run={effective_dry_run})")
 
         cutoff_time = time.time() - (policy.max_age_days * 24 * 60 * 60)
 
@@ -144,11 +135,13 @@ class RetentionEnforcer:
             "cutoff_time": cutoff_time,
             "records_purged": total_purged,
             "bytes_freed": total_bytes,
-            "dry_run": effective_dry_run
+            "dry_run": effective_dry_run,
         }
 
-        logger.info(f"Purge completed for {data_type}: {total_purged} records, "
-                   f"{total_bytes} bytes {'would be' if effective_dry_run else ''} freed")
+        logger.info(
+            f"Purge completed for {data_type}: {total_purged} records, "
+            f"{total_bytes} bytes {'would be' if effective_dry_run else ''} freed"
+        )
 
         return result
 
@@ -186,7 +179,7 @@ class RetentionEnforcer:
 
         if not dry_run:
             # Write back only the kept lines
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.writelines(kept_lines)
 
         bytes_freed = sum(len(line) for line in lines) - sum(len(line) for line in kept_lines)
@@ -195,8 +188,7 @@ class RetentionEnforcer:
 
     def run_full_purge(self, dry_run: bool = False) -> dict:
         """Run purge for all configured data types."""
-        logger.info("Starting full data retention purge"
-                   f"{' (dry run)' if dry_run else ''}")
+        logger.info(f"Starting full data retention purge{' (dry run)' if dry_run else ''}")
 
         results = {}
         start_time = time.time()
@@ -211,12 +203,14 @@ class RetentionEnforcer:
             "duration_seconds": end_time - start_time,
             "dry_run": dry_run,
             "results": results,
-            "stats": self.stats.copy()
+            "stats": self.stats.copy(),
         }
 
-        logger.info(f"Full purge completed in {end_time - start_time:.1f}s: "
-                   f"{self.stats['records_purged']} records purged, "
-                   f"{self.stats['bytes_freed']} bytes freed")
+        logger.info(
+            f"Full purge completed in {end_time - start_time:.1f}s: "
+            f"{self.stats['records_purged']} records purged, "
+            f"{self.stats['bytes_freed']} bytes freed"
+        )
 
         return summary
 
@@ -231,15 +225,11 @@ def main():
     import json
 
     parser = argparse.ArgumentParser(description="ATP Data Retention Enforcement")
-    parser.add_argument("--data-dir", default="./data",
-                       help="Data directory path")
-    parser.add_argument("--config", default="./retention_config.json",
-                       help="Retention configuration file")
-    parser.add_argument("--dry-run", action="store_true",
-                       help="Perform dry run without actual deletion")
+    parser.add_argument("--data-dir", default="./data", help="Data directory path")
+    parser.add_argument("--config", default="./retention_config.json", help="Retention configuration file")
+    parser.add_argument("--dry-run", action="store_true", help="Perform dry run without actual deletion")
     parser.add_argument("--data-type", help="Specific data type to purge")
-    parser.add_argument("--init-config", action="store_true",
-                       help="Initialize default configuration file")
+    parser.add_argument("--init-config", action="store_true", help="Initialize default configuration file")
 
     args = parser.parse_args()
 

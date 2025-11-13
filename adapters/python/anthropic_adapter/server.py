@@ -29,7 +29,7 @@ import logging
 import os
 import time
 from collections.abc import AsyncIterator
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
 import adapter_pb2
 import adapter_pb2_grpc
@@ -61,6 +61,7 @@ DEFAULT_MODEL = "claude-3-haiku-20240307"
 
 class _AdapterServicerProto(Protocol):
     """Protocol for adapter servicer methods."""
+
     async def Estimate(self, req: adapter_pb2.EstimateRequest, ctx: Any) -> adapter_pb2.EstimateResponse: ...  # noqa: N802
     async def Stream(self, req: adapter_pb2.StreamRequest, ctx: Any) -> AsyncIterator[adapter_pb2.StreamChunk]: ...  # noqa: N802
     async def Health(self, req: adapter_pb2.HealthRequest, ctx: Any) -> adapter_pb2.HealthResponse: ...  # noqa: N802
@@ -80,16 +81,16 @@ class AnthropicAdapter:
         else:
             # For testing without API key
             self.client = None
-    
+
     def _count_tokens(self, text: str) -> int:
         """Count tokens in text using rough estimation.
-        
+
         Anthropic doesn't provide a public tokenizer, so we use approximation.
         Claude uses a similar tokenizer to GPT models, roughly 4 chars per token.
         """
         return len(text) // 4 + 10  # Add small buffer for safety
-    
-    def _parse_prompt_json(self, prompt_json: str) -> Dict[str, Any]:
+
+    def _parse_prompt_json(self, prompt_json: str) -> dict[str, Any]:
         """Parse the prompt JSON and extract relevant information."""
         try:
             prompt_data = json.loads(prompt_json)
@@ -97,30 +98,27 @@ class AnthropicAdapter:
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse prompt JSON: {e}")
             return {"messages": [{"role": "user", "content": prompt_json}]}
-    
-    def _convert_messages_to_anthropic_format(self, messages: List[Dict[str, Any]]) -> tuple[str, List[Dict[str, Any]]]:
+
+    def _convert_messages_to_anthropic_format(self, messages: list[dict[str, Any]]) -> tuple[str, list[dict[str, Any]]]:
         """Convert OpenAI-style messages to Anthropic format.
-        
+
         Anthropic expects a system prompt separate from messages, and messages
         must alternate between user and assistant.
         """
         system_prompt = ""
         anthropic_messages = []
-        
+
         for message in messages:
             role = message.get("role", "user")
             content = message.get("content", "")
-            
+
             if role == "system":
                 system_prompt += content + "\n"
             elif role in ["user", "assistant"]:
-                anthropic_messages.append({
-                    "role": role,
-                    "content": content
-                })
-        
+                anthropic_messages.append({"role": role, "content": content})
+
         return system_prompt.strip(), anthropic_messages
-    
+
     def _estimate_output_tokens(self, input_tokens: int, model: str) -> int:
         """Estimate output tokens based on input and model."""
         # Conservative estimates based on typical usage patterns
@@ -132,14 +130,14 @@ class AnthropicAdapter:
             return min(input_tokens // 4, 4096)  # Haiku is more concise
         else:
             return min(input_tokens // 3, 4096)  # Conservative default
-    
+
     def _calculate_cost(self, input_tokens: int, output_tokens: int, model: str) -> int:
         """Calculate cost in USD micros."""
         pricing = ANTHROPIC_PRICING.get(model, ANTHROPIC_PRICING[DEFAULT_MODEL])
-        
+
         input_cost = (input_tokens * pricing["input"]) // 1000
         output_cost = (output_tokens * pricing["output"]) // 1000
-        
+
         return input_cost + output_cost
 
     async def Estimate(self, req: adapter_pb2.EstimateRequest, ctx: Any) -> adapter_pb2.EstimateResponse:  # noqa: N802
@@ -147,11 +145,11 @@ class AnthropicAdapter:
         try:
             prompt_data = self._parse_prompt_json(req.prompt_json)
             model = prompt_data.get("model", DEFAULT_MODEL)
-            
+
             # Count input tokens
             input_tokens = 0
             messages = prompt_data.get("messages", [])
-            
+
             for message in messages:
                 content = message.get("content", "")
                 if isinstance(content, str):
@@ -164,24 +162,24 @@ class AnthropicAdapter:
                         elif item.get("type") == "image":
                             # Vision models: rough estimate for image processing
                             input_tokens += 1000  # Base cost for image analysis
-            
+
             # Add tokens for tool definitions if present
             tools = prompt_data.get("tools", [])
-            
+
             for tool in tools:
                 tool_str = json.dumps(tool)
                 input_tokens += self._count_tokens(tool_str)
-            
+
             # Estimate output tokens
             max_tokens = prompt_data.get("max_tokens")
             if max_tokens:
                 output_tokens = min(max_tokens, self._estimate_output_tokens(input_tokens, model))
             else:
                 output_tokens = self._estimate_output_tokens(input_tokens, model)
-            
+
             # Calculate cost
             cost_micros = self._calculate_cost(input_tokens, output_tokens, model)
-            
+
             # Token estimates breakdown
             token_estimates = {
                 "input_tokens": input_tokens,
@@ -194,14 +192,16 @@ class AnthropicAdapter:
                     "tool_tokens": sum(self._count_tokens(json.dumps(t)) for t in tools),
                 },
             }
-            
+
             # Tool cost breakdown
             tool_cost_breakdown = {
                 "tools_used": [tool.get("function", {}).get("name", "unknown") for tool in tools],
                 "total_tool_cost_usd_micros": 0,  # Anthropic doesn't charge extra for tool use
-                "tool_definitions_cost": sum(self._count_tokens(json.dumps(t)) for t in tools) * ANTHROPIC_PRICING.get(model, ANTHROPIC_PRICING[DEFAULT_MODEL])["input"] // 1000,
+                "tool_definitions_cost": sum(self._count_tokens(json.dumps(t)) for t in tools)
+                * ANTHROPIC_PRICING.get(model, ANTHROPIC_PRICING[DEFAULT_MODEL])["input"]
+                // 1000,
             }
-            
+
             return adapter_pb2.EstimateResponse(
                 in_tokens=input_tokens,
                 out_tokens=output_tokens,
@@ -210,7 +210,7 @@ class AnthropicAdapter:
                 tool_cost_breakdown_json=json.dumps(tool_cost_breakdown),
                 token_estimates_json=json.dumps(token_estimates),
             )
-            
+
         except Exception as e:
             logger.error(f"Error in Estimate: {e}")
             # Return fallback estimate
@@ -221,7 +221,9 @@ class AnthropicAdapter:
                 usd_micros=self._calculate_cost(fallback_tokens, fallback_tokens // 2, DEFAULT_MODEL),
                 confidence=0.3,
                 tool_cost_breakdown_json=json.dumps({"tools_used": [], "total_tool_cost_usd_micros": 0}),
-                token_estimates_json=json.dumps({"input_tokens": fallback_tokens, "output_tokens": fallback_tokens // 2}),
+                token_estimates_json=json.dumps(
+                    {"input_tokens": fallback_tokens, "output_tokens": fallback_tokens // 2}
+                ),
             )
 
     async def Stream(self, req: adapter_pb2.StreamRequest, ctx: Any) -> AsyncIterator[adapter_pb2.StreamChunk]:  # noqa: N802
@@ -230,11 +232,13 @@ class AnthropicAdapter:
             if not self.client:
                 yield adapter_pb2.StreamChunk(
                     type="agent.result.error",
-                    content_json=json.dumps({
-                        "error": "Anthropic API key not configured",
-                        "adapter": "anthropic_adapter",
-                        "error_type": "ConfigurationError",
-                    }),
+                    content_json=json.dumps(
+                        {
+                            "error": "Anthropic API key not configured",
+                            "adapter": "anthropic_adapter",
+                            "error_type": "ConfigurationError",
+                        }
+                    ),
                     confidence=0.0,
                     partial_in_tokens=0,
                     partial_out_tokens=0,
@@ -242,15 +246,15 @@ class AnthropicAdapter:
                     more=False,
                 )
                 return
-                
+
             prompt_data = self._parse_prompt_json(req.prompt_json)
             model = prompt_data.get("model", DEFAULT_MODEL)
-            
+
             # Convert messages to Anthropic format
             system_prompt, anthropic_messages = self._convert_messages_to_anthropic_format(
                 prompt_data.get("messages", [])
             )
-            
+
             # Prepare Anthropic API call
             api_params = {
                 "model": model,
@@ -259,73 +263,73 @@ class AnthropicAdapter:
                 "max_tokens": prompt_data.get("max_tokens", 4096),
                 "temperature": prompt_data.get("temperature", 0.7),
             }
-            
+
             if system_prompt:
                 api_params["system"] = system_prompt
-            
+
             # Add tool use if present
             if "tools" in prompt_data:
                 api_params["tools"] = prompt_data["tools"]
-            
+
             # Track tokens and cost
             input_tokens = 0
             output_tokens = 0
             accumulated_content = ""
             tool_use_blocks = []
-            
+
             # Count input tokens
             for message in anthropic_messages:
                 content = message.get("content", "")
                 if isinstance(content, str):
                     input_tokens += self._count_tokens(content)
-            
+
             if system_prompt:
                 input_tokens += self._count_tokens(system_prompt)
-            
+
             start_time = time.time()
-            
+
             async with self.client.messages.stream(**api_params) as stream:
                 async for event in stream:
                     if event.type == "content_block_delta":
-                        if hasattr(event.delta, 'text'):
+                        if hasattr(event.delta, "text"):
                             text_delta = event.delta.text
                             accumulated_content += text_delta
                             output_tokens += self._count_tokens(text_delta)
-                            
+
                             yield adapter_pb2.StreamChunk(
                                 type="agent.result.partial",
-                                content_json=json.dumps({
-                                    "content": text_delta,
-                                    "accumulated_content": accumulated_content,
-                                    "model": model,
-                                    "adapter": "anthropic_adapter"
-                                }),
+                                content_json=json.dumps(
+                                    {
+                                        "content": text_delta,
+                                        "accumulated_content": accumulated_content,
+                                        "model": model,
+                                        "adapter": "anthropic_adapter",
+                                    }
+                                ),
                                 confidence=0.8,
                                 partial_in_tokens=input_tokens,
                                 partial_out_tokens=output_tokens,
                                 partial_usd_micros=self._calculate_cost(input_tokens, output_tokens, model),
                                 more=True,
                             )
-                    
+
                     elif event.type == "content_block_start":
-                        if hasattr(event.content_block, 'type') and event.content_block.type == "tool_use":
-                            tool_use_blocks.append({
-                                "id": event.content_block.id,
-                                "name": event.content_block.name,
-                                "input": {}
-                            })
-                    
-                    elif event.type == "content_block_delta" and hasattr(event.delta, 'partial_json'):
+                        if hasattr(event.content_block, "type") and event.content_block.type == "tool_use":
+                            tool_use_blocks.append(
+                                {"id": event.content_block.id, "name": event.content_block.name, "input": {}}
+                            )
+
+                    elif event.type == "content_block_delta" and hasattr(event.delta, "partial_json"):
                         # Handle tool use input streaming
                         if tool_use_blocks:
                             # Update the last tool use block with partial JSON
                             pass  # Anthropic handles this internally
-                    
+
                     elif event.type == "message_stop":
                         # Get final usage statistics
                         message = await stream.get_final_message()
                         usage = message.usage
-                        
+
                         final_content = {
                             "content": accumulated_content,
                             "model": model,
@@ -338,10 +342,10 @@ class AnthropicAdapter:
                             },
                             "response_time_ms": (time.time() - start_time) * 1000,
                         }
-                        
+
                         if tool_use_blocks:
                             final_content["tool_calls"] = tool_use_blocks
-                        
+
                         yield adapter_pb2.StreamChunk(
                             type="agent.result.final",
                             content_json=json.dumps(final_content),
@@ -352,16 +356,18 @@ class AnthropicAdapter:
                             more=False,
                         )
                         return
-            
+
         except Exception as e:
             logger.error(f"Error in Stream: {e}")
             yield adapter_pb2.StreamChunk(
                 type="agent.result.error",
-                content_json=json.dumps({
-                    "error": str(e),
-                    "adapter": "anthropic_adapter",
-                    "error_type": type(e).__name__,
-                }),
+                content_json=json.dumps(
+                    {
+                        "error": str(e),
+                        "adapter": "anthropic_adapter",
+                        "error_type": type(e).__name__,
+                    }
+                ),
                 confidence=0.0,
                 partial_in_tokens=0,
                 partial_out_tokens=0,
@@ -374,24 +380,24 @@ class AnthropicAdapter:
         try:
             if not self.client:
                 return adapter_pb2.HealthResponse(p95_ms=10000.0, error_rate=1.0)
-                
+
             # Test Anthropic API connectivity with a minimal request
             start_time = time.time()
-            
+
             response = await self.client.messages.create(
                 model="claude-3-haiku-20240307",
                 messages=[{"role": "user", "content": "Hi"}],
                 max_tokens=1,
                 temperature=0,
             )
-            
+
             response_time = (time.time() - start_time) * 1000  # Convert to milliseconds
-            
+
             if response and response.content:
                 return adapter_pb2.HealthResponse(p95_ms=response_time, error_rate=0.0)
             else:
                 return adapter_pb2.HealthResponse(p95_ms=5000.0, error_rate=0.5)
-                
+
         except Exception as e:
             logger.error(f"Health check failed: {e}")
             return adapter_pb2.HealthResponse(p95_ms=10000.0, error_rate=1.0)
@@ -408,7 +414,7 @@ async def health() -> dict[str, Any]:
         # Quick health check
         if not os.getenv("ANTHROPIC_API_KEY"):
             return {"ok": False, "error": "ANTHROPIC_API_KEY not configured"}
-        
+
         return {"ok": True, "adapter": "anthropic_adapter", "models_supported": list(ANTHROPIC_PRICING.keys())}
     except Exception as e:
         return {"ok": False, "error": str(e)}
@@ -425,7 +431,7 @@ async def serve() -> None:
     if not os.getenv("ANTHROPIC_API_KEY"):
         logger.error("ANTHROPIC_API_KEY environment variable is required")
         return
-    
+
     # Start gRPC server
     grpc_server = grpc.aio.server()
     _register(grpc_server)
@@ -439,10 +445,7 @@ async def serve() -> None:
     logger.info("HTTP Health server listening on :8080")
 
     # Run both servers concurrently
-    await asyncio.gather(
-        grpc_server.wait_for_termination(),
-        http_server.serve()
-    )
+    await asyncio.gather(grpc_server.wait_for_termination(), http_server.serve())
 
 
 if __name__ == "__main__":

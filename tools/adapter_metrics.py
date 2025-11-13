@@ -5,7 +5,7 @@ import json
 import time
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from typing import Any, Optional
+from typing import Any
 
 # Optional prometheus import
 try:
@@ -211,7 +211,7 @@ class CertificationMetricsCollector:
         if PROMETHEUS_AVAILABLE and self.adapter_uptime_seconds:
             self.adapter_uptime_seconds.labels(adapter_name=adapter_name).set(uptime_seconds)
 
-    def get_adapter_status(self, adapter_name: str) -> Optional[AdapterMetrics]:
+    def get_adapter_status(self, adapter_name: str) -> AdapterMetrics | None:
         """Get current status of an adapter."""
         if self._lock:
             with self._lock:

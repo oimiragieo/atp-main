@@ -14,7 +14,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -28,7 +28,7 @@ class VectorSearchResult:
     key: str
     score: float
     metadata: dict[str, Any]
-    embedding: Optional[list[float]] = None
+    embedding: list[float] | None = None
 
 
 @dataclass
@@ -39,7 +39,7 @@ class VectorQueryMetrics:
     duration_ms: float
     namespace: str
     result_count: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class VectorBackend(abc.ABC):
@@ -60,13 +60,13 @@ class VectorBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get(self, namespace: str, key: str) -> Optional[tuple[list[float], dict[str, Any]]]:
+    async def get(self, namespace: str, key: str) -> tuple[list[float], dict[str, Any]] | None:
         """Retrieve a vector and its metadata by key."""
         pass
 
     @abc.abstractmethod
     async def query(
-        self, namespace: str, embedding: list[float], k: int = 10, threshold: Optional[float] = None
+        self, namespace: str, embedding: list[float], k: int = 10, threshold: float | None = None
     ) -> list[VectorSearchResult]:
         """Find k most similar vectors to the query embedding."""
         pass
@@ -123,7 +123,7 @@ class InMemoryVectorBackend(VectorBackend):
         duration = (time.time() - start_time) * 1000
         self._record_metrics(VectorQueryMetrics(operation="upsert", duration_ms=duration, namespace=namespace))
 
-    async def get(self, namespace: str, key: str) -> Optional[tuple[list[float], dict[str, Any]]]:
+    async def get(self, namespace: str, key: str) -> tuple[list[float], dict[str, Any]] | None:
         start_time = time.time()
         result = self.store.get(namespace, {}).get(key)
 
@@ -137,7 +137,7 @@ class InMemoryVectorBackend(VectorBackend):
         return result
 
     async def query(
-        self, namespace: str, embedding: list[float], k: int = 10, threshold: Optional[float] = None
+        self, namespace: str, embedding: list[float], k: int = 10, threshold: float | None = None
     ) -> list[VectorSearchResult]:
         start_time = time.time()
 
@@ -270,7 +270,7 @@ class RedisVectorBackend(VectorBackend):
         duration = (time.time() - start_time) * 1000
         self._record_metrics(VectorQueryMetrics(operation="upsert", duration_ms=duration, namespace=namespace))
 
-    async def get(self, namespace: str, key: str) -> Optional[tuple[list[float], dict[str, Any]]]:
+    async def get(self, namespace: str, key: str) -> tuple[list[float], dict[str, Any]] | None:
         if not self.redis_client:
             return None
 
@@ -292,7 +292,7 @@ class RedisVectorBackend(VectorBackend):
         return doc["embedding"], doc["metadata"]
 
     async def query(
-        self, namespace: str, embedding: list[float], k: int = 10, threshold: Optional[float] = None
+        self, namespace: str, embedding: list[float], k: int = 10, threshold: float | None = None
     ) -> list[VectorSearchResult]:
         if not self.redis_client:
             return []
@@ -379,7 +379,7 @@ class WeaviateVectorBackend(VectorBackend):
         duration = (time.time() - start_time) * 1000
         self._record_metrics(VectorQueryMetrics(operation="upsert", duration_ms=duration, namespace=namespace))
 
-    async def get(self, namespace: str, key: str) -> Optional[tuple[list[float], dict[str, Any]]]:
+    async def get(self, namespace: str, key: str) -> tuple[list[float], dict[str, Any]] | None:
         if not self.client:
             return None
 
@@ -392,7 +392,7 @@ class WeaviateVectorBackend(VectorBackend):
         return None
 
     async def query(
-        self, namespace: str, embedding: list[float], k: int = 10, threshold: Optional[float] = None
+        self, namespace: str, embedding: list[float], k: int = 10, threshold: float | None = None
     ) -> list[VectorSearchResult]:
         if not self.client:
             return []
@@ -469,7 +469,7 @@ class PGVectorBackend(VectorBackend):
         duration = (time.time() - start_time) * 1000
         self._record_metrics(VectorQueryMetrics(operation="upsert", duration_ms=duration, namespace=namespace))
 
-    async def get(self, namespace: str, key: str) -> Optional[tuple[list[float], dict[str, Any]]]:
+    async def get(self, namespace: str, key: str) -> tuple[list[float], dict[str, Any]] | None:
         if not self.pool:
             return None
 
@@ -482,7 +482,7 @@ class PGVectorBackend(VectorBackend):
         return None
 
     async def query(
-        self, namespace: str, embedding: list[float], k: int = 10, threshold: Optional[float] = None
+        self, namespace: str, embedding: list[float], k: int = 10, threshold: float | None = None
     ) -> list[VectorSearchResult]:
         if not self.pool:
             return []

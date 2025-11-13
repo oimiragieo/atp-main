@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from typing import Any, Optional
+from typing import Any
 
 
 class Span:
@@ -12,7 +12,7 @@ class Span:
 
 
 @contextmanager
-def start_span(name: str, tokens: Optional[int] = None, usd_micros: Optional[int] = None, qos: Optional[str] = None):
+def start_span(name: str, tokens: int | None = None, usd_micros: int | None = None, qos: str | None = None):
     span = Span(name)
     if tokens is not None:
         span.set_attr("atp.tokens", int(tokens))

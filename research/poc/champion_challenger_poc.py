@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -11,7 +10,7 @@ class Candidate:
 
 def select(
     ch: list[Candidate], min_conf: float = 0.7, near_eps: float = 0.02
-) -> tuple[Optional[Candidate], Optional[Candidate], bool]:
+) -> tuple[Candidate | None, Candidate | None, bool]:
     """Return (champion, challenger, escalated).
 
     Champion: highest confidence (tie-break by lower cost). Escalate if champion below min_conf.

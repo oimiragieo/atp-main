@@ -8,9 +8,10 @@ Supports schema validation, migration, and policy enforcement for data ingestion
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 try:
     import jsonschema
@@ -35,7 +36,7 @@ class SchemaVersion:
     created_at: float
     description: str
     is_active: bool = True
-    compatibility_rules: Optional[dict[str, Any]] = None
+    compatibility_rules: dict[str, Any] | None = None
 
 
 @dataclass
@@ -46,13 +47,13 @@ class ValidationResult:
     errors: list[str]
     schema_id: str
     schema_version: int
-    data_version: Optional[int] = None
+    data_version: int | None = None
 
 
 class SchemaRegistry:
     """Registry for JSON schemas with version management and evolution support."""
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: str | None = None):
         self.schemas: dict[str, list[SchemaVersion]] = {}
         self.migration_registries: dict[str, MigrationRegistry] = {}
         self.storage_path = Path(storage_path) if storage_path else None
@@ -66,7 +67,7 @@ class SchemaRegistry:
         schema_id: str,
         schema: dict[str, Any],
         description: str = "",
-        compatibility_rules: Optional[dict[str, Any]] = None,
+        compatibility_rules: dict[str, Any] | None = None,
     ) -> int:
         """Register a new schema version.
 
@@ -106,7 +107,7 @@ class SchemaRegistry:
         logger.info(f"Registered schema {schema_id} version {new_version}")
         return new_version
 
-    def get_schema(self, schema_id: str, version: Optional[int] = None) -> Optional[SchemaVersion]:
+    def get_schema(self, schema_id: str, version: int | None = None) -> SchemaVersion | None:
         """Get a specific schema version.
 
         Args:
@@ -135,9 +136,7 @@ class SchemaRegistry:
 
         return None
 
-    def validate_data(
-        self, schema_id: str, data: dict[str, Any], data_version: Optional[int] = None
-    ) -> ValidationResult:
+    def validate_data(self, schema_id: str, data: dict[str, Any], data_version: int | None = None) -> ValidationResult:
         """Validate data against a schema.
 
         Args:
@@ -235,7 +234,7 @@ class SchemaRegistry:
 
         logger.info(f"Registered migration for {schema_id}: v{from_version} -> v{to_version}")
 
-    def negotiate_version(self, schema_id: str, client_supported_versions: list[int]) -> Optional[int]:
+    def negotiate_version(self, schema_id: str, client_supported_versions: list[int]) -> int | None:
         """Negotiate the best schema version based on client capabilities.
 
         Args:
@@ -346,7 +345,7 @@ class IngestionPolicy:
         self.policies[schema_id] = policy
 
     def validate_ingestion(
-        self, schema_id: str, data: dict[str, Any], client_version: Optional[int] = None
+        self, schema_id: str, data: dict[str, Any], client_version: int | None = None
     ) -> ValidationResult:
         """Validate data for ingestion with policy enforcement.
 

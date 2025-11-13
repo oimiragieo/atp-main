@@ -10,9 +10,10 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -122,9 +123,7 @@ class OrchestrationSession:
             # Check if all dependencies are completed successfully
             # Only consider dependencies that exist in this session
             deps_satisfied = all(
-                self.sub_requests[dep_id].is_successful
-                for dep_id in req.dependencies
-                if dep_id in self.sub_requests
+                self.sub_requests[dep_id].is_successful for dep_id in req.dependencies if dep_id in self.sub_requests
             )
             # If there are dependencies that don't exist in this session, they're not satisfied
             has_external_deps = any(dep_id not in self.sub_requests for dep_id in req.dependencies)
@@ -147,18 +146,21 @@ class SubRequestOrchestrator:
         self._sub_requests_created = REGISTRY.counter("atp_orchestrator_sub_requests_created_total")
         self._sub_requests_completed = REGISTRY.counter("atp_orchestrator_sub_requests_completed_total")
         self._sub_requests_failed = REGISTRY.counter("atp_orchestrator_sub_requests_failed_total")
-        self._session_duration = REGISTRY.histogram("atp_orchestrator_session_duration_seconds", [1, 5, 10, 30, 60, 300])
-        self._sub_request_duration = REGISTRY.histogram("atp_orchestrator_sub_request_duration_seconds", [0.1, 0.5, 1, 5, 10, 30])
+        self._session_duration = REGISTRY.histogram(
+            "atp_orchestrator_session_duration_seconds", [1, 5, 10, 30, 60, 300]
+        )
+        self._sub_request_duration = REGISTRY.histogram(
+            "atp_orchestrator_sub_request_duration_seconds", [0.1, 0.5, 1, 5, 10, 30]
+        )
         self._active_sessions = REGISTRY.gauge("atp_orchestrator_active_sessions")
-        self._sub_requests_per_session = REGISTRY.histogram("atp_orchestrator_sub_requests_per_session", [1, 2, 3, 5, 10, 20])
+        self._sub_requests_per_session = REGISTRY.histogram(
+            "atp_orchestrator_sub_requests_per_session", [1, 2, 3, 5, 10, 20]
+        )
 
     def create_session(self, initial_prompt: str) -> str:
         """Create a new orchestration session."""
         session_id = f"orch_{uuid.uuid4().hex[:8]}"
-        session = OrchestrationSession(
-            session_id=session_id,
-            initial_prompt=initial_prompt
-        )
+        session = OrchestrationSession(session_id=session_id, initial_prompt=initial_prompt)
         self.sessions[session_id] = session
         self._sessions_created.inc()
         self._active_sessions.inc()
@@ -171,7 +173,7 @@ class SubRequestOrchestrator:
         prompt: str,
         adapter_name: str,
         dependencies: list[str] | None = None,
-        timeout_seconds: float = 30.0
+        timeout_seconds: float = 30.0,
     ) -> str:
         """Add a sub-request to an orchestration session."""
         if session_id not in self.sessions:
@@ -187,7 +189,7 @@ class SubRequestOrchestrator:
             prompt=prompt,
             adapter_name=adapter_name,
             dependencies=dependencies or [],
-            timeout_seconds=timeout_seconds
+            timeout_seconds=timeout_seconds,
         )
 
         session.sub_requests[request_id] = sub_request
@@ -328,10 +330,10 @@ class SubRequestOrchestrator:
                     "started_at": req.started_at,
                     "completed_at": req.completed_at,
                     "duration": req.duration,
-                    "error": req.error
+                    "error": req.error,
                 }
                 for req_id, req in session.sub_requests.items()
-            }
+            },
         }
 
 

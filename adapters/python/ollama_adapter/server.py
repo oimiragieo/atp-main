@@ -36,6 +36,7 @@ from fastapi import FastAPI
 
 class _AdapterServicerProto(Protocol):
     """Protocol for adapter servicer methods."""
+
     async def Estimate(self, req: adapter_pb2.EstimateRequest, ctx: Any) -> adapter_pb2.EstimateResponse: ...  # noqa: N802
     async def Stream(self, req: adapter_pb2.StreamRequest, ctx: Any) -> AsyncIterator[adapter_pb2.StreamChunk]: ...  # noqa: N802
     async def Health(self, req: adapter_pb2.HealthRequest, ctx: Any) -> adapter_pb2.HealthResponse: ...  # noqa: N802
@@ -139,10 +140,7 @@ async def serve() -> None:
     print("HTTP Health server listening on :8080")
 
     # Run both servers concurrently
-    await asyncio.gather(
-        grpc_server.wait_for_termination(),
-        http_server.serve()
-    )
+    await asyncio.gather(grpc_server.wait_for_termination(), http_server.serve())
 
 
 if __name__ == "__main__":

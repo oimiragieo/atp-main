@@ -30,7 +30,7 @@ class TestDpLedgerEntry(unittest.TestCase):
             epsilon_used=0.5,
             sensitivity=1.0,
             sequence_number=1,
-            previous_hash="abc123"
+            previous_hash="abc123",
         )
 
         self.assertEqual(entry.entry_id, "test_001")
@@ -53,7 +53,7 @@ class TestDpLedgerEntry(unittest.TestCase):
             epsilon_used=0.5,
             sensitivity=1.0,
             sequence_number=1,
-            previous_hash="abc123"
+            previous_hash="abc123",
         )
 
         hash_value = entry.compute_hash()
@@ -76,7 +76,7 @@ class TestDpLedgerEntry(unittest.TestCase):
             sensitivity=1.0,
             sequence_number=1,
             previous_hash="abc123",
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
 
         # Serialize to dict
@@ -108,7 +108,7 @@ class TestDpLedgerEntry(unittest.TestCase):
             epsilon_used=0.5,
             sensitivity=1.0,
             sequence_number=1,
-            previous_hash="0" * 64
+            previous_hash="0" * 64,
         )
         hash1 = entry1.compute_hash()
 
@@ -122,7 +122,7 @@ class TestDpLedgerEntry(unittest.TestCase):
             epsilon_used=0.3,
             sensitivity=1.0,
             sequence_number=2,
-            previous_hash=hash1
+            previous_hash=hash1,
         )
         hash2 = entry2.compute_hash()
 
@@ -137,14 +137,12 @@ class TestDpLedgerExporter(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.temp_dir = Path(tempfile.mkdtemp())
-        self.exporter = DpLedgerExporter(
-            ledger_path=str(self.temp_dir),
-            max_epsilon_per_tenant=2.0
-        )
+        self.exporter = DpLedgerExporter(ledger_path=str(self.temp_dir), max_epsilon_per_tenant=2.0)
 
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_exporter_initialization(self):
@@ -156,11 +154,7 @@ class TestDpLedgerExporter(unittest.TestCase):
     def test_add_entry_success(self):
         """Test successful addition of ledger entry."""
         success = self.exporter.add_entry(
-            tenant_id="tenant1",
-            event_type="request_count",
-            dp_value=95.2,
-            epsilon_used=0.5,
-            sensitivity=1.0
+            tenant_id="tenant1", event_type="request_count", dp_value=95.2, epsilon_used=0.5, sensitivity=1.0
         )
 
         self.assertTrue(success)
@@ -179,11 +173,7 @@ class TestDpLedgerExporter(unittest.TestCase):
 
         # This should fail
         success = self.exporter.add_entry(
-            tenant_id="tenant1",
-            event_type="latency",
-            dp_value=45.7,
-            epsilon_used=0.1,
-            sensitivity=1.0
+            tenant_id="tenant1", event_type="latency", dp_value=45.7, epsilon_used=0.1, sensitivity=1.0
         )
 
         self.assertFalse(success)
@@ -214,10 +204,7 @@ class TestDpLedgerExporter(unittest.TestCase):
         self.exporter.add_entry("tenant1", "latency", 45.7, 0.3, 1.0)
 
         # Create new exporter instance (simulating restart)
-        new_exporter = DpLedgerExporter(
-            ledger_path=str(self.temp_dir),
-            max_epsilon_per_tenant=2.0
-        )
+        new_exporter = DpLedgerExporter(ledger_path=str(self.temp_dir), max_epsilon_per_tenant=2.0)
 
         # Should have loaded the state
         self.assertEqual(new_exporter.current_sequence, 2)
@@ -299,7 +286,7 @@ class TestDpLedgerExporter(unittest.TestCase):
             dp_value=95.2,
             epsilon_used=0.5,
             sensitivity=1.0,
-            metadata=metadata
+            metadata=metadata,
         )
 
         self.assertTrue(success)
@@ -338,14 +325,12 @@ class TestDpLedgerGlobalFunctions(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_global_exporter_initialization(self):
         """Test global exporter initialization."""
-        exporter = initialize_dp_ledger_exporter(
-            ledger_path=str(self.temp_dir),
-            max_epsilon_per_tenant=1.5
-        )
+        exporter = initialize_dp_ledger_exporter(ledger_path=str(self.temp_dir), max_epsilon_per_tenant=1.5)
 
         self.assertIsNotNone(exporter)
         self.assertEqual(exporter.max_epsilon_per_tenant, 1.5)

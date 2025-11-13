@@ -22,7 +22,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # Import metrics
 from metrics import (
@@ -37,6 +37,7 @@ from metrics import (
 
 class ApprovalState(Enum):
     """Approval states for policy change requests."""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -46,6 +47,7 @@ class ApprovalState(Enum):
 
 class ApprovalStage(Enum):
     """Approval stages in the workflow."""
+
     SECURITY_REVIEW = "security_review"
     COMPLIANCE_REVIEW = "compliance_review"
     BUSINESS_APPROVAL = "business_approval"
@@ -55,11 +57,12 @@ class ApprovalStage(Enum):
 @dataclass
 class PolicyChangeRequest:
     """Represents a policy change request."""
+
     request_id: str
     policy_type: str  # e.g., "ingestion_policy", "access_policy"
-    policy_id: str    # e.g., schema_id or resource_id
+    policy_id: str  # e.g., schema_id or resource_id
     change_type: str  # e.g., "create", "update", "delete"
-    current_policy: Optional[dict[str, Any]]
+    current_policy: dict[str, Any] | None
     proposed_policy: dict[str, Any]
     justification: str
     requester: str
@@ -67,7 +70,7 @@ class PolicyChangeRequest:
     expires_at: datetime
     required_approvers: list[str]
     current_approvals: list[str] = None
-    rejection_reason: Optional[str] = None
+    rejection_reason: str | None = None
     state: ApprovalState = ApprovalState.PENDING
     audit_trail: list[dict[str, Any]] = None
 
@@ -81,20 +84,20 @@ class PolicyChangeRequest:
         """Convert to dictionary for serialization."""
         data = asdict(self)
         # Convert enums to strings
-        data['state'] = self.state.value
+        data["state"] = self.state.value
         # Convert datetimes to ISO strings
-        data['created_at'] = self.created_at.isoformat()
-        data['expires_at'] = self.expires_at.isoformat()
+        data["created_at"] = self.created_at.isoformat()
+        data["expires_at"] = self.expires_at.isoformat()
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'PolicyChangeRequest':
+    def from_dict(cls, data: dict[str, Any]) -> "PolicyChangeRequest":
         """Create from dictionary."""
         # Convert strings back to enums
-        data['state'] = ApprovalState(data['state'])
+        data["state"] = ApprovalState(data["state"])
         # Convert ISO strings back to datetimes
-        data['created_at'] = datetime.fromisoformat(data['created_at'])
-        data['expires_at'] = datetime.fromisoformat(data['expires_at'])
+        data["created_at"] = datetime.fromisoformat(data["created_at"])
+        data["expires_at"] = datetime.fromisoformat(data["expires_at"])
         return cls(**data)
 
     def is_expired(self) -> bool:
@@ -124,19 +127,14 @@ class PolicyChangeRequest:
 
     def _add_audit_entry(self, action: str, user: str, details: str = "") -> None:
         """Add an entry to the audit trail."""
-        entry = {
-            'timestamp': datetime.now().isoformat(),
-            'action': action,
-            'user': user,
-            'details': details
-        }
+        entry = {"timestamp": datetime.now().isoformat(), "action": action, "user": user, "details": details}
         self.audit_trail.append(entry)
 
 
 class PolicyApprovalWorkflow:
     """Manages the policy change approval workflow."""
 
-    def __init__(self, storage_path: Optional[Path] = None, secret: bytes = b"default-approval-secret"):
+    def __init__(self, storage_path: Path | None = None, secret: bytes = b"default-approval-secret"):
         self.requests: dict[str, PolicyChangeRequest] = {}
         self.storage_path = storage_path or Path("data/policy_approvals")
         self.secret = secret
@@ -148,12 +146,12 @@ class PolicyApprovalWorkflow:
         policy_type: str,
         policy_id: str,
         change_type: str,
-        current_policy: Optional[dict[str, Any]],
+        current_policy: dict[str, Any] | None,
         proposed_policy: dict[str, Any],
         justification: str,
         requester: str,
         required_approvers: list[str],
-        expiry_hours: int = 168  # 7 days default
+        expiry_hours: int = 168,  # 7 days default
     ) -> str:
         """Create a new policy change request."""
         request_id = self._generate_request_id(policy_type, policy_id, requester)
@@ -170,7 +168,7 @@ class PolicyApprovalWorkflow:
             requester=requester,
             created_at=datetime.now(),
             expires_at=expires_at,
-            required_approvers=required_approvers
+            required_approvers=required_approvers,
         )
 
         # Add creation audit entry
@@ -248,15 +246,12 @@ class PolicyApprovalWorkflow:
         # Update metrics (cancellation doesn't count as rejection or approval)
         POLICY_CHANGE_REQUESTS_PENDING.dec()
 
-    def get_request(self, request_id: str) -> Optional[PolicyChangeRequest]:
+    def get_request(self, request_id: str) -> PolicyChangeRequest | None:
         """Get a policy change request."""
         return self.requests.get(request_id)
 
     def list_requests(
-        self,
-        state: Optional[ApprovalState] = None,
-        requester: Optional[str] = None,
-        policy_type: Optional[str] = None
+        self, state: ApprovalState | None = None, requester: str | None = None, policy_type: str | None = None
     ) -> list[PolicyChangeRequest]:
         """List policy change requests with optional filtering."""
         requests = list(self.requests.values())
@@ -303,7 +298,7 @@ class PolicyApprovalWorkflow:
             return
 
         file_path = self.storage_path / f"{request.request_id}.json"
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(request.to_dict(), f, indent=2)
 
     def _load_requests(self) -> None:
@@ -334,11 +329,11 @@ class PolicyChangeGating:
         policy_type: str,
         policy_id: str,
         change_type: str,
-        current_policy: Optional[dict[str, Any]],
+        current_policy: dict[str, Any] | None,
         proposed_policy: dict[str, Any],
         justification: str,
         requester: str,
-        required_approvers: list[str]
+        required_approvers: list[str],
     ) -> str:
         """Request a policy change that requires approval."""
         request_id = self.approval_workflow.create_request(
@@ -349,15 +344,15 @@ class PolicyChangeGating:
             proposed_policy=proposed_policy,
             justification=justification,
             requester=requester,
-            required_approvers=required_approvers
+            required_approvers=required_approvers,
         )
 
         # Store the proposed change for later application
         self.pending_changes[request_id] = {
-            'policy_type': policy_type,
-            'policy_id': policy_id,
-            'change_type': change_type,
-            'proposed_policy': proposed_policy
+            "policy_type": policy_type,
+            "policy_id": policy_id,
+            "change_type": change_type,
+            "proposed_policy": proposed_policy,
         }
 
         return request_id
@@ -374,13 +369,10 @@ class PolicyChangeGating:
 
         try:
             # Apply the change based on policy type
-            if pending_change['policy_type'] == 'ingestion_policy':
-                if pending_change['change_type'] == 'update':
-                    policy_system.set_policy(
-                        pending_change['policy_id'],
-                        pending_change['proposed_policy']
-                    )
-                elif pending_change['change_type'] == 'delete':
+            if pending_change["policy_type"] == "ingestion_policy":
+                if pending_change["change_type"] == "update":
+                    policy_system.set_policy(pending_change["policy_id"], pending_change["proposed_policy"])
+                elif pending_change["change_type"] == "delete":
                     # Remove policy (implementation depends on policy system)
                     pass
 

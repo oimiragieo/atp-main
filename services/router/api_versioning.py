@@ -20,47 +20,53 @@ This module provides comprehensive API versioning capabilities including:
 - Deprecation management
 - Migration assistance
 """
-import asyncio
-import json
+
 import logging
-import time
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Optional, Any, Callable, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
 import re
-from packaging import version
-from fastapi import Request, Response
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any
+
+from fastapi import Request
 from fastapi.responses import JSONResponse
+from packaging import version
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class VersioningStrategy(Enum):
     """API versioning strategies."""
+
     URL_PATH = "url_path"  # /api/v1/endpoint
-    HEADER = "header"      # Accept: application/vnd.api+json;version=1
+    HEADER = "header"  # Accept: application/vnd.api+json;version=1
     QUERY_PARAM = "query_param"  # ?version=1
     CONTENT_TYPE = "content_type"  # Content-Type: application/vnd.api.v1+json
 
+
 class CompatibilityLevel(Enum):
     """Backward compatibility levels."""
-    BREAKING = "breaking"      # Breaking changes
+
+    BREAKING = "breaking"  # Breaking changes
     COMPATIBLE = "compatible"  # Backward compatible
     DEPRECATED = "deprecated"  # Deprecated but compatible
+
 
 @dataclass
 class APIVersion:
     """API version information."""
+
     version: str
     release_date: datetime
     status: str  # "stable", "beta", "alpha", "deprecated", "sunset"
     compatibility_level: CompatibilityLevel
-    breaking_changes: List[str] = None
-    deprecations: List[str] = None
-    sunset_date: Optional[datetime] = None
-    migration_guide_url: Optional[str] = None
+    breaking_changes: list[str] = None
+    deprecations: list[str] = None
+    sunset_date: datetime | None = None
+    migration_guide_url: str | None = None
 
     def __post_init__(self):
         if self.breaking_changes is None:
@@ -77,7 +83,7 @@ class APIVersion:
             return False
         return True
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
         result["compatibility_level"] = self.compatibility_level.value
         result["release_date"] = self.release_date.isoformat()
@@ -85,28 +91,32 @@ class APIVersion:
             result["sunset_date"] = self.sunset_date.isoformat()
         return result
 
+
 @dataclass
 class TransformationRule:
     """Request/response transformation rule."""
+
     rule_id: str
     name: str
     source_version: str
     target_version: str
     transformation_type: str  # "request", "response", "both"
-    field_mappings: Dict[str, str] = None
-    custom_transformer: Optional[str] = None
+    field_mappings: dict[str, str] = None
+    custom_transformer: str | None = None
     enabled: bool = True
 
     def __post_init__(self):
         if self.field_mappings is None:
             self.field_mappings = {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
 
 @dataclass
 class DeprecationNotice:
     """Deprecation notice for API features."""
+
     feature_id: str
     feature_name: str
     deprecated_in_version: str
@@ -114,25 +124,26 @@ class DeprecationNotice:
     deprecation_date: datetime
     removal_date: datetime
     reason: str
-    replacement: Optional[str] = None
-    migration_guide: Optional[str] = None
+    replacement: str | None = None
+    migration_guide: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
         result["deprecation_date"] = self.deprecation_date.isoformat()
         result["removal_date"] = self.removal_date.isoformat()
         return result
+
 
 class APIVersionManager:
     """API version management system."""
 
     def __init__(self, default_version: str = "1.0.0"):
         self.default_version = default_version
-        self.versions: Dict[str, APIVersion] = {}
-        self.transformation_rules: Dict[str, TransformationRule] = {}
-        self.deprecation_notices: Dict[str, DeprecationNotice] = {}
-        self.custom_transformers: Dict[str, Callable] = {}
-        
+        self.versions: dict[str, APIVersion] = {}
+        self.transformation_rules: dict[str, TransformationRule] = {}
+        self.deprecation_notices: dict[str, DeprecationNotice] = {}
+        self.custom_transformers: dict[str, Callable] = {}
+
         # Initialize default versions
         self._initialize_default_versions()
 
@@ -143,7 +154,7 @@ class APIVersionManager:
             version="1.0.0",
             release_date=datetime(2024, 1, 1, tzinfo=timezone.utc),
             status="stable",
-            compatibility_level=CompatibilityLevel.COMPATIBLE
+            compatibility_level=CompatibilityLevel.COMPATIBLE,
         )
         self.versions["1.0.0"] = v1
 
@@ -153,7 +164,7 @@ class APIVersionManager:
             release_date=datetime(2024, 6, 1, tzinfo=timezone.utc),
             status="stable",
             compatibility_level=CompatibilityLevel.COMPATIBLE,
-            deprecations=["legacy_auth_method"]
+            deprecations=["legacy_auth_method"],
         )
         self.versions["1.1.0"] = v1_1
 
@@ -166,8 +177,8 @@ class APIVersionManager:
             breaking_changes=[
                 "Changed authentication from API key to JWT",
                 "Renamed 'completions' endpoint to 'generate'",
-                "Modified response format for streaming endpoints"
-            ]
+                "Modified response format for streaming endpoints",
+            ],
         )
         self.versions["2.0.0"] = v2
 
@@ -176,7 +187,7 @@ class APIVersionManager:
             version="2.1.0",
             release_date=datetime(2025, 3, 1, tzinfo=timezone.utc),
             status="beta",
-            compatibility_level=CompatibilityLevel.COMPATIBLE
+            compatibility_level=CompatibilityLevel.COMPATIBLE,
         )
         self.versions["2.1.0"] = v2_1
 
@@ -196,8 +207,8 @@ class APIVersionManager:
                 "prompt": "input",
                 "max_tokens": "max_length",
                 "temperature": "temperature",
-                "top_p": "top_p"
-            }
+                "top_p": "top_p",
+            },
         )
         self.transformation_rules[completions_rule.rule_id] = completions_rule
 
@@ -208,7 +219,7 @@ class APIVersionManager:
             source_version="1.0.0",
             target_version="2.0.0",
             transformation_type="request",
-            custom_transformer="transform_auth_v1_to_v2"
+            custom_transformer="transform_auth_v1_to_v2",
         )
         self.transformation_rules[auth_rule.rule_id] = auth_rule
 
@@ -220,12 +231,7 @@ class APIVersionManager:
         self.versions[api_version.version] = api_version
         logger.info(f"Added API version {api_version.version}")
 
-    def deprecate_version(
-        self, 
-        version_str: str, 
-        sunset_date: datetime,
-        migration_guide_url: Optional[str] = None
-    ):
+    def deprecate_version(self, version_str: str, sunset_date: datetime, migration_guide_url: str | None = None):
         """Deprecate an API version."""
         if version_str in self.versions:
             api_version = self.versions[version_str]
@@ -241,22 +247,22 @@ class APIVersionManager:
             api_version.status = "sunset"
             logger.info(f"Sunset API version {version_str}")
 
-    def get_version_info(self, version_str: str) -> Optional[APIVersion]:
+    def get_version_info(self, version_str: str) -> APIVersion | None:
         """Get information about a specific version."""
         return self.versions.get(version_str)
 
-    def list_versions(self, include_sunset: bool = False) -> List[APIVersion]:
+    def list_versions(self, include_sunset: bool = False) -> list[APIVersion]:
         """List all API versions."""
         versions = []
         for api_version in self.versions.values():
             if include_sunset or api_version.is_supported:
                 versions.append(api_version)
-        
+
         # Sort by version number
         versions.sort(key=lambda v: version.parse(v.version), reverse=True)
         return versions
 
-    def get_latest_version(self, status: Optional[str] = None) -> Optional[APIVersion]:
+    def get_latest_version(self, status: str | None = None) -> APIVersion | None:
         """Get the latest API version."""
         versions = self.list_versions()
         if status:
@@ -264,15 +270,13 @@ class APIVersionManager:
         return versions[0] if versions else None
 
     def extract_version_from_request(
-        self, 
-        request: Request, 
-        strategy: VersioningStrategy = VersioningStrategy.URL_PATH
+        self, request: Request, strategy: VersioningStrategy = VersioningStrategy.URL_PATH
     ) -> str:
         """Extract API version from request."""
         if strategy == VersioningStrategy.URL_PATH:
             # Extract from URL path like /api/v1/endpoint or /api/v2.1/endpoint
             path = request.url.path
-            match = re.search(r'/api/v?(\d+(?:\.\d+)*)', path)
+            match = re.search(r"/api/v?(\d+(?:\.\d+)*)", path)
             if match:
                 version_str = match.group(1)
                 # Convert short version to full version
@@ -285,7 +289,7 @@ class APIVersionManager:
         elif strategy == VersioningStrategy.HEADER:
             # Extract from Accept header
             accept_header = request.headers.get("Accept", "")
-            match = re.search(r'version=(\d+(?:\.\d+)*)', accept_header)
+            match = re.search(r"version=(\d+(?:\.\d+)*)", accept_header)
             if match:
                 return match.group(1)
         elif strategy == VersioningStrategy.QUERY_PARAM:
@@ -296,7 +300,7 @@ class APIVersionManager:
         elif strategy == VersioningStrategy.CONTENT_TYPE:
             # Extract from Content-Type header
             content_type = request.headers.get("Content-Type", "")
-            match = re.search(r'\.v(\d+(?:\.\d+)*)\+', content_type)
+            match = re.search(r"\.v(\d+(?:\.\d+)*)\+", content_type)
             if match:
                 return match.group(1)
 
@@ -308,15 +312,11 @@ class APIVersionManager:
         api_version = self.versions.get(version_str)
         return api_version.is_supported if api_version else False
 
-    def get_compatibility_info(
-        self, 
-        source_version: str, 
-        target_version: str
-    ) -> Dict[str, Any]:
+    def get_compatibility_info(self, source_version: str, target_version: str) -> dict[str, Any]:
         """Get compatibility information between versions."""
         source_ver = self.versions.get(source_version)
         target_ver = self.versions.get(target_version)
-        
+
         if not source_ver or not target_ver:
             return {"error": "Version not found"}
 
@@ -332,7 +332,7 @@ class APIVersionManager:
             "breaking_changes": [],
             "deprecations": [],
             "transformation_required": False,
-            "available_transformations": []
+            "available_transformations": [],
         }
 
         if source_parsed.major != target_parsed.major:
@@ -349,19 +349,18 @@ class APIVersionManager:
         return compatibility_info
 
     async def transform_request(
-        self, 
-        request_data: Dict[str, Any],
-        source_version: str,
-        target_version: str,
-        endpoint: str
-    ) -> Dict[str, Any]:
+        self, request_data: dict[str, Any], source_version: str, target_version: str, endpoint: str
+    ) -> dict[str, Any]:
         """Transform request data between versions."""
         # Find applicable transformation rules
         applicable_rules = [
-            rule for rule in self.transformation_rules.values()
-            if (rule.source_version == source_version and 
-                rule.target_version == target_version and
-                rule.transformation_type in ["request", "both"])
+            rule
+            for rule in self.transformation_rules.values()
+            if (
+                rule.source_version == source_version
+                and rule.target_version == target_version
+                and rule.transformation_type in ["request", "both"]
+            )
         ]
 
         transformed_data = request_data.copy()
@@ -373,26 +372,23 @@ class APIVersionManager:
                 transformed_data = await transformer(transformed_data, "request", endpoint)
             else:
                 # Apply field mappings
-                transformed_data = self._apply_field_mappings(
-                    transformed_data, rule.field_mappings
-                )
+                transformed_data = self._apply_field_mappings(transformed_data, rule.field_mappings)
 
         return transformed_data
 
     async def transform_response(
-        self, 
-        response_data: Dict[str, Any],
-        source_version: str,
-        target_version: str,
-        endpoint: str
-    ) -> Dict[str, Any]:
+        self, response_data: dict[str, Any], source_version: str, target_version: str, endpoint: str
+    ) -> dict[str, Any]:
         """Transform response data between versions."""
         # Find applicable transformation rules
         applicable_rules = [
-            rule for rule in self.transformation_rules.values()
-            if (rule.source_version == target_version and  # Note: reversed for response
-                rule.target_version == source_version and
-                rule.transformation_type in ["response", "both"])
+            rule
+            for rule in self.transformation_rules.values()
+            if (
+                rule.source_version == target_version  # Note: reversed for response
+                and rule.target_version == source_version
+                and rule.transformation_type in ["response", "both"]
+            )
         ]
 
         transformed_data = response_data.copy()
@@ -405,17 +401,11 @@ class APIVersionManager:
             else:
                 # Apply reverse field mappings for response
                 reverse_mappings = {v: k for k, v in rule.field_mappings.items()}
-                transformed_data = self._apply_field_mappings(
-                    transformed_data, reverse_mappings
-                )
+                transformed_data = self._apply_field_mappings(transformed_data, reverse_mappings)
 
         return transformed_data
 
-    def _apply_field_mappings(
-        self, 
-        data: Dict[str, Any], 
-        mappings: Dict[str, str]
-    ) -> Dict[str, Any]:
+    def _apply_field_mappings(self, data: dict[str, Any], mappings: dict[str, str]) -> dict[str, Any]:
         """Apply field mappings to data."""
         transformed = {}
         for key, value in data.items():
@@ -428,11 +418,8 @@ class APIVersionManager:
         return transformed
 
     async def _transform_auth_v1_to_v2(
-        self, 
-        data: Dict[str, Any], 
-        transform_type: str,
-        endpoint: str
-    ) -> Dict[str, Any]:
+        self, data: dict[str, Any], transform_type: str, endpoint: str
+    ) -> dict[str, Any]:
         """Custom transformer for authentication v1 to v2."""
         if transform_type == "request":
             # Transform API key to JWT format expectation
@@ -456,27 +443,17 @@ class APIVersionManager:
         self.deprecation_notices[notice.feature_id] = notice
         logger.info(f"Added deprecation notice for: {notice.feature_name}")
 
-    def get_deprecation_notices(
-        self, 
-        version_str: Optional[str] = None
-    ) -> List[DeprecationNotice]:
+    def get_deprecation_notices(self, version_str: str | None = None) -> list[DeprecationNotice]:
         """Get deprecation notices."""
         notices = list(self.deprecation_notices.values())
         if version_str:
-            notices = [
-                notice for notice in notices
-                if notice.deprecated_in_version == version_str
-            ]
+            notices = [notice for notice in notices if notice.deprecated_in_version == version_str]
         return notices
 
-    def generate_migration_guide(
-        self, 
-        source_version: str, 
-        target_version: str
-    ) -> Dict[str, Any]:
+    def generate_migration_guide(self, source_version: str, target_version: str) -> dict[str, Any]:
         """Generate migration guide between versions."""
         compatibility_info = self.get_compatibility_info(source_version, target_version)
-        
+
         migration_guide = {
             "source_version": source_version,
             "target_version": target_version,
@@ -486,7 +463,7 @@ class APIVersionManager:
             "deprecations": compatibility_info.get("deprecations", []),
             "steps": [],
             "code_examples": {},
-            "testing_recommendations": []
+            "testing_recommendations": [],
         }
 
         # Determine migration complexity
@@ -499,32 +476,32 @@ class APIVersionManager:
 
         # Add migration steps
         if compatibility_info["transformation_required"]:
-            migration_guide["steps"].extend([
-                "1. Review breaking changes and deprecations",
-                "2. Update authentication method if required",
-                "3. Update endpoint URLs and request formats",
-                "4. Test with new API version",
-                "5. Update error handling for new response formats",
-                "6. Deploy and monitor"
-            ])
+            migration_guide["steps"].extend(
+                [
+                    "1. Review breaking changes and deprecations",
+                    "2. Update authentication method if required",
+                    "3. Update endpoint URLs and request formats",
+                    "4. Test with new API version",
+                    "5. Update error handling for new response formats",
+                    "6. Deploy and monitor",
+                ]
+            )
         else:
-            migration_guide["steps"].extend([
-                "1. Update API version in requests",
-                "2. Test existing functionality",
-                "3. Deploy and monitor"
-            ])
+            migration_guide["steps"].extend(
+                ["1. Update API version in requests", "2. Test existing functionality", "3. Deploy and monitor"]
+            )
 
         # Add code examples
         if source_version == "1.0.0" and target_version == "2.0.0":
             migration_guide["code_examples"] = {
                 "authentication": {
                     "v1": "headers = {'X-API-Key': 'your-api-key'}",
-                    "v2": "headers = {'Authorization': 'Bearer your-jwt-token'}"
+                    "v2": "headers = {'Authorization': 'Bearer your-jwt-token'}",
                 },
                 "completions": {
                     "v1": "POST /api/v1/completions {'prompt': 'Hello', 'max_tokens': 100}",
-                    "v2": "POST /api/v2/generate {'input': 'Hello', 'max_length': 100}"
-                }
+                    "v2": "POST /api/v2/generate {'input': 'Hello', 'max_length': 100}",
+                },
             }
 
         # Add testing recommendations
@@ -533,22 +510,22 @@ class APIVersionManager:
             "Verify authentication works correctly",
             "Check error handling and response formats",
             "Performance test with expected load",
-            "Test backward compatibility if supporting multiple versions"
+            "Test backward compatibility if supporting multiple versions",
         ]
 
         return migration_guide
 
-    def get_version_headers(self, version_str: str) -> Dict[str, str]:
+    def get_version_headers(self, version_str: str) -> dict[str, str]:
         """Get appropriate headers for API version."""
         headers = {}
-        
+
         api_version = self.versions.get(version_str)
         if not api_version:
             return headers
 
         # Add version information
         headers["X-API-Version"] = version_str
-        
+
         # Add deprecation warnings
         if api_version.status == "deprecated":
             headers["X-API-Deprecated"] = "true"
@@ -562,7 +539,7 @@ class APIVersionManager:
 
         return headers
 
-    def validate_version_request(self, version_str: str) -> Dict[str, Any]:
+    def validate_version_request(self, version_str: str) -> dict[str, Any]:
         """Validate if a version request is valid."""
         result = {
             "valid": False,
@@ -570,7 +547,7 @@ class APIVersionManager:
             "message": "",
             "supported": False,
             "deprecated": False,
-            "sunset": False
+            "sunset": False,
         }
 
         api_version = self.versions.get(version_str)
@@ -599,15 +576,16 @@ class APIVersionManager:
 
         return result
 
+
 # Middleware for FastAPI integration
 class APIVersioningMiddleware:
     """FastAPI middleware for API versioning."""
-    
+
     def __init__(
-        self, 
+        self,
         version_manager: APIVersionManager,
         strategy: VersioningStrategy = VersioningStrategy.URL_PATH,
-        auto_transform: bool = True
+        auto_transform: bool = True,
     ):
         self.version_manager = version_manager
         self.strategy = strategy
@@ -616,21 +594,19 @@ class APIVersioningMiddleware:
     async def __call__(self, request: Request, call_next):
         """Process request with versioning support."""
         # Extract version from request
-        requested_version = self.version_manager.extract_version_from_request(
-            request, self.strategy
-        )
+        requested_version = self.version_manager.extract_version_from_request(request, self.strategy)
 
         # Validate version
         validation_result = self.version_manager.validate_version_request(requested_version)
-        
+
         if not validation_result["valid"]:
             return JSONResponse(
                 status_code=400,
                 content={
                     "error": "Invalid API version",
                     "message": validation_result["message"],
-                    "supported_versions": [v.version for v in self.version_manager.list_versions()]
-                }
+                    "supported_versions": [v.version for v in self.version_manager.list_versions()],
+                },
             )
 
         if not validation_result["supported"]:
@@ -639,8 +615,8 @@ class APIVersioningMiddleware:
                 content={
                     "error": "API version not supported",
                     "message": validation_result["message"],
-                    "supported_versions": [v.version for v in self.version_manager.list_versions()]
-                }
+                    "supported_versions": [v.version for v in self.version_manager.list_versions()],
+                },
             )
 
         # Add version information to request state
@@ -656,6 +632,7 @@ class APIVersioningMiddleware:
             response.headers[key] = value
 
         return response
+
 
 # Factory function
 def create_version_manager(default_version: str = "1.0.0") -> APIVersionManager:

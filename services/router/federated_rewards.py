@@ -39,24 +39,20 @@ FEDERATED_REWARD_JSON_SCHEMA: dict[str, Any] = {
         "cluster_hash",
         "reward_signals",
         "participant_count",
-        "timestamp"
+        "timestamp",
     ],
     "properties": {
         "schema_version": {
             "type": "integer",
             "const": FEDERATED_REWARD_SCHEMA_VERSION,
-            "description": "Schema version for compatibility"
+            "description": "Schema version for compatibility",
         },
-        "aggregation_round": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Federated learning round identifier"
-        },
+        "aggregation_round": {"type": "integer", "minimum": 1, "description": "Federated learning round identifier"},
         "cluster_hash": {
             "type": "string",
             "minLength": 16,
             "maxLength": 64,
-            "description": "Anonymous cluster identifier (SHA-256 hash)"
+            "description": "Anonymous cluster identifier (SHA-256 hash)",
         },
         "reward_signals": {
             "type": "object",
@@ -70,55 +66,43 @@ FEDERATED_REWARD_JSON_SCHEMA: dict[str, Any] = {
                             "type": "number",
                             "minimum": 0.0,
                             "maximum": 1.0,
-                            "description": "Fraction of successful requests"
+                            "description": "Fraction of successful requests",
                         },
-                        "avg_latency": {
-                            "type": "number",
-                            "minimum": 0.0,
-                            "description": "Average latency in seconds"
-                        },
+                        "avg_latency": {"type": "number", "minimum": 0.0, "description": "Average latency in seconds"},
                         "total_samples": {
                             "type": "integer",
                             "minimum": 1,
-                            "description": "Total number of samples aggregated"
+                            "description": "Total number of samples aggregated",
                         },
                         "quality_score": {
                             "type": "number",
                             "minimum": 0.0,
                             "maximum": 1.0,
-                            "description": "Average quality score (optional)"
+                            "description": "Average quality score (optional)",
                         },
                         "cost_efficiency": {
                             "type": "number",
                             "minimum": 0.0,
-                            "description": "Cost per token efficiency metric"
-                        }
-                    }
+                            "description": "Cost per token efficiency metric",
+                        },
+                    },
                 }
             },
-            "additionalProperties": False
+            "additionalProperties": False,
         },
         "participant_count": {
             "type": "integer",
             "minimum": 1,
-            "description": "Number of routers contributing to this signal"
+            "description": "Number of routers contributing to this signal",
         },
-        "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "description": "ISO 8601 timestamp of signal creation"
-        },
+        "timestamp": {"type": "string", "format": "date-time", "description": "ISO 8601 timestamp of signal creation"},
         "privacy_budget_used": {
             "type": "number",
             "minimum": 0.0,
-            "description": "Privacy budget consumed for this aggregation"
+            "description": "Privacy budget consumed for this aggregation",
         },
-        "noise_scale": {
-            "type": "number",
-            "minimum": 0.0,
-            "description": "Differential privacy noise scale applied"
-        }
-    }
+        "noise_scale": {"type": "number", "minimum": 0.0, "description": "Differential privacy noise scale applied"},
+    },
 }
 
 
@@ -132,7 +116,7 @@ class FederatedRewardSignal:
         reward_signals: dict[str, dict[str, Any]],
         participant_count: int,
         privacy_budget_used: float | None = None,
-        noise_scale: float | None = None
+        noise_scale: float | None = None,
     ):
         """Initialize a federated reward signal.
 
@@ -161,7 +145,7 @@ class FederatedRewardSignal:
             "cluster_hash": self.cluster_hash,
             "reward_signals": self.reward_signals,
             "participant_count": self.participant_count,
-            "timestamp": self.timestamp
+            "timestamp": self.timestamp,
         }
 
         if self.privacy_budget_used is not None:
@@ -175,7 +159,7 @@ class FederatedRewardSignal:
         return result
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'FederatedRewardSignal':
+    def from_dict(cls, data: dict[str, Any]) -> "FederatedRewardSignal":
         """Create a FederatedRewardSignal from a dictionary."""
         # Validate input data before creating instance
         validation_errors = validate_federated_reward_signal(data)
@@ -188,7 +172,7 @@ class FederatedRewardSignal:
             reward_signals=data["reward_signals"],
             participant_count=data["participant_count"],
             privacy_budget_used=data.get("privacy_budget_used"),
-            noise_scale=data.get("noise_scale")
+            noise_scale=data.get("noise_scale"),
         )
 
     def to_json(self) -> str:
@@ -196,7 +180,7 @@ class FederatedRewardSignal:
         return json.dumps(self.to_dict(), indent=2)
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'FederatedRewardSignal':
+    def from_json(cls, json_str: str) -> "FederatedRewardSignal":
         """Create a FederatedRewardSignal from JSON string."""
         try:
             data = json.loads(json_str)
@@ -233,8 +217,12 @@ def validate_federated_reward_signal(data: dict[str, Any]) -> list[str]:
 
     # Check required fields
     required_fields = [
-        "schema_version", "aggregation_round", "cluster_hash",
-        "reward_signals", "participant_count", "timestamp"
+        "schema_version",
+        "aggregation_round",
+        "cluster_hash",
+        "reward_signals",
+        "participant_count",
+        "timestamp",
     ]
 
     for field in required_fields:
@@ -372,7 +360,7 @@ def aggregate_reward_signals(signals: list[FederatedRewardSignal]) -> FederatedR
         aggregated_signal = {
             "success_rate": success_rate_sum / total_weight,
             "avg_latency": latency_sum / total_weight,
-            "total_samples": total_samples
+            "total_samples": total_samples,
         }
 
         if quality_count > 0:
@@ -384,13 +372,14 @@ def aggregate_reward_signals(signals: list[FederatedRewardSignal]) -> FederatedR
 
     # Aggregate privacy metrics
     total_privacy_budget = sum(
-        signal.privacy_budget_used for signal in signals
-        if signal.privacy_budget_used is not None
+        signal.privacy_budget_used for signal in signals if signal.privacy_budget_used is not None
     )
-    avg_noise_scale = sum(
-        signal.noise_scale for signal in signals
-        if signal.noise_scale is not None
-    ) / len([s for s in signals if s.noise_scale is not None]) if any(s.noise_scale is not None for s in signals) else None
+    avg_noise_scale = (
+        sum(signal.noise_scale for signal in signals if signal.noise_scale is not None)
+        / len([s for s in signals if s.noise_scale is not None])
+        if any(s.noise_scale is not None for s in signals)
+        else None
+    )
 
     return FederatedRewardSignal(
         aggregation_round=aggregation_round,
@@ -398,5 +387,5 @@ def aggregate_reward_signals(signals: list[FederatedRewardSignal]) -> FederatedR
         reward_signals=aggregated_rewards,
         participant_count=total_participants,
         privacy_budget_used=total_privacy_budget if total_privacy_budget > 0 else None,
-        noise_scale=avg_noise_scale
+        noise_scale=avg_noise_scale,
     )

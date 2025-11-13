@@ -25,19 +25,23 @@ class BuildValidator:
         self.cache_dir.mkdir(exist_ok=True)
 
         self.components = {
-            'rust-router': lambda name: self._validate_rust_build(),
-            'memory-gateway': lambda name: self._validate_python_build('memory-gateway'),
-            'persona-adapter': lambda name: self._validate_python_build('persona_adapter'),
-            'ollama-adapter': lambda name: self._validate_python_build('ollama_adapter'),
+            "rust-router": lambda name: self._validate_rust_build(),
+            "memory-gateway": lambda name: self._validate_python_build("memory-gateway"),
+            "persona-adapter": lambda name: self._validate_python_build("persona_adapter"),
+            "ollama-adapter": lambda name: self._validate_python_build("ollama_adapter"),
         }
 
     def _get_cache_key(self, component_name: str, operation: str) -> str:
         """Generate cache key for a component operation."""
         # Include file modification times in cache key
-        if component_name == 'rust-router':
+        if component_name == "rust-router":
             files = list(Path("atp-router").rglob("*.rs")) + list(Path("atp-router").rglob("*.toml"))
         else:
-            component_dir = Path(component_name) if component_name == 'memory-gateway' else Path(f"adapters/python/{component_name}")
+            component_dir = (
+                Path(component_name)
+                if component_name == "memory-gateway"
+                else Path(f"adapters/python/{component_name}")
+            )
             files = list(component_dir.rglob("*.py")) + list(component_dir.rglob("requirements.txt"))
 
         # Create hash of file modification times
@@ -64,7 +68,7 @@ class BuildValidator:
     def _save_cache(self, cache_key: str, result: dict):
         """Save result to cache."""
         cache_file = self.cache_dir / f"{cache_key}.json"
-        with open(cache_file, 'w') as f:
+        with open(cache_file, "w") as f:
             json.dump(result, f)
 
     def _validate_component_cached(self, component_name: str, validator) -> bool:
@@ -80,19 +84,15 @@ class BuildValidator:
 
         # Run validation
         print(f"  🔍 Validating {component_name}...")
-        start_time = __import__('time').time()
+        start_time = __import__("time").time()
         try:
             result = validator(component_name)
-            end_time = __import__('time').time()
+            end_time = __import__("time").time()
             duration = end_time - start_time
 
             # Cache successful results
             if result:
-                cache_data = {
-                    "success": True,
-                    "duration": duration,
-                    "timestamp": end_time
-                }
+                cache_data = {"success": True, "duration": duration, "timestamp": end_time}
                 self._save_cache(cache_key, cache_data)
                 print(f"  ✅ {component_name} validation completed in {duration:.1f} seconds (cached)")
             else:
@@ -104,7 +104,9 @@ class BuildValidator:
             self.errors.append(f"{component_name} validation error: {e}")
             return False
 
-    def _run_command(self, cmd: list[str], cwd: Path = None, capture_output: bool = True, env: dict[str, str] = None) -> tuple[int, str, str]:
+    def _run_command(
+        self, cmd: list[str], cwd: Path = None, capture_output: bool = True, env: dict[str, str] = None
+    ) -> tuple[int, str, str]:
         """Run a command and return exit code, stdout, stderr."""
         print(f"  🔧 Running command: {' '.join(cmd)}")
         if cwd:
@@ -116,7 +118,7 @@ class BuildValidator:
                 capture_output=capture_output,
                 text=True,
                 timeout=600,  # 10 minute timeout for pip installs
-                env=env
+                env=env,
             )
             print(f"  ✅ Command completed with exit code: {result.returncode}")
             if result.returncode != 0 and result.stderr:
@@ -151,18 +153,14 @@ class BuildValidator:
             env["PROTOC"] = str(local_protoc_exe.absolute())
             print(f"  🔧 Using PROTOC: {env['PROTOC']}")
 
-        exit_code, stdout, stderr = self._run_command(
-            ["cargo", "build", "--release"],
-            cwd=router_dir,
-            env=env
-        )
+        exit_code, stdout, stderr = self._run_command(["cargo", "build", "--release"], cwd=router_dir, env=env)
 
         if exit_code != 0:
             self.errors.append(f"Rust build failed: {stderr}")
             return False
 
         # Check for warnings in stderr
-        warning_lines = [line for line in stderr.split('\n') if 'warning:' in line.lower()]
+        warning_lines = [line for line in stderr.split("\n") if "warning:" in line.lower()]
         if warning_lines:
             for warning in warning_lines[:5]:  # Show first 5 warnings
                 self.warnings.append(f"Rust warning: {warning}")
@@ -204,6 +202,7 @@ class BuildValidator:
         """Attempt to install protoc automatically."""
         try:
             import platform
+
             if platform.system() != "Windows":
                 return False  # Only support Windows auto-install for now
 
@@ -213,9 +212,9 @@ class BuildValidator:
                 return False
 
             print("  📥 Running protoc installation script...")
-            exit_code, stdout, stderr = self._run_command([
-                "powershell", "-ExecutionPolicy", "Bypass", "-File", str(install_script)
-            ])
+            exit_code, stdout, stderr = self._run_command(
+                ["powershell", "-ExecutionPolicy", "Bypass", "-File", str(install_script)]
+            )
 
             if exit_code == 0:
                 print("  ✅ protoc installed successfully")
@@ -234,7 +233,9 @@ class BuildValidator:
         """Validate Python component build."""
         import platform
 
-        component_dir = Path(f"adapters/python/{component_name}") if "adapter" in component_name else Path(component_name)
+        component_dir = (
+            Path(f"adapters/python/{component_name}") if "adapter" in component_name else Path(component_name)
+        )
 
         if not component_dir.exists():
             self.errors.append(f"Python component directory not found: {component_dir}")
@@ -267,10 +268,12 @@ class BuildValidator:
             print("  📦 Windows detected - checking grpcio compatibility...")
             try:
                 import grpc  # noqa: F401
+
                 # Test basic grpc functionality
                 try:
                     # Simple test to see if grpc works
                     from grpc import StatusCode  # noqa: F401
+
                     print("  ✅ grpcio already installed and working")
                 except Exception as e:
                     print(f"  ⚠️  grpcio installed but not fully working: {e}")
@@ -279,19 +282,21 @@ class BuildValidator:
                     print("  📝 Filtering grpcio and uvloop from requirements...")
                     with open(requirements_file) as f:
                         requirements = f.read()
-                    filtered_reqs = '\n'.join([
-                        line for line in requirements.split('\n')
-                        if not any(pkg in line.lower() for pkg in ['grpcio', 'grpcio-tools', 'uvloop'])
-                    ])
+                    filtered_reqs = "\n".join(
+                        [
+                            line
+                            for line in requirements.split("\n")
+                            if not any(pkg in line.lower() for pkg in ["grpcio", "grpcio-tools", "uvloop"])
+                        ]
+                    )
                     temp_req_file = component_dir / "requirements_temp.txt"
-                    with open(temp_req_file, 'w') as f:
+                    with open(temp_req_file, "w") as f:
                         f.write(filtered_reqs)
                     print(f"  📄 Created filtered requirements file: {temp_req_file}")
 
                     print("  🚀 Installing dependencies with grpcio filtered...")
                     exit_code, stdout, stderr = self._run_command(
-                        ["pip", "install", "-r", "requirements_temp.txt"],
-                        cwd=component_dir
+                        ["pip", "install", "-r", "requirements_temp.txt"], cwd=component_dir
                     )
                     temp_req_file.unlink()
                     print("  🧹 Cleaned up grpcio-filtered requirements file")
@@ -316,19 +321,21 @@ class BuildValidator:
                     with open(requirements_file) as f:
                         requirements = f.read()
                     # Remove grpcio and grpcio-tools lines
-                    filtered_reqs = '\n'.join([
-                        line for line in requirements.split('\n')
-                        if not any(pkg in line.lower() for pkg in ['grpcio', 'grpcio-tools', 'uvloop'])
-                    ])
+                    filtered_reqs = "\n".join(
+                        [
+                            line
+                            for line in requirements.split("\n")
+                            if not any(pkg in line.lower() for pkg in ["grpcio", "grpcio-tools", "uvloop"])
+                        ]
+                    )
                     temp_req_file = component_dir / "requirements_temp.txt"
-                    with open(temp_req_file, 'w') as f:
+                    with open(temp_req_file, "w") as f:
                         f.write(filtered_reqs)
                     print(f"  📄 Created filtered requirements file: {temp_req_file}")
 
                     print("  🚀 Installing dependencies with grpcio filtered...")
                     exit_code, stdout, stderr = self._run_command(
-                        ["pip", "install", "-r", "requirements_temp.txt"],
-                        cwd=component_dir
+                        ["pip", "install", "-r", "requirements_temp.txt"], cwd=component_dir
                     )
                     temp_req_file.unlink()  # Clean up temp file
                     print("  🧹 Cleaned up grpcio-filtered requirements file")
@@ -346,10 +353,7 @@ class BuildValidator:
                     return False
 
         print(f"  🚀 Starting pip install for {component_name}...")
-        exit_code, stdout, stderr = self._run_command(
-            ["pip", "install", "-r", "requirements.txt"],
-            cwd=component_dir
-        )
+        exit_code, stdout, stderr = self._run_command(["pip", "install", "-r", "requirements.txt"], cwd=component_dir)
 
         if exit_code != 0:
             print(f"  ❌ Pip install failed for {component_name}, analyzing error...")
@@ -363,22 +367,23 @@ class BuildValidator:
                     with open(requirements_file) as f:
                         requirements = f.read()
                     # Remove uvloop line
-                    filtered_reqs = '\n'.join([line for line in requirements.split('\n') if 'uvloop' not in line])
+                    filtered_reqs = "\n".join([line for line in requirements.split("\n") if "uvloop" not in line])
                     temp_req_file = component_dir / "requirements_temp.txt"
-                    with open(temp_req_file, 'w') as f:
+                    with open(temp_req_file, "w") as f:
                         f.write(filtered_reqs)
 
                     print("  🚀 Retrying pip install without uvloop...")
                     exit_code, stdout, stderr = self._run_command(
-                        ["pip", "install", "-r", "requirements_temp.txt"],
-                        cwd=component_dir
+                        ["pip", "install", "-r", "requirements_temp.txt"], cwd=component_dir
                     )
                     temp_req_file.unlink()  # Clean up temp file
                     print("  🧹 Cleaned up temporary requirements file")
 
                     if exit_code != 0:
                         print(f"  ❌ Pip install still failed after uvloop removal: {stderr[:200]}...")
-                        self.errors.append(f"Python dependency installation failed for {component_name} even without uvloop: {stderr}")
+                        self.errors.append(
+                            f"Python dependency installation failed for {component_name} even without uvloop: {stderr}"
+                        )
                         return False
                     else:
                         print("  ✅ Pip install succeeded after uvloop removal")
@@ -400,9 +405,7 @@ class BuildValidator:
 
         for py_file in python_files:
             print(f"    🔍 Checking syntax of {py_file.name}...")
-            exit_code, stdout, stderr = self._run_command(
-                ["python", "-m", "py_compile", str(py_file)]
-            )
+            exit_code, stdout, stderr = self._run_command(["python", "-m", "py_compile", str(py_file)])
 
             if exit_code != 0:
                 print(f"    ❌ Syntax error in {py_file.name}: {stderr[:100]}...")
@@ -432,17 +435,25 @@ class BuildValidator:
 
                 if ruff_exit != 0:
                     # Check if these are just style warnings, not critical errors
-                    critical_errors = [line for line in ruff_err.split('\n') if any(severity in line.upper() for severity in ['ERROR', 'FATAL'])]
+                    critical_errors = [
+                        line
+                        for line in ruff_err.split("\n")
+                        if any(severity in line.upper() for severity in ["ERROR", "FATAL"])
+                    ]
                     if critical_errors:
                         self.errors.append(f"Critical Ruff errors found: {len(critical_errors)} issues")
                         for error in critical_errors[:3]:  # Show first 3
                             self.warnings.append(f"Ruff: {error}")
                     else:
-                        self.warnings.append(f"Ruff found {ruff_err.count('error:')} style/lint issues (non-critical for build)")
+                        self.warnings.append(
+                            f"Ruff found {ruff_err.count('error:')} style/lint issues (non-critical for build)"
+                        )
                 else:
                     print("Ruff linting passed!")
 
-                mypy_exit, mypy_out, mypy_err = self._run_command(["python", "-m", "mypy", "router_service", "tools", "memory-gateway"])
+                mypy_exit, mypy_out, mypy_err = self._run_command(
+                    ["python", "-m", "mypy", "router_service", "tools", "memory-gateway"]
+                )
                 if mypy_exit != 0:
                     # MyPy often has warnings that aren't build-breaking
                     self.warnings.append("MyPy type checking found issues (review but may not block build)")
@@ -454,8 +465,8 @@ class BuildValidator:
                 return False
 
         # Check for warnings in output
-        if stderr and 'warning' in stderr.lower():
-            warning_lines = [line for line in stderr.split('\n') if 'warning' in line.lower()]
+        if stderr and "warning" in stderr.lower():
+            warning_lines = [line for line in stderr.split("\n") if "warning" in line.lower()]
             for warning in warning_lines[:3]:
                 self.warnings.append(f"Lint warning: {warning}")
 
@@ -467,7 +478,7 @@ class BuildValidator:
             "deploy/docker/Dockerfile.router",
             "memory-gateway/Dockerfile",
             "adapters/python/persona_adapter/Dockerfile",
-            "adapters/python/ollama_adapter/Dockerfile"
+            "adapters/python/ollama_adapter/Dockerfile",
         ]
 
         for dockerfile in dockerfiles:
@@ -478,17 +489,13 @@ class BuildValidator:
             print(f"Validating Dockerfile syntax: {dockerfile}")
 
             # Try --dry-run first (available in newer Docker versions)
-            exit_code, stdout, stderr = self._run_command(
-                ["docker", "build", "--dry-run", "-f", dockerfile, "."]
-            )
+            exit_code, stdout, stderr = self._run_command(["docker", "build", "--dry-run", "-f", dockerfile, "."])
 
             # If --dry-run is not supported, try alternative validation
             if exit_code != 0 and "unknown flag" in stderr:
                 print("  --dry-run not supported, using alternative validation...")
                 # Alternative: Check if docker can parse the Dockerfile
-                exit_code, stdout, stderr = self._run_command(
-                    ["docker", "build", "--help"]
-                )
+                exit_code, stdout, stderr = self._run_command(["docker", "build", "--help"])
                 if exit_code != 0:
                     self.warnings.append(f"Docker not available for {dockerfile}")
                 else:
@@ -506,7 +513,7 @@ class BuildValidator:
 
         # Validate individual components in parallel
         print("🔍 Validating components in parallel...")
-        start_time = __import__('time').time()
+        start_time = __import__("time").time()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             # Submit all component validations
@@ -526,7 +533,7 @@ class BuildValidator:
                     print(f"❌ {component_name} validation generated an exception: {exc}")
                     self.errors.append(f"Exception during {component_name} validation: {exc}")
 
-        total_time = __import__('time').time() - start_time
+        total_time = __import__("time").time() - start_time
         print(f"🔄 Parallel validation completed in {total_time:.1f} seconds")
 
         # Validate Makefile targets
@@ -545,10 +552,10 @@ class BuildValidator:
     def _validate_component(self, component_name: str, validator) -> bool:
         """Validate a single component (for parallel execution)."""
         print(f"  🔍 Starting validation of {component_name}...")
-        start_time = __import__('time').time()
+        start_time = __import__("time").time()
         try:
             result = validator(component_name)
-            end_time = __import__('time').time()
+            end_time = __import__("time").time()
             duration = end_time - start_time
             print(f"  ✅ {component_name} validation completed in {duration:.1f} seconds")
             return result
@@ -560,12 +567,7 @@ class BuildValidator:
     def _check_critical_issues(self):
         """Check for critical production build issues."""
         # Check if all required files exist
-        required_files = [
-            "requirements_all.txt",
-            "pytest.ini",
-            "mypy.ini",
-            "ruff.toml"
-        ]
+        required_files = ["requirements_all.txt", "pytest.ini", "mypy.ini", "ruff.toml"]
 
         for req_file in required_files:
             if not Path(req_file).exists():

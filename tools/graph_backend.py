@@ -14,7 +14,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class GraphQueryMetrics:
     node_count: int = 0
     relationship_count: int = 0
     path_count: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class GraphBackend(abc.ABC):
@@ -102,7 +102,7 @@ class GraphBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_node(self, node_id: str) -> Optional[GraphNode]:
+    async def get_node(self, node_id: str) -> GraphNode | None:
         """Retrieve a node by ID."""
         pass
 
@@ -122,7 +122,7 @@ class GraphBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    async def get_relationship(self, relationship_id: str) -> Optional[GraphRelationship]:
+    async def get_relationship(self, relationship_id: str) -> GraphRelationship | None:
         """Retrieve a relationship by ID."""
         pass
 
@@ -133,7 +133,7 @@ class GraphBackend(abc.ABC):
 
     @abc.abstractmethod
     async def query_nodes(
-        self, labels: Optional[set[str]] = None, properties: Optional[dict[str, Any]] = None, limit: int = 100
+        self, labels: set[str] | None = None, properties: dict[str, Any] | None = None, limit: int = 100
     ) -> GraphQueryResult:
         """Query nodes by labels and properties."""
         pass
@@ -141,9 +141,9 @@ class GraphBackend(abc.ABC):
     @abc.abstractmethod
     async def query_relationships(
         self,
-        source_id: Optional[str] = None,
-        target_id: Optional[str] = None,
-        relationship_type: Optional[str] = None,
+        source_id: str | None = None,
+        target_id: str | None = None,
+        relationship_type: str | None = None,
         limit: int = 100,
     ) -> GraphQueryResult:
         """Query relationships by source, target, and type."""
@@ -158,7 +158,7 @@ class GraphBackend(abc.ABC):
 
     @abc.abstractmethod
     async def get_neighbors(
-        self, node_id: str, relationship_type: Optional[str] = None, direction: str = "both", limit: int = 50
+        self, node_id: str, relationship_type: str | None = None, direction: str = "both", limit: int = 50
     ) -> GraphQueryResult:
         """Get neighboring nodes connected by relationships."""
         pass
@@ -175,7 +175,7 @@ class GraphBackend(abc.ABC):
         node_count: int = 0,
         relationship_count: int = 0,
         path_count: int = 0,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """Record operation metrics."""
         if self.metrics_callback:
@@ -223,7 +223,7 @@ class InMemoryGraphBackend(GraphBackend):
             self._record_metrics("create_node", duration, error=str(e))
             raise
 
-    async def get_node(self, node_id: str) -> Optional[GraphNode]:
+    async def get_node(self, node_id: str) -> GraphNode | None:
         """Retrieve a node by ID."""
         start_time = time.time()
         try:
@@ -305,7 +305,7 @@ class InMemoryGraphBackend(GraphBackend):
             self._record_metrics("create_relationship", duration, error=str(e))
             raise
 
-    async def get_relationship(self, relationship_id: str) -> Optional[GraphRelationship]:
+    async def get_relationship(self, relationship_id: str) -> GraphRelationship | None:
         """Retrieve a relationship by ID."""
         start_time = time.time()
         try:
@@ -339,7 +339,7 @@ class InMemoryGraphBackend(GraphBackend):
             raise
 
     async def query_nodes(
-        self, labels: Optional[set[str]] = None, properties: Optional[dict[str, Any]] = None, limit: int = 100
+        self, labels: set[str] | None = None, properties: dict[str, Any] | None = None, limit: int = 100
     ) -> GraphQueryResult:
         """Query nodes by labels and properties."""
         start_time = time.time()
@@ -371,9 +371,9 @@ class InMemoryGraphBackend(GraphBackend):
 
     async def query_relationships(
         self,
-        source_id: Optional[str] = None,
-        target_id: Optional[str] = None,
-        relationship_type: Optional[str] = None,
+        source_id: str | None = None,
+        target_id: str | None = None,
+        relationship_type: str | None = None,
         limit: int = 100,
     ) -> GraphQueryResult:
         """Query relationships by source, target, and type."""
@@ -460,7 +460,7 @@ class InMemoryGraphBackend(GraphBackend):
             raise
 
     async def get_neighbors(
-        self, node_id: str, relationship_type: Optional[str] = None, direction: str = "both", limit: int = 50
+        self, node_id: str, relationship_type: str | None = None, direction: str = "both", limit: int = 50
     ) -> GraphQueryResult:
         """Get neighboring nodes connected by relationships."""
         start_time = time.time()
@@ -566,7 +566,7 @@ class Neo4jGraphBackend(GraphBackend):
         # Implementation would go here
         raise NotImplementedError("Neo4j backend not yet implemented")
 
-    async def get_node(self, node_id: str) -> Optional[GraphNode]:
+    async def get_node(self, node_id: str) -> GraphNode | None:
         """Retrieve a node from Neo4j."""
         if not self.driver:
             raise RuntimeError("Neo4j driver not available")
@@ -594,7 +594,7 @@ class Neo4jGraphBackend(GraphBackend):
         # Implementation would go here
         raise NotImplementedError("Neo4j backend not yet implemented")
 
-    async def get_relationship(self, relationship_id: str) -> Optional[GraphRelationship]:
+    async def get_relationship(self, relationship_id: str) -> GraphRelationship | None:
         """Retrieve a relationship from Neo4j."""
         if not self.driver:
             raise RuntimeError("Neo4j driver not available")
@@ -609,7 +609,7 @@ class Neo4jGraphBackend(GraphBackend):
         raise NotImplementedError("Neo4j backend not yet implemented")
 
     async def query_nodes(
-        self, labels: Optional[set[str]] = None, properties: Optional[dict[str, Any]] = None, limit: int = 100
+        self, labels: set[str] | None = None, properties: dict[str, Any] | None = None, limit: int = 100
     ) -> GraphQueryResult:
         """Query nodes in Neo4j."""
         if not self.driver:
@@ -619,9 +619,9 @@ class Neo4jGraphBackend(GraphBackend):
 
     async def query_relationships(
         self,
-        source_id: Optional[str] = None,
-        target_id: Optional[str] = None,
-        relationship_type: Optional[str] = None,
+        source_id: str | None = None,
+        target_id: str | None = None,
+        relationship_type: str | None = None,
         limit: int = 100,
     ) -> GraphQueryResult:
         """Query relationships in Neo4j."""
@@ -640,7 +640,7 @@ class Neo4jGraphBackend(GraphBackend):
         raise NotImplementedError("Neo4j backend not yet implemented")
 
     async def get_neighbors(
-        self, node_id: str, relationship_type: Optional[str] = None, direction: str = "both", limit: int = 50
+        self, node_id: str, relationship_type: str | None = None, direction: str = "both", limit: int = 50
     ) -> GraphQueryResult:
         """Get neighbors in Neo4j."""
         if not self.driver:
@@ -660,7 +660,7 @@ class GraphBackendFactory:
     """Factory for creating graph backend instances."""
 
     @staticmethod
-    def create_memory_backend(config: Optional[dict[str, Any]] = None) -> GraphBackend:
+    def create_memory_backend(config: dict[str, Any] | None = None) -> GraphBackend:
         """Create an in-memory graph backend."""
         if config is None:
             config = {}
@@ -683,7 +683,7 @@ class GraphBackendFactory:
 
 
 @asynccontextmanager
-async def get_graph_backend(backend_type: str = "memory", config: Optional[dict[str, Any]] = None):
+async def get_graph_backend(backend_type: str = "memory", config: dict[str, Any] | None = None):
     """Context manager for graph backend connections."""
     if config is None:
         config = {}

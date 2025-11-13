@@ -29,7 +29,7 @@ class TestEvidencePackAssembler(unittest.TestCase):
             retention_logs_dir=str(self.temp_dir / "retention"),
             slo_reports_dir=str(self.temp_dir / "slo"),
             output_dir=str(self.temp_dir / "output"),
-            days_back=7
+            days_back=7,
         )
         self.assembler = EvidencePackAssembler(self.config)
 
@@ -40,6 +40,7 @@ class TestEvidencePackAssembler(unittest.TestCase):
     def tearDown(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir)
 
     def test_config_initialization(self):
@@ -59,7 +60,8 @@ class TestEvidencePackAssembler(unittest.TestCase):
         policy_file = self.temp_dir / "policies" / "policy_test.yaml"
         policy_content = {"rules": [{"match": {"tenant": "*"}, "effect": "allow"}]}
         import yaml
-        with open(policy_file, 'w') as f:
+
+        with open(policy_file, "w") as f:
             yaml.dump(policy_content, f)
 
         pack = self.assembler.assemble_pack("test-pack-001")
@@ -81,10 +83,11 @@ class TestEvidencePackAssembler(unittest.TestCase):
         json_content = {"rules": [{"match": {"tenant": "*"}, "effect": "deny"}]}
 
         import yaml
-        with open(yaml_policy, 'w') as f:
+
+        with open(yaml_policy, "w") as f:
             yaml.dump(yaml_content, f)
 
-        with open(json_policy, 'w') as f:
+        with open(json_policy, "w") as f:
             json.dump(json_content, f)
 
         policies = self.assembler._collect_policies()
@@ -107,14 +110,11 @@ class TestEvidencePackAssembler(unittest.TestCase):
             {"time": now.isoformat(), "event": "access", "user": "charlie"},
         ]
 
-        with open(audit_file, 'w') as f:
+        with open(audit_file, "w") as f:
             for entry in audit_entries:
-                f.write(json.dumps(entry) + '\n')
+                f.write(json.dumps(entry) + "\n")
 
-        time_range = {
-            "start": (now - timedelta(days=2)).isoformat(),
-            "end": now.isoformat()
-        }
+        time_range = {"start": (now - timedelta(days=2)).isoformat(), "end": now.isoformat()}
 
         audit_chain = self.assembler._collect_audit_chain(time_range)
 
@@ -136,14 +136,11 @@ class TestEvidencePackAssembler(unittest.TestCase):
             {"timestamp": (now - timedelta(days=1)).isoformat(), "privacy_budget_used": 0.2, "query_type": "sum"},
         ]
 
-        with open(dp_file, 'w') as f:
+        with open(dp_file, "w") as f:
             for entry in dp_entries:
-                f.write(json.dumps(entry) + '\n')
+                f.write(json.dumps(entry) + "\n")
 
-        time_range = {
-            "start": (now - timedelta(days=2)).isoformat(),
-            "end": now.isoformat()
-        }
+        time_range = {"start": (now - timedelta(days=2)).isoformat(), "end": now.isoformat()}
 
         dp_ledger = self.assembler._collect_dp_ledger(time_range)
 
@@ -160,17 +157,19 @@ class TestEvidencePackAssembler(unittest.TestCase):
 
         retention_entries = [
             {"timestamp": now.isoformat(), "action": "delete", "data_type": "logs", "age_days": 90},
-            {"timestamp": (now - timedelta(days=1)).isoformat(), "action": "archive", "data_type": "metrics", "age_days": 30},
+            {
+                "timestamp": (now - timedelta(days=1)).isoformat(),
+                "action": "archive",
+                "data_type": "metrics",
+                "age_days": 30,
+            },
         ]
 
-        with open(retention_file, 'w') as f:
+        with open(retention_file, "w") as f:
             for entry in retention_entries:
-                f.write(json.dumps(entry) + '\n')
+                f.write(json.dumps(entry) + "\n")
 
-        time_range = {
-            "start": (now - timedelta(days=2)).isoformat(),
-            "end": now.isoformat()
-        }
+        time_range = {"start": (now - timedelta(days=2)).isoformat(), "end": now.isoformat()}
 
         retention_logs = self.assembler._collect_retention_logs(time_range)
 
@@ -187,28 +186,26 @@ class TestEvidencePackAssembler(unittest.TestCase):
 
         slm_entries = [
             {"timestamp": now.isoformat(), "service": "router", "latency_p95": 150, "error_rate": 0.02},
-            {"timestamp": (now - timedelta(days=1)).isoformat(), "service": "memory", "latency_p95": 200, "error_rate": 0.01},
+            {
+                "timestamp": (now - timedelta(days=1)).isoformat(),
+                "service": "memory",
+                "latency_p95": 200,
+                "error_rate": 0.01,
+            },
         ]
 
-        with open(slm_file, 'w') as f:
+        with open(slm_file, "w") as f:
             for entry in slm_entries:
-                f.write(json.dumps(entry) + '\n')
+                f.write(json.dumps(entry) + "\n")
 
         # Create test counters file
         counters_file = self.temp_dir / "slo" / "test_counters.json"
-        counters_data = {
-            "requests_total": 10000,
-            "errors_total": 200,
-            "latency_sum": 1500000
-        }
+        counters_data = {"requests_total": 10000, "errors_total": 200, "latency_sum": 1500000}
 
-        with open(counters_file, 'w') as f:
+        with open(counters_file, "w") as f:
             json.dump(counters_data, f)
 
-        time_range = {
-            "start": (now - timedelta(days=2)).isoformat(),
-            "end": now.isoformat()
-        }
+        time_range = {"start": (now - timedelta(days=2)).isoformat(), "end": now.isoformat()}
 
         slo_reports = self.assembler._collect_slo_reports(time_range)
 
@@ -228,7 +225,7 @@ class TestEvidencePackAssembler(unittest.TestCase):
         self.assertTrue(os.path.exists(output_path))
 
         # Verify contents
-        with zipfile.ZipFile(output_path, 'r') as zf:
+        with zipfile.ZipFile(output_path, "r") as zf:
             files = zf.namelist()
             self.assertIn("manifest.json", files)
 
@@ -293,10 +290,7 @@ class TestEvidencePackAssembler(unittest.TestCase):
 
     def test_custom_time_range(self):
         """Test using custom time range for pack assembly."""
-        custom_time_range = {
-            "start": "2024-01-01T00:00:00",
-            "end": "2024-01-31T23:59:59"
-        }
+        custom_time_range = {"start": "2024-01-01T00:00:00", "end": "2024-01-31T23:59:59"}
 
         pack = self.assembler.assemble_pack("custom-time-pack", custom_time_range)
 
@@ -310,7 +304,7 @@ class TestEvidencePackAssembler(unittest.TestCase):
             audit_logs_dir="/non/existent/audit",
             dp_ledger_dir="/non/existent/dp",
             retention_logs_dir="/non/existent/retention",
-            slo_reports_dir="/non/existent/slo"
+            slo_reports_dir="/non/existent/slo",
         )
         assembler = EvidencePackAssembler(config)
 
@@ -327,7 +321,7 @@ class TestEvidencePackAssembler(unittest.TestCase):
         """Test handling of malformed JSON files."""
         # Create file with invalid JSON
         bad_file = self.temp_dir / "policies" / "bad_policy.json"
-        with open(bad_file, 'w') as f:
+        with open(bad_file, "w") as f:
             f.write("invalid json content {")
 
         policies = self.assembler._collect_policies()

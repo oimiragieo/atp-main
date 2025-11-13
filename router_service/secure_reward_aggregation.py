@@ -24,11 +24,12 @@ import json
 import secrets
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
+
+from tools.secure_aggregation_poc import SimpleHomomorphicEncryption
 
 from metrics import FEDERATED_ROUNDS_COMPLETED, SECURE_AGG_FAILURES_TOTAL
 from router_service.federated_rewards import FederatedRewardSignal
-from tools.secure_aggregation_poc import SimpleHomomorphicEncryption
 
 
 @dataclass
@@ -41,8 +42,8 @@ class EncryptedRewardContribution:
     encrypted_signals: dict[str, dict[str, str]]  # model_task -> field -> encrypted_value
     timestamp: float
     signature: str
-    privacy_budget_used: Optional[float] = None
-    noise_scale: Optional[float] = None
+    privacy_budget_used: float | None = None
+    noise_scale: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
@@ -52,7 +53,7 @@ class EncryptedRewardContribution:
             "cluster_hash": self.cluster_hash,
             "encrypted_signals": self.encrypted_signals,
             "timestamp": self.timestamp,
-            "signature": self.signature
+            "signature": self.signature,
         }
         if self.privacy_budget_used is not None:
             result["privacy_budget_used"] = self.privacy_budget_used
@@ -64,23 +65,14 @@ class EncryptedRewardContribution:
 class SecureRewardAggregatorNode:
     """Router node that participates in secure reward signal aggregation."""
 
-    def __init__(
-        self,
-        router_id: str,
-        signing_key: bytes,
-        encryption_key: bytes,
-        deterministic_noise: bool = True
-    ):
+    def __init__(self, router_id: str, signing_key: bytes, encryption_key: bytes, deterministic_noise: bool = True):
         self.router_id = router_id
         self.signing_key = signing_key
         self.encryption = SimpleHomomorphicEncryption(encryption_key)
         self.deterministic_noise = deterministic_noise
 
     def encrypt_reward_signal(
-        self,
-        signal: FederatedRewardSignal,
-        noise_scale: float = 1.0,
-        fixed_timestamp: float | None = None
+        self, signal: FederatedRewardSignal, noise_scale: float = 1.0, fixed_timestamp: float | None = None
     ) -> EncryptedRewardContribution:
         """Encrypt a federated reward signal for secure aggregation.
 
@@ -93,6 +85,7 @@ class SecureRewardAggregatorNode:
         """
         # Validate input signal before processing
         from router_service.federated_rewards import validate_federated_reward_signal
+
         validation_errors = validate_federated_reward_signal(signal.to_dict())
         if validation_errors:
             raise ValueError(f"Invalid federated reward signal: {validation_errors}")
@@ -128,13 +121,16 @@ class SecureRewardAggregatorNode:
 
         # Create signature
         timestamp = fixed_timestamp if fixed_timestamp is not None else time.time()
-        payload = json.dumps({
-            "router_id": self.router_id,
-            "aggregation_round": signal.aggregation_round,
-            "cluster_hash": signal.cluster_hash,
-            "encrypted_signals": encrypted_signals,
-            "timestamp": timestamp
-        }, sort_keys=True).encode()
+        payload = json.dumps(
+            {
+                "router_id": self.router_id,
+                "aggregation_round": signal.aggregation_round,
+                "cluster_hash": signal.cluster_hash,
+                "encrypted_signals": encrypted_signals,
+                "timestamp": timestamp,
+            },
+            sort_keys=True,
+        ).encode()
 
         signature = hmac.new(self.signing_key, payload, hashlib.sha256).hexdigest()
 
@@ -146,18 +142,21 @@ class SecureRewardAggregatorNode:
             timestamp=timestamp,
             signature=signature,
             privacy_budget_used=signal.privacy_budget_used,
-            noise_scale=noise_scale
+            noise_scale=noise_scale,
         )
 
     def verify_contribution(self, contribution: EncryptedRewardContribution, expected_key: bytes) -> bool:
         """Verify the signature of an encrypted contribution."""
-        payload = json.dumps({
-            "router_id": contribution.router_id,
-            "aggregation_round": contribution.aggregation_round,
-            "cluster_hash": contribution.cluster_hash,
-            "encrypted_signals": contribution.encrypted_signals,
-            "timestamp": contribution.timestamp
-        }, sort_keys=True).encode()
+        payload = json.dumps(
+            {
+                "router_id": contribution.router_id,
+                "aggregation_round": contribution.aggregation_round,
+                "cluster_hash": contribution.cluster_hash,
+                "encrypted_signals": contribution.encrypted_signals,
+                "timestamp": contribution.timestamp,
+            },
+            sort_keys=True,
+        ).encode()
 
         expected_sig = hmac.new(expected_key, payload, hashlib.sha256).hexdigest()
         return hmac.compare_digest(contribution.signature, expected_sig)
@@ -201,22 +200,23 @@ class SecureRewardAggregatorCoordinator:
         if not expected_key:
             return False
 
-        payload = json.dumps({
-            "router_id": contribution.router_id,
-            "aggregation_round": contribution.aggregation_round,
-            "cluster_hash": contribution.cluster_hash,
-            "encrypted_signals": contribution.encrypted_signals,
-            "timestamp": contribution.timestamp
-        }, sort_keys=True).encode()
+        payload = json.dumps(
+            {
+                "router_id": contribution.router_id,
+                "aggregation_round": contribution.aggregation_round,
+                "cluster_hash": contribution.cluster_hash,
+                "encrypted_signals": contribution.encrypted_signals,
+                "timestamp": contribution.timestamp,
+            },
+            sort_keys=True,
+        ).encode()
 
         expected_sig = hmac.new(expected_key, payload, hashlib.sha256).hexdigest()
         return hmac.compare_digest(contribution.signature, expected_sig)
 
     def perform_secure_aggregation(
-        self,
-        min_participants: int = 2,
-        max_participants: int = 100
-    ) -> Optional[FederatedRewardSignal]:
+        self, min_participants: int = 2, max_participants: int = 100
+    ) -> FederatedRewardSignal | None:
         """Perform secure aggregation of all collected contributions.
 
         Args:
@@ -292,7 +292,9 @@ class SecureRewardAggregatorCoordinator:
                         aggregated_signals[model_task][field] = int(avg_value)
                 else:
                     # No values could be decrypted - set to 0
-                    aggregated_signals[model_task][field] = 0.0 if field in ["success_rate", "avg_latency", "quality_score", "cost_efficiency"] else 0
+                    aggregated_signals[model_task][field] = (
+                        0.0 if field in ["success_rate", "avg_latency", "quality_score", "cost_efficiency"] else 0
+                    )
 
         # Calculate total privacy budget used
         total_privacy_budget = sum(
@@ -303,9 +305,7 @@ class SecureRewardAggregatorCoordinator:
 
         # Calculate average noise scale
         noise_scales = [
-            contrib.noise_scale
-            for contrib in self.contributions.values()
-            if contrib.noise_scale is not None
+            contrib.noise_scale for contrib in self.contributions.values() if contrib.noise_scale is not None
         ]
         avg_noise_scale = sum(noise_scales) / len(noise_scales) if noise_scales else None
 
@@ -316,7 +316,7 @@ class SecureRewardAggregatorCoordinator:
             reward_signals=aggregated_signals,
             participant_count=len(self.contributions),
             privacy_budget_used=total_privacy_budget if total_privacy_budget > 0 else None,
-            noise_scale=avg_noise_scale
+            noise_scale=avg_noise_scale,
         )
 
         # Increment federated rounds completed metric
@@ -341,8 +341,5 @@ def create_secure_aggregation_keys(num_routers: int) -> dict[str, dict[str, byte
     keys = {}
     for i in range(num_routers):
         router_id = f"router_{i}"
-        keys[router_id] = {
-            'signing_key': secrets.token_bytes(32),
-            'encryption_key': secrets.token_bytes(32)
-        }
+        keys[router_id] = {"signing_key": secrets.token_bytes(32), "encryption_key": secrets.token_bytes(32)}
     return keys

@@ -1,10 +1,9 @@
-import os
 from typing import Any
 
 import httpx
 from fastapi.testclient import TestClient
 
-from admin_aggregator.app import app, _build_client
+from admin_aggregator.app import app
 
 
 class MockRouter:
@@ -17,33 +16,45 @@ class MockRouter:
     def handler(self, request: httpx.Request) -> httpx.Response:
         path = request.url.path
         if path.endswith("/admin/version"):
-            return httpx.Response(200, json={
-                "service_version": self.version,
-                "bandit_strategy": "ucb",
-                "schema_version": 1,
-                "max_prompt_chars": 6000,
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "service_version": self.version,
+                    "bandit_strategy": "ucb",
+                    "schema_version": 1,
+                    "max_prompt_chars": 6000,
+                },
+            )
         if path.endswith("/admin/state_health"):
-            return httpx.Response(200, json={
-                "backend": self.backend,
-                "status": self.status,
-                "detail": {},
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "backend": self.backend,
+                    "status": self.status,
+                    "detail": {},
+                },
+            )
         if path.endswith("/admin/cluster_stats"):
-            return httpx.Response(200, json={
-                "stats": [
-                    {"cluster": "c1", "model": "mA", "calls": 10},
-                    {"cluster": "c1", "model": "mB", "calls": 5},
-                ]
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "stats": [
+                        {"cluster": "c1", "model": "mA", "calls": 10},
+                        {"cluster": "c1", "model": "mB", "calls": 5},
+                    ]
+                },
+            )
         if path.endswith("/admin/model_status"):
-            return httpx.Response(200, json={
-                "models": [
-                    {"model": "mA", "status": "prod", "capabilities": ["chat"], "safety_grade": "A"},
-                ],
-                "promotions": 2,
-                "demotions": 1,
-            })
+            return httpx.Response(
+                200,
+                json={
+                    "models": [
+                        {"model": "mA", "status": "prod", "capabilities": ["chat"], "safety_grade": "A"},
+                    ],
+                    "promotions": 2,
+                    "demotions": 1,
+                },
+            )
         return httpx.Response(404, json={"error": "not_found", "path": path})
 
 
@@ -98,5 +109,5 @@ def test_summary_and_aggregates(monkeypatch: Any) -> None:
     assert r.status_code == 200
     ms = r.json()
     assert ms["promotions"] == 4  # 2 per router
-    assert ms["demotions"] == 2   # 1 per router
+    assert ms["demotions"] == 2  # 1 per router
     assert len(ms["models"]) == 2  # one per router

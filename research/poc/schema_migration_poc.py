@@ -5,8 +5,9 @@ version to a target version while recording lineage (audit trail) of transformat
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass

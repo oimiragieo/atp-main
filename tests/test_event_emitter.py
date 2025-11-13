@@ -37,12 +37,7 @@ class TestRejectionEvent:
 
     def test_rejection_event_creation(self):
         """Test creating a rejection event."""
-        event = RejectionEvent(
-            RejectionReason.INPUT_VALIDATION,
-            "test_component",
-            "req-123",
-            {"extra": "data"}
-        )
+        event = RejectionEvent(RejectionReason.INPUT_VALIDATION, "test_component", "req-123", {"extra": "data"})
 
         assert event.reason == RejectionReason.INPUT_VALIDATION
         assert event.component == "test_component"
@@ -52,11 +47,7 @@ class TestRejectionEvent:
 
     def test_rejection_event_to_dict(self):
         """Test converting rejection event to dictionary."""
-        event = RejectionEvent(
-            RejectionReason.REPLAY_DETECTED,
-            "replay_guard",
-            "req-456"
-        )
+        event = RejectionEvent(RejectionReason.REPLAY_DETECTED, "replay_guard", "req-456")
 
         event_dict = event.to_dict()
 
@@ -85,7 +76,7 @@ class TestSpeculativeEvent:
             latency_saved_ms=15.5,
             confidence_score=0.85,
             request_id="req-789",
-            details={"model_version": "1.0"}
+            details={"model_version": "1.0"},
         )
 
         assert event.event_type == SpeculativeEventType.SPECULATION_ACCEPTED
@@ -97,11 +88,7 @@ class TestSpeculativeEvent:
 
     def test_speculative_event_to_dict(self):
         """Test converting speculative event to dictionary."""
-        event = SpeculativeEvent(
-            SpeculativeEventType.SPECULATION_REJECTED,
-            "target-model-v1",
-            confidence_score=0.45
-        )
+        event = SpeculativeEvent(SpeculativeEventType.SPECULATION_REJECTED, "target-model-v1", confidence_score=0.45)
 
         event_dict = event.to_dict()
 
@@ -185,15 +172,10 @@ class TestEventEmitter:
 class TestConvenienceFunctions:
     """Test convenience functions for event emission."""
 
-    @patch('router_service.event_emitter._EVENT_EMITTER')
+    @patch("router_service.event_emitter._EVENT_EMITTER")
     def test_emit_rejection_event(self, mock_emitter):
         """Test emit_rejection_event convenience function."""
-        emit_rejection_event(
-            RejectionReason.POLICY_VIOLATION,
-            "policy_engine",
-            "req-123",
-            {"policy": "test_policy"}
-        )
+        emit_rejection_event(RejectionReason.POLICY_VIOLATION, "policy_engine", "req-123", {"policy": "test_policy"})
 
         mock_emitter.emit_rejection.assert_called_once()
         event = mock_emitter.emit_rejection.call_args[0][0]
@@ -203,8 +185,8 @@ class TestConvenienceFunctions:
         assert event.request_id == "req-123"
         assert event.details == {"policy": "test_policy"}
 
-    @patch('router_service.event_emitter._EVENT_EMITTER')
-    @patch('router_service.event_emitter.SPECULATIVE_EVENTS_TOTAL')
+    @patch("router_service.event_emitter._EVENT_EMITTER")
+    @patch("router_service.event_emitter.SPECULATIVE_EVENTS_TOTAL")
     def test_emit_speculative_event(self, mock_counter, mock_emitter):
         """Test emit_speculative_event convenience function."""
         emit_speculative_event(
@@ -212,7 +194,7 @@ class TestConvenienceFunctions:
             "draft-model",
             latency_saved_ms=20.0,
             confidence_score=0.9,
-            request_id="req-456"
+            request_id="req-456",
         )
 
         mock_emitter.emit_speculative.assert_called_once()
@@ -233,26 +215,23 @@ class TestSpeculativeSampler:
 
     def test_speculative_sampler_creation(self):
         """Test creating a speculative sampler."""
-        sampler = SpeculativeSampler(
-            draft_model="draft-v1",
-            target_model="target-v1",
-            acceptance_threshold=0.8
-        )
+        sampler = SpeculativeSampler(draft_model="draft-v1", target_model="target-v1", acceptance_threshold=0.8)
 
         assert sampler.draft_model == "draft-v1"
         assert sampler.target_model == "target-v1"
         assert sampler.acceptance_threshold == 0.8
 
-    @patch('router_service.speculative_sampler.emit_speculative_event')
+    @patch("router_service.speculative_sampler.emit_speculative_event")
     def test_speculate_accepted(self, mock_emit):
         """Test speculative sampling with accepted speculation."""
         sampler = SpeculativeSampler(acceptance_threshold=0.5)
 
         # Mock to ensure high confidence (prefix match) and acceptance
-        with patch('random.choice', return_value="hello world"), \
-             patch('random.random', return_value=0.5), \
-             patch('time.sleep'):  # Skip actual sleep
-
+        with (
+            patch("random.choice", return_value="hello world"),
+            patch("random.random", return_value=0.5),
+            patch("time.sleep"),
+        ):  # Skip actual sleep
             result = sampler.speculate("test prompt", "req-123")
 
             assert result["accepted"] is True
@@ -265,16 +244,17 @@ class TestSpeculativeSampler:
             # Verify events were emitted
             assert mock_emit.call_count >= 2  # At least attempted and accepted
 
-    @patch('router_service.speculative_sampler.emit_speculative_event')
+    @patch("router_service.speculative_sampler.emit_speculative_event")
     def test_speculate_rejected(self, mock_emit):
         """Test speculative sampling with rejected speculation."""
         sampler = SpeculativeSampler(acceptance_threshold=0.9)  # High threshold
 
         # Mock to ensure low confidence (mismatch)
-        with patch('random.choice', side_effect=["hello world", "goodbye world"]), \
-             patch('random.random', return_value=0.5), \
-             patch('time.sleep'):  # Skip actual sleep
-
+        with (
+            patch("random.choice", side_effect=["hello world", "goodbye world"]),
+            patch("random.random", return_value=0.5),
+            patch("time.sleep"),
+        ):  # Skip actual sleep
             result = sampler.speculate("test prompt", "req-456")
 
             assert result["accepted"] is False
@@ -305,13 +285,9 @@ class TestSpeculativeSampler:
         """Test benchmark functionality."""
         sampler = SpeculativeSampler()
 
-        with patch.object(sampler, 'speculate') as mock_speculate:
+        with patch.object(sampler, "speculate") as mock_speculate:
             # Mock speculate to return accepted results
-            mock_speculate.return_value = {
-                "accepted": True,
-                "latency_saved_ms": 30.0,
-                "confidence": 0.85
-            }
+            mock_speculate.return_value = {"accepted": True, "latency_saved_ms": 30.0, "confidence": 0.85}
 
             result = sampler.benchmark(trials=10)
 
@@ -328,14 +304,14 @@ class TestSpeculativeSampler:
 class TestIntegrationWithExistingComponents:
     """Test integration with existing rejection components."""
 
-    @patch('router_service.input_hardening.emit_rejection_event')
+    @patch("router_service.input_hardening.emit_rejection_event")
     def test_input_hardening_integration(self, mock_emit):
         """Test that input hardening emits rejection events."""
         from router_service.input_hardening import check_input
 
         # Test invalid MIME - use data with many non-printable characters
         # This creates a byte string with many NUL bytes to trigger rejection
-        invalid_data = b'\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F' * 10
+        invalid_data = b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" * 10
         result, reason = check_input(invalid_data, request_id="req-123")
         assert result is False
         assert reason == "invalid_mime"
@@ -346,7 +322,7 @@ class TestIntegrationWithExistingComponents:
         assert call_args[0][1] == "input_hardening"
         assert call_args[0][2] == "req-123"
 
-    @patch('router_service.replay_guard.emit_rejection_event')
+    @patch("router_service.replay_guard.emit_rejection_event")
     def test_replay_guard_integration(self, mock_emit):
         """Test that replay guard emits rejection events."""
         from router_service.replay_guard import NonceStore

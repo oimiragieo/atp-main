@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 from metrics.registry import REGISTRY
 
@@ -130,7 +129,7 @@ class AdaptiveReconciliationSwitcher:
         perf.quality_score = (1 - alpha) * perf.quality_score + alpha * quality_score
         perf.last_updated = time.time()
 
-    def get_strategy_performance(self, strategy_name: str) -> Optional[ReconciliationPerformance]:  # noqa: UP007
+    def get_strategy_performance(self, strategy_name: str) -> ReconciliationPerformance | None:  # noqa: UP007
         """Get performance metrics for a strategy."""
         return self.performance_history.get(strategy_name)
 

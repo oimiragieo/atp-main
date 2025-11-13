@@ -15,13 +15,13 @@ from fastapi.testclient import TestClient
 from metrics import MEMORY_ACCESS_ANOMALIES_TOTAL
 
 # Set up environment variables before importing modules
-os.environ['AUDIT_SECRET'] = 'test-secret-key'  # noqa: S105
-os.environ['ANOMALY_THRESHOLD'] = '5'  # Lower threshold for testing
+os.environ["AUDIT_SECRET"] = "test-secret-key"  # noqa: S105
+os.environ["ANOMALY_THRESHOLD"] = "5"  # Lower threshold for testing
 
 # Create temporary audit log file
-temp_audit_file = tempfile.NamedTemporaryFile(mode='w+', delete=False)
+temp_audit_file = tempfile.NamedTemporaryFile(mode="w+", delete=False)
 temp_audit_file.close()
-os.environ['AUDIT_PATH'] = temp_audit_file.name
+os.environ["AUDIT_PATH"] = temp_audit_file.name
 
 # Import memory_gateway modules using importlib due to hyphen in directory name
 memory_gateway_path = os.path.join(os.path.dirname(__file__), "..", "memory-gateway")
@@ -31,7 +31,9 @@ memory_gateway = types.ModuleType("memory_gateway")
 sys.modules["memory_gateway"] = memory_gateway
 
 # Import audit_log first
-spec = importlib.util.spec_from_file_location("memory_gateway.audit_log", os.path.join(memory_gateway_path, "audit_log.py"))
+spec = importlib.util.spec_from_file_location(
+    "memory_gateway.audit_log", os.path.join(memory_gateway_path, "audit_log.py")
+)
 memory_gateway_audit = importlib.util.module_from_spec(spec)
 sys.modules["memory_gateway.audit_log"] = memory_gateway_audit
 spec.loader.exec_module(memory_gateway_audit)
@@ -72,17 +74,12 @@ class TestCrossNamespaceAudit:
         """Test that basic memory operations create audit entries."""
         # Test PUT operation
         response = client.put(
-            "/v1/memory/test_ns/test_key",
-            json={"object": {"data": "test_value"}},
-            headers={"x-tenant-id": "tenant1"}
+            "/v1/memory/test_ns/test_key", json={"object": {"data": "test_value"}}, headers={"x-tenant-id": "tenant1"}
         )
         assert response.status_code == 200
 
         # Test GET operation
-        response = client.get(
-            "/v1/memory/test_ns/test_key",
-            headers={"x-tenant-id": "tenant1"}
-        )
+        response = client.get("/v1/memory/test_ns/test_key", headers={"x-tenant-id": "tenant1"})
         assert response.status_code == 200
         assert response.json()["object"]["data"] == "test_value"
 
@@ -94,17 +91,9 @@ class TestCrossNamespaceAudit:
         NAMESPACE_ACCESS_PATTERNS.clear()
 
         # Perform operations across different namespaces
-        client.put(
-            "/v1/memory/ns1/key1",
-            json={"object": {"data": "value1"}},
-            headers={"x-tenant-id": "tenant1"}
-        )
+        client.put("/v1/memory/ns1/key1", json={"object": {"data": "value1"}}, headers={"x-tenant-id": "tenant1"})
 
-        client.put(
-            "/v1/memory/ns2/key2",
-            json={"object": {"data": "value2"}},
-            headers={"x-tenant-id": "tenant1"}
-        )
+        client.put("/v1/memory/ns2/key2", json={"object": {"data": "value2"}}, headers={"x-tenant-id": "tenant1"})
 
         # Check that access patterns are recorded
         assert NAMESPACE_ACCESS_PATTERNS["tenant1"]["ns1"] == 1
@@ -129,7 +118,7 @@ class TestCrossNamespaceAudit:
                 client.put(
                     f"/v1/memory/{ns}/key",
                     json={"object": {"data": f"value{i}"}},
-                    headers={"x-tenant-id": "suspicious_tenant"}
+                    headers={"x-tenant-id": "suspicious_tenant"},
                 )
 
             # Check that anomaly was detected
@@ -147,46 +136,39 @@ class TestCrossNamespaceAudit:
 
         # Perform some operations to create audit entries
         client.put(
-            "/v1/memory/test_ns/test_key",
-            json={"object": {"data": "test_value"}},
-            headers={"x-tenant-id": "tenant1"}
+            "/v1/memory/test_ns/test_key", json={"object": {"data": "test_value"}}, headers={"x-tenant-id": "tenant1"}
         )
 
         # Verify audit log integrity
-        secret = os.environ['AUDIT_SECRET'].encode()
+        secret = os.environ["AUDIT_SECRET"].encode()
         assert verify_log(temp_audit_file.name, secret), "Audit log should be verifiable"
 
     def test_tenant_isolation_in_audit(self, client):
         """Test that different tenants are properly isolated in audit logs."""
         # Operations by different tenants
         client.put(
-            "/v1/memory/shared_ns/key1",
-            json={"object": {"data": "tenant1_data"}},
-            headers={"x-tenant-id": "tenant1"}
+            "/v1/memory/shared_ns/key1", json={"object": {"data": "tenant1_data"}}, headers={"x-tenant-id": "tenant1"}
         )
 
         client.put(
-            "/v1/memory/shared_ns/key2",
-            json={"object": {"data": "tenant2_data"}},
-            headers={"x-tenant-id": "tenant2"}
+            "/v1/memory/shared_ns/key2", json={"object": {"data": "tenant2_data"}}, headers={"x-tenant-id": "tenant2"}
         )
 
         # Each should be recorded separately in audit
         from memory_gateway.app import NAMESPACE_ACCESS_PATTERNS
+
         assert NAMESPACE_ACCESS_PATTERNS["tenant1"]["shared_ns"] == 1
         assert NAMESPACE_ACCESS_PATTERNS["tenant2"]["shared_ns"] == 1
 
     def test_get_not_found_audit(self, client):
         """Test that GET operations for non-existent keys are audited."""
-        response = client.get(
-            "/v1/memory/test_ns/nonexistent_key",
-            headers={"x-tenant-id": "tenant1"}
-        )
+        response = client.get("/v1/memory/test_ns/nonexistent_key", headers={"x-tenant-id": "tenant1"})
         assert response.status_code == 200
         assert response.json()["error"] == "not_found"
 
         # Should still be recorded in access patterns
         from memory_gateway.app import NAMESPACE_ACCESS_PATTERNS
+
         assert NAMESPACE_ACCESS_PATTERNS["tenant1"]["test_ns"] >= 1
 
     def test_anomaly_metric_increment(self, client):
@@ -195,7 +177,7 @@ class TestCrossNamespaceAudit:
         memory_gateway_app.TENANT_ACCESS_HISTORY.clear()
 
         # Mock the metric
-        with patch.object(memory_gateway_app, 'MEMORY_ACCESS_ANOMALIES_TOTAL') as mock_metric:
+        with patch.object(memory_gateway_app, "MEMORY_ACCESS_ANOMALIES_TOTAL") as mock_metric:
             # Trigger anomaly condition
             original_threshold = memory_gateway_app.ANOMALY_THRESHOLD
             try:
@@ -206,7 +188,7 @@ class TestCrossNamespaceAudit:
                     client.put(
                         f"/v1/memory/ns{i}/key",
                         json={"object": {"data": f"value{i}"}},
-                        headers={"x-tenant-id": "test_tenant"}
+                        headers={"x-tenant-id": "test_tenant"},
                     )
 
                 # Verify metric was incremented
@@ -221,9 +203,7 @@ class TestCrossNamespaceAudit:
 
         # Perform operation
         client.put(
-            "/v1/memory/test_ns/test_key",
-            json={"object": {"data": "test_value"}},
-            headers={"x-tenant-id": "tenant1"}
+            "/v1/memory/test_ns/test_key", json={"object": {"data": "test_value"}}, headers={"x-tenant-id": "tenant1"}
         )
 
         # Read audit log and check structure
@@ -245,13 +225,19 @@ class TestCrossNamespaceAudit:
         assert response.status_code == 404  # FastAPI handles empty path parameters as 404
 
         # Test namespace with invalid characters
-        response = client.put("/v1/memory/invalid@namespace/test_key", json={"object": {"data": "test"}}, headers={"x-tenant-id": "tenant1"})
+        response = client.put(
+            "/v1/memory/invalid@namespace/test_key",
+            json={"object": {"data": "test"}},
+            headers={"x-tenant-id": "tenant1"},
+        )
         assert response.status_code == 400
         assert "invalid characters" in response.json()["detail"]
 
         # Test overly long namespace
         long_ns = "a" * 101
-        response = client.put(f"/v1/memory/{long_ns}/test_key", json={"object": {"data": "test"}}, headers={"x-tenant-id": "tenant1"})
+        response = client.put(
+            f"/v1/memory/{long_ns}/test_key", json={"object": {"data": "test"}}, headers={"x-tenant-id": "tenant1"}
+        )
         assert response.status_code == 400
         assert "too long" in response.json()["detail"]
 
@@ -262,13 +248,17 @@ class TestCrossNamespaceAudit:
         assert response.status_code == 404  # FastAPI handles empty path parameters as 404
 
         # Test key with invalid characters
-        response = client.put("/v1/memory/test_ns/invalid@key", json={"object": {"data": "test"}}, headers={"x-tenant-id": "tenant1"})
+        response = client.put(
+            "/v1/memory/test_ns/invalid@key", json={"object": {"data": "test"}}, headers={"x-tenant-id": "tenant1"}
+        )
         assert response.status_code == 400
         assert "invalid characters" in response.json()["detail"]
 
         # Test overly long key
         long_key = "a" * 201
-        response = client.put(f"/v1/memory/test_ns/{long_key}", json={"object": {"data": "test"}}, headers={"x-tenant-id": "tenant1"})
+        response = client.put(
+            f"/v1/memory/test_ns/{long_key}", json={"object": {"data": "test"}}, headers={"x-tenant-id": "tenant1"}
+        )
         assert response.status_code == 400
         assert "too long" in response.json()["detail"]
 
@@ -279,25 +269,35 @@ class TestCrossNamespaceAudit:
         assert response.status_code == 422  # FastAPI validation error
 
         # Test empty tenant ID
-        response = client.put("/v1/memory/test_ns/test_key", json={"object": {"data": "test"}}, headers={"x-tenant-id": ""})
+        response = client.put(
+            "/v1/memory/test_ns/test_key", json={"object": {"data": "test"}}, headers={"x-tenant-id": ""}
+        )
         assert response.status_code == 400
         assert "cannot be empty" in response.json()["detail"]
 
         # Test tenant ID with invalid characters
-        response = client.put("/v1/memory/test_ns/test_key", json={"object": {"data": "test"}}, headers={"x-tenant-id": "invalid@tenant"})
+        response = client.put(
+            "/v1/memory/test_ns/test_key", json={"object": {"data": "test"}}, headers={"x-tenant-id": "invalid@tenant"}
+        )
         assert response.status_code == 400
         assert "invalid characters" in response.json()["detail"]
 
     def test_input_validation_consistency_level(self, client):
         """Test input validation for consistency level."""
         # Test invalid consistency level
-        response = client.get("/v1/memory/test_ns/test_key", headers={"x-tenant-id": "tenant1", "x-consistency-level": "INVALID"})
+        response = client.get(
+            "/v1/memory/test_ns/test_key", headers={"x-tenant-id": "tenant1", "x-consistency-level": "INVALID"}
+        )
         assert response.status_code == 400
         assert "Invalid consistency level" in response.json()["detail"]
 
         # Test valid consistency levels
-        response = client.get("/v1/memory/test_ns/test_key", headers={"x-tenant-id": "tenant1", "x-consistency-level": "EVENTUAL"})
+        response = client.get(
+            "/v1/memory/test_ns/test_key", headers={"x-tenant-id": "tenant1", "x-consistency-level": "EVENTUAL"}
+        )
         assert response.status_code == 200
 
-        response = client.get("/v1/memory/test_ns/test_key", headers={"x-tenant-id": "tenant1", "x-consistency-level": "STRONG"})
+        response = client.get(
+            "/v1/memory/test_ns/test_key", headers={"x-tenant-id": "tenant1", "x-consistency-level": "STRONG"}
+        )
         assert response.status_code == 200

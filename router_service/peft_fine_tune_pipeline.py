@@ -9,7 +9,7 @@ import json
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -205,7 +205,7 @@ class PEFTFineTunePipeline:
         """Get history of all training jobs."""
         return self._job_history.copy()
 
-    def get_job_status(self, job_id: str) -> Optional[dict[str, Any]]:
+    def get_job_status(self, job_id: str) -> dict[str, Any] | None:
         """Get status of a specific job."""
         for job in self._job_history:
             if job.get("job_id") == job_id:

@@ -31,8 +31,8 @@ class TestSecureRewardAggregation:
         self.keys = create_secure_aggregation_keys(3)
         self.shared_encryption_key = b"shared_encryption_key_32_bytes"
         self.coordinator = SecureRewardAggregatorCoordinator(
-            router_keys={router_id: keys['signing_key'] for router_id, keys in self.keys.items()},
-            encryption_key=self.shared_encryption_key
+            router_keys={router_id: keys["signing_key"] for router_id, keys in self.keys.items()},
+            encryption_key=self.shared_encryption_key,
         )
 
     def test_basic_aggregation(self):
@@ -41,22 +41,16 @@ class TestSecureRewardAggregation:
         for router_id in ["router_0", "router_1"]:
             node = SecureRewardAggregatorNode(
                 router_id=router_id,
-                signing_key=self.keys[router_id]['signing_key'],
-                encryption_key=self.shared_encryption_key
+                signing_key=self.keys[router_id]["signing_key"],
+                encryption_key=self.shared_encryption_key,
             )
 
-            reward_signals = {
-                "gpt-4:chat": {
-                    "success_rate": 0.9,
-                    "avg_latency": 1.0,
-                    "total_samples": 100
-                }
-            }
+            reward_signals = {"gpt-4:chat": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}}
             signal = FederatedRewardSignal(
                 aggregation_round=1,
                 cluster_hash="test_cluster_1234567890",
                 reward_signals=reward_signals,
-                participant_count=1
+                participant_count=1,
             )
 
             contribution = node.encrypt_reward_signal(signal)
@@ -78,7 +72,7 @@ class TestSecureRewardAggregation:
         unauthorized_node = SecureRewardAggregatorNode(
             router_id="unauthorized_router",
             signing_key=b"unauthorized_key_32_bytes_long",
-            encryption_key=self.shared_encryption_key
+            encryption_key=self.shared_encryption_key,
         )
 
         reward_signals = {"model:task": {"success_rate": 0.9, "avg_latency": 1.0, "total_samples": 100}}
@@ -86,7 +80,7 @@ class TestSecureRewardAggregation:
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=1
+            participant_count=1,
         )
 
         contribution = unauthorized_node.encrypt_reward_signal(signal)

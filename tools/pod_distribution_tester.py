@@ -15,6 +15,7 @@ from dataclasses import dataclass
 @dataclass
 class PodInfo:
     """Information about a pod's location."""
+
     name: str
     node: str
     zone: str
@@ -24,6 +25,7 @@ class PodInfo:
 @dataclass
 class DistributionMetrics:
     """Metrics for pod distribution analysis."""
+
     total_pods: int
     nodes_used: int
     zones_used: int
@@ -43,12 +45,7 @@ class PodDistributionTester:
     def run_kubectl_command(self, command: list[str]) -> str:
         """Run a kubectl command and return the output."""
         try:
-            result = subprocess.run(
-                ["kubectl"] + command,
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(["kubectl"] + command, capture_output=True, text=True, check=True)
             return result.stdout
         except subprocess.CalledProcessError as e:
             print(f"Error running kubectl command: {e}")
@@ -58,12 +55,7 @@ class PodDistributionTester:
     def get_pod_distribution(self) -> list[PodInfo]:
         """Get current pod distribution information."""
         # Get pods with their node and zone information
-        command = [
-            "get", "pods",
-            "-n", self.namespace,
-            "-l", f"app={self.deployment_name}",
-            "-o", "json"
-        ]
+        command = ["get", "pods", "-n", self.namespace, "-l", f"app={self.deployment_name}", "-o", "json"]
 
         output = self.run_kubectl_command(command)
         if not output:
@@ -81,12 +73,7 @@ class PodDistributionTester:
                 # Get zone information from node
                 zone = self.get_node_zone(node_name)
 
-                pod_infos.append(PodInfo(
-                    name=pod_name,
-                    node=node_name,
-                    zone=zone,
-                    status=status
-                ))
+                pod_infos.append(PodInfo(name=pod_name, node=node_name, zone=zone, status=status))
 
             return pod_infos
 
@@ -96,10 +83,7 @@ class PodDistributionTester:
 
     def get_node_zone(self, node_name: str) -> str:
         """Get the zone for a given node."""
-        command = [
-            "get", "node", node_name,
-            "-o", "jsonpath={.metadata.labels.topology\\.kubernetes\\.io/zone}"
-        ]
+        command = ["get", "node", node_name, "-o", "jsonpath={.metadata.labels.topology\\.kubernetes\\.io/zone}"]
 
         output = self.run_kubectl_command(command)
         return output.strip() if output else "unknown"
@@ -132,7 +116,7 @@ class PodDistributionTester:
             pods_per_node=pods_per_node,
             pods_per_zone=pods_per_zone,
             zone_spread_score=zone_spread_score,
-            node_spread_score=node_spread_score
+            node_spread_score=node_spread_score,
         )
 
     def _calculate_spread_score(self, counts: list[int]) -> float:
@@ -143,7 +127,7 @@ class PodDistributionTester:
         total = sum(counts)
         ideal_per_group = total / len(counts)
         variance = sum((count - ideal_per_group) ** 2 for count in counts) / len(counts)
-        return variance ** 0.5  # RMS deviation
+        return variance**0.5  # RMS deviation
 
     def print_distribution_report(self, pods: list[PodInfo], metrics: DistributionMetrics):
         """Print a detailed distribution report."""
@@ -183,8 +167,10 @@ class PodDistributionTester:
 
         # Test 3: Reasonable spread (score < 2.0 is good)
         spread_ok = metrics.zone_spread_score < 2.0 and metrics.node_spread_score < 2.0
-        print(f"✓ Reasonable spread: {'PASS' if spread_ok else 'FAIL'} "
-              f"(zone: {metrics.zone_spread_score:.2f}, node: {metrics.node_spread_score:.2f})")
+        print(
+            f"✓ Reasonable spread: {'PASS' if spread_ok else 'FAIL'} "
+            f"(zone: {metrics.zone_spread_score:.2f}, node: {metrics.node_spread_score:.2f})"
+        )
 
         # Test 4: No single point of failure
         max_per_zone = max(metrics.pods_per_zone.values()) if metrics.pods_per_zone else 0

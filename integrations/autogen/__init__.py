@@ -17,16 +17,10 @@ This package provides AutoGen integration for the ATP platform.
 """
 
 from .atp_agent import ATPAutoGenAgent
-from .group_chat import ATPGroupChat, ATPGroupChatManager
 from .code_execution import ATPCodeExecutor
 from .function_calling import ATPFunctionRegistry
+from .group_chat import ATPGroupChat, ATPGroupChatManager
 
-__all__ = [
-    "ATPAutoGenAgent",
-    "ATPGroupChat",
-    "ATPGroupChatManager", 
-    "ATPCodeExecutor",
-    "ATPFunctionRegistry"
-]
+__all__ = ["ATPAutoGenAgent", "ATPGroupChat", "ATPGroupChatManager", "ATPCodeExecutor", "ATPFunctionRegistry"]
 
 __version__ = "1.0.0"

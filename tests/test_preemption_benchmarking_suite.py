@@ -67,7 +67,7 @@ class TestPreemptionScenarioRunner:
             "balanced_load_moderate_preemption",
             "bronze_dominant_small_spike",
             "silver_heavy_silver_preemption",
-            "minimal_gold_massive_lower"
+            "minimal_gold_massive_lower",
         ]
         assert scenario_names == expected_names
 
@@ -83,11 +83,11 @@ class TestPreemptionScenarioRunner:
             preempted_sessions=["b1", "b2", "s1"],
             preempted_counts={"b": 2, "s": 1},
             execution_time_ms=5.5,
-            needed_slots=3
+            needed_slots=3,
         )
         runner.results = [result]
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_file = f.name
 
         try:
@@ -132,9 +132,7 @@ class TestPreemptionMetricsHarness:
         ]
 
         preempted = ["b1"]
-        result = harness.capture_scenario_metrics(
-            "test_scenario", active_sessions, 1, preempted
-        )
+        result = harness.capture_scenario_metrics("test_scenario", active_sessions, 1, preempted)
 
         assert result["scenario_name"] == "test_scenario"
         assert result["total_sessions"] == 3
@@ -154,9 +152,7 @@ class TestPreemptionMetricsHarness:
             Active("b2", "bronze", time.time() * 1000 - 3000),
         ]
 
-        result = await harness.run_scenario_with_metrics(
-            "test_scenario", active_sessions, 2, prefer_oldest=True
-        )
+        result = await harness.run_scenario_with_metrics("test_scenario", active_sessions, 2, prefer_oldest=True)
 
         assert "baseline" in result
         assert "scenario" in result
@@ -190,15 +186,11 @@ class TestPreemptionMetricsHarness:
                     "median_age_ms": 1500,
                     "min_age_ms": 1000,
                     "max_age_ms": 2000,
-                    "stdev_age_ms": 500
-                }
+                    "stdev_age_ms": 500,
+                },
             },
-            "delta": {
-                "preemptions_delta": 2,
-                "time_delta_ms": 10,
-                "efficiency": 1.0
-            },
-            "preempted_sessions": ["b1", "b2"]
+            "delta": {"preemptions_delta": 2, "time_delta_ms": 10, "efficiency": 1.0},
+            "preempted_sessions": ["b1", "b2"],
         }
         harness.metrics_history = [mock_result]
 
@@ -217,10 +209,7 @@ class TestPreemptionReportGenerator:
 
     def test_load_data_missing_files(self):
         """Test loading data when files don't exist."""
-        generator = PreemptionReportGenerator(
-            "nonexistent_results.json",
-            "nonexistent_metrics.json"
-        )
+        generator = PreemptionReportGenerator("nonexistent_results.json", "nonexistent_metrics.json")
 
         generator.load_data()
 
@@ -235,15 +224,17 @@ class TestPreemptionReportGenerator:
         # Mock data
         generator.results_data = {
             "timestamp": time.time(),
-            "scenarios": [{
-                "name": "test_scenario",
-                "total_sessions": 10,
-                "qos_distribution": {"gold": 2, "silver": 3, "bronze": 5},
-                "needed_slots": 3,
-                "preempted_count": 3,
-                "preempted_by_qos": {"b": 3},
-                "preemption_efficiency": 1.0
-            }]
+            "scenarios": [
+                {
+                    "name": "test_scenario",
+                    "total_sessions": 10,
+                    "qos_distribution": {"gold": 2, "silver": 3, "bronze": 5},
+                    "needed_slots": 3,
+                    "preempted_count": 3,
+                    "preempted_by_qos": {"b": 3},
+                    "preemption_efficiency": 1.0,
+                }
+            ],
         }
 
         generator.metrics_data = {
@@ -252,14 +243,14 @@ class TestPreemptionReportGenerator:
                 "total_preemptions": 3,
                 "average_efficiency": 1.0,
                 "average_execution_time_ms": 2.5,
-                "qos_preemption_distribution": {"b": 3}
+                "qos_preemption_distribution": {"b": 3},
             },
             "age_statistics": {
                 "mean_age_across_scenarios": 1500,
                 "median_age_across_scenarios": 1500,
-                "age_variance": 250000
+                "age_variance": 250000,
             },
-            "scenario_details": []
+            "scenario_details": [],
         }
 
         report = generator.generate_summary_report()
@@ -275,15 +266,17 @@ class TestPreemptionReportGenerator:
 
         # Mock data
         generator.results_data = {
-            "scenarios": [{
-                "name": "test_scenario",
-                "total_sessions": 5,
-                "qos_distribution": {"gold": 1, "silver": 1, "bronze": 3},
-                "needed_slots": 2,
-                "preempted_count": 2,
-                "preempted_by_qos": {"b": 2},
-                "preemption_efficiency": 1.0
-            }]
+            "scenarios": [
+                {
+                    "name": "test_scenario",
+                    "total_sessions": 5,
+                    "qos_distribution": {"gold": 1, "silver": 1, "bronze": 3},
+                    "needed_slots": 2,
+                    "preempted_count": 2,
+                    "preempted_by_qos": {"b": 2},
+                    "preemption_efficiency": 1.0,
+                }
+            ]
         }
 
         generator.metrics_data = {
@@ -291,7 +284,7 @@ class TestPreemptionReportGenerator:
                 "total_scenarios": 1,
                 "total_preemptions": 2,
                 "average_efficiency": 1.0,
-                "qos_preemption_distribution": {"b": 2}
+                "qos_preemption_distribution": {"b": 2},
             }
         }
 
@@ -313,7 +306,7 @@ class TestPreemptionReportGenerator:
                 "total_preemptions": 0,
                 "average_efficiency": 0.0,
                 "average_execution_time_ms": 0.0,
-                "qos_preemption_distribution": {}
+                "qos_preemption_distribution": {},
             }
         }
 
@@ -321,11 +314,7 @@ class TestPreemptionReportGenerator:
             generator.save_reports(temp_dir)
 
             # Check that files were created
-            expected_files = [
-                "preemption_summary_report.txt",
-                "preemption_detailed_report.txt",
-                "preemption_report.md"
-            ]
+            expected_files = ["preemption_summary_report.txt", "preemption_detailed_report.txt", "preemption_report.md"]
 
             for filename in expected_files:
                 filepath = Path(temp_dir) / filename
@@ -356,9 +345,7 @@ class TestPreemptionBenchmarkingIntegration:
             Active("b1", "bronze", time.time() * 1000 - 2000),
         ]
 
-        metrics_result = await harness.run_scenario_with_metrics(
-            "integration_test", active_sessions, 1
-        )
+        metrics_result = await harness.run_scenario_with_metrics("integration_test", active_sessions, 1)
 
         assert len(metrics_result["preempted_sessions"]) == 1
         assert metrics_result["scenario"]["preemption_efficiency"] == 1.0

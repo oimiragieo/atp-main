@@ -13,7 +13,7 @@ def embed(text):
 
 
 def cosine(a, b):
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(x * x for x in b))
     if na * nb == 0:
@@ -31,7 +31,7 @@ def select_adapter(query, adapters):
         all_keys = sorted(set(qk + ak))
 
         def vec(keys, kset, v):
-            mapping = dict(zip(kset, v))
+            mapping = dict(zip(kset, v, strict=False))
             return [mapping.get(k, 0) for k in keys]
 
         qvec = vec(all_keys, qk, qv)

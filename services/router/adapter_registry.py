@@ -101,7 +101,7 @@ class AdapterRegistry:
                 memory_usage_mb=capability_data.get("memory_usage_mb"),
                 cpu_usage_percent=capability_data.get("cpu_usage_percent"),
                 uptime_seconds=capability_data.get("uptime_seconds"),
-                last_health_update=time.time()
+                last_health_update=time.time(),
             )
 
             # Check if this is a new registration

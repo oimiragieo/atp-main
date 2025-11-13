@@ -21,7 +21,7 @@ providing AI agents with access to the ATP memory fabric through the tool interf
 import json
 import time
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -79,8 +79,9 @@ class MemoryGatewayClient:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.client.aclose()
 
-    async def list_keys(self, namespace: str, prefix: Optional[str] = None,
-                       limit: int = 50, cursor: Optional[str] = None) -> dict[str, Any]:
+    async def list_keys(
+        self, namespace: str, prefix: str | None = None, limit: int = 50, cursor: str | None = None
+    ) -> dict[str, Any]:
         """List keys in a namespace.
 
         Args:
@@ -96,9 +97,7 @@ class MemoryGatewayClient:
         # In a real implementation, this would make HTTP calls to the gateway
 
         # Simulate some keys
-        all_keys = [
-            f"{prefix or 'key'}_{i}" for i in range(1, 101)
-        ]
+        all_keys = [f"{prefix or 'key'}_{i}" for i in range(1, 101)]
 
         # Apply prefix filter
         if prefix:
@@ -117,13 +116,9 @@ class MemoryGatewayClient:
 
         next_cursor = str(end_idx) if end_idx < len(all_keys) else None
 
-        return {
-            "keys": keys_page,
-            "cursor": next_cursor,
-            "total": len(all_keys)
-        }
+        return {"keys": keys_page, "cursor": next_cursor, "total": len(all_keys)}
 
-    async def get(self, namespace: str, key: str) -> Optional[Any]:
+    async def get(self, namespace: str, key: str) -> Any | None:
         """Get a value from memory.
 
         Args:
@@ -135,21 +130,16 @@ class MemoryGatewayClient:
         """
         # Simulate memory retrieval
         if key.startswith("session_"):
-            return {
-                "session_id": key,
-                "start_time": datetime.now().isoformat(),
-                "status": "active"
-            }
+            return {"session_id": key, "start_time": datetime.now().isoformat(), "status": "active"}
         elif key.startswith("agent_"):
             return {
                 "agent_id": key,
                 "capabilities": ["memory", "tools", "reasoning"],
-                "last_active": datetime.now().isoformat()
+                "last_active": datetime.now().isoformat(),
             }
         return None
 
-    async def put(self, namespace: str, key: str, value: Any,
-                  ttl_seconds: Optional[int] = None) -> bool:
+    async def put(self, namespace: str, key: str, value: Any, ttl_seconds: int | None = None) -> bool:
         """Store a value in memory.
 
         Args:
@@ -169,8 +159,7 @@ class MemoryGatewayClient:
 class MemoryTools:
     """MCP tools for memory and context operations."""
 
-    def __init__(self, memory_gateway_url: str, tenant_id: str,
-                 allowed_namespaces: Optional[list[str]] = None):
+    def __init__(self, memory_gateway_url: str, tenant_id: str, allowed_namespaces: list[str] | None = None):
         """Initialize memory tools.
 
         Args:
@@ -180,9 +169,7 @@ class MemoryTools:
         """
         self.gateway_url = memory_gateway_url
         self.tenant_id = tenant_id
-        self.permissions = PermissionChecker(
-            allowed_namespaces or ["session.*", "agent.*", "public.*"]
-        )
+        self.permissions = PermissionChecker(allowed_namespaces or ["session.*", "agent.*", "public.*"])
         self.schema_versioning = ToolSchemaVersioning()
 
         # Session context (would come from actual session management)
@@ -191,11 +178,8 @@ class MemoryTools:
             "agent_id": f"agent_{int(time.time()) % 1000}",
             "task_id": f"task_{int(time.time()) % 100}",
             "start_time": datetime.now().isoformat(),
-            "memory_usage": {
-                "tokens_used": 0,
-                "usd_spent": 0.0
-            },
-            "tool_history": []
+            "memory_usage": {"tokens_used": 0, "usd_spent": 0.0},
+            "tool_history": [],
         }
 
     def _filter_pii_keys(self, keys: list[str]) -> list[str]:
@@ -236,7 +220,7 @@ class MemoryTools:
 
         # Check size (simulate gateway limits)
         data_str = json.dumps(data)
-        if len(data_str.encode('utf-8')) > 1024 * 1024:  # 1MB limit
+        if len(data_str.encode("utf-8")) > 1024 * 1024:  # 1MB limit
             raise ValueError("Data too large (max 1MB)")
 
     async def list_memory(self, args: dict[str, Any]) -> dict[str, Any]:
@@ -259,12 +243,7 @@ class MemoryTools:
 
         # Use memory gateway client
         async with MemoryGatewayClient(self.gateway_url, self.tenant_id) as client:
-            response = await client.list_keys(
-                namespace=namespace,
-                prefix=prefix,
-                limit=limit,
-                cursor=cursor
-            )
+            response = await client.list_keys(namespace=namespace, prefix=prefix, limit=limit, cursor=cursor)
 
         # Apply PII filtering
         filtered_keys = self._filter_pii_keys(response["keys"])
@@ -272,7 +251,7 @@ class MemoryTools:
         return {
             "keys": filtered_keys,
             "cursor": response.get("cursor"),
-            "total": response.get("total", len(filtered_keys))
+            "total": response.get("total", len(filtered_keys)),
         }
 
     async def get_context(self, args: dict[str, Any]) -> dict[str, Any]:
@@ -290,21 +269,19 @@ class MemoryTools:
         context = {}
 
         if context_type in ["session", "all"]:
-            context.update({
-                "session_id": self.session_context["session_id"],
-                "start_time": self.session_context["start_time"],
-                "memory_usage": self.session_context["memory_usage"]
-            })
+            context.update(
+                {
+                    "session_id": self.session_context["session_id"],
+                    "start_time": self.session_context["start_time"],
+                    "memory_usage": self.session_context["memory_usage"],
+                }
+            )
 
         if context_type in ["agent", "all"]:
-            context.update({
-                "agent_id": self.session_context["agent_id"]
-            })
+            context.update({"agent_id": self.session_context["agent_id"]})
 
         if context_type in ["task", "all"]:
-            context.update({
-                "task_id": self.session_context["task_id"]
-            })
+            context.update({"task_id": self.session_context["task_id"]})
 
         if include_history:
             context["tool_history"] = self.session_context["tool_history"]
@@ -334,20 +311,13 @@ class MemoryTools:
 
         # Store using memory gateway
         async with MemoryGatewayClient(self.gateway_url, self.tenant_id) as client:
-            success = await client.put(
-                namespace=namespace,
-                key=key,
-                value=value,
-                ttl_seconds=ttl_seconds
-            )
+            success = await client.put(namespace=namespace, key=key, value=value, ttl_seconds=ttl_seconds)
 
         if success:
             # Update tool history
-            self.session_context["tool_history"].append({
-                "tool_name": "putMemory",
-                "timestamp": datetime.now().isoformat(),
-                "success": True
-            })
+            self.session_context["tool_history"].append(
+                {"tool_name": "putMemory", "timestamp": datetime.now().isoformat(), "success": True}
+            )
 
         return {"success": success}
 
@@ -364,28 +334,19 @@ class MemoryTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "namespace": {
-                            "type": "string",
-                            "description": "Memory namespace to list"
-                        },
-                        "prefix": {
-                            "type": "string",
-                            "description": "Key prefix filter (optional)"
-                        },
+                        "namespace": {"type": "string", "description": "Memory namespace to list"},
+                        "prefix": {"type": "string", "description": "Key prefix filter (optional)"},
                         "limit": {
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 100,
                             "default": 50,
-                            "description": "Maximum number of keys to return"
+                            "description": "Maximum number of keys to return",
                         },
-                        "cursor": {
-                            "type": "string",
-                            "description": "Pagination cursor (optional)"
-                        }
+                        "cursor": {"type": "string", "description": "Pagination cursor (optional)"},
                     },
-                    "required": ["namespace"]
-                }
+                    "required": ["namespace"],
+                },
             },
             {
                 "name": "getContext",
@@ -397,15 +358,15 @@ class MemoryTools:
                             "type": "string",
                             "enum": ["session", "agent", "task", "all"],
                             "default": "all",
-                            "description": "Type of context to retrieve"
+                            "description": "Type of context to retrieve",
                         },
                         "include_history": {
                             "type": "boolean",
                             "default": False,
-                            "description": "Include historical context"
-                        }
-                    }
-                }
+                            "description": "Include historical context",
+                        },
+                    },
+                },
             },
             {
                 "name": "putMemory",
@@ -413,26 +374,18 @@ class MemoryTools:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "namespace": {
-                            "type": "string",
-                            "description": "Memory namespace"
-                        },
-                        "key": {
-                            "type": "string",
-                            "description": "Memory key"
-                        },
-                        "value": {
-                            "description": "Value to store (any JSON-serializable data)"
-                        },
+                        "namespace": {"type": "string", "description": "Memory namespace"},
+                        "key": {"type": "string", "description": "Memory key"},
+                        "value": {"description": "Value to store (any JSON-serializable data)"},
                         "ttl_seconds": {
                             "type": "integer",
                             "minimum": 0,
-                            "description": "Time-to-live in seconds (optional)"
-                        }
+                            "description": "Time-to-live in seconds (optional)",
+                        },
                     },
-                    "required": ["namespace", "key", "value"]
-                }
-            }
+                    "required": ["namespace", "key", "value"],
+                },
+            },
         ]
 
     async def execute_tool(self, tool_name: str, args: dict[str, Any]) -> dict[str, Any]:
@@ -456,7 +409,4 @@ class MemoryTools:
 
 
 # Global instance for easy access
-memory_tools = MemoryTools(
-    memory_gateway_url="http://localhost:8000",
-    tenant_id="default_tenant"
-)
+memory_tools = MemoryTools(memory_gateway_url="http://localhost:8000", tenant_id="default_tenant")

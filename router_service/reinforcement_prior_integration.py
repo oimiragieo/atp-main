@@ -62,6 +62,7 @@ class ReinforcementPrior:
         """
         # Validate input signal before processing
         from router_service.federated_rewards import validate_federated_reward_signal
+
         validation_errors = validate_federated_reward_signal(signal.to_dict())
         if validation_errors:
             logger.warning(f"Invalid federated reward signal in update_from_signal: {validation_errors}")
@@ -78,8 +79,8 @@ class ReinforcementPrior:
         prior_alpha = self.success_rate_prior * self.sample_count
         prior_beta = (1 - self.success_rate_prior) * self.sample_count
 
-        new_successes = int(reward_data['success_rate'] * reward_data['total_samples'])
-        new_failures = reward_data['total_samples'] - new_successes
+        new_successes = int(reward_data["success_rate"] * reward_data["total_samples"])
+        new_failures = reward_data["total_samples"] - new_successes
 
         posterior_alpha = prior_alpha + new_successes
         posterior_beta = prior_beta + new_failures
@@ -87,14 +88,14 @@ class ReinforcementPrior:
 
         # Update latency prior (simple exponential moving average)
         alpha = 0.1  # Learning rate
-        self.latency_prior_ms = (1 - alpha) * self.latency_prior_ms + alpha * reward_data['avg_latency']
+        self.latency_prior_ms = (1 - alpha) * self.latency_prior_ms + alpha * reward_data["avg_latency"]
 
         # Update quality prior if available
-        if 'quality_score' in reward_data:
-            self.quality_prior = (1 - alpha) * self.quality_prior + alpha * reward_data['quality_score']
+        if "quality_score" in reward_data:
+            self.quality_prior = (1 - alpha) * self.quality_prior + alpha * reward_data["quality_score"]
 
         # Update sample count and confidence
-        self.sample_count += reward_data['total_samples']
+        self.sample_count += reward_data["total_samples"]
         self.last_updated = time.time()
 
         # Confidence increases with more samples (diminishing returns)
@@ -120,7 +121,7 @@ class ReinforcementPrior:
             cost=base_objectives.cost + success_adjustment,
             latency=base_objectives.latency + latency_adjustment,
             quality_score=max(0, base_objectives.quality_score - quality_adjustment),
-            carbon_intensity=base_objectives.carbon_intensity  # No prior for carbon yet
+            carbon_intensity=base_objectives.carbon_intensity,  # No prior for carbon yet
         )
 
 
@@ -138,6 +139,7 @@ class ReinforcementPriorManager:
         """
         # Validate input signal before processing
         from router_service.federated_rewards import validate_federated_reward_signal
+
         validation_errors = validate_federated_reward_signal(aggregated_signal.to_dict())
         if validation_errors:
             logger.warning(f"Invalid aggregated federated reward signal: {validation_errors}")
@@ -160,12 +162,12 @@ class ReinforcementPriorManager:
                     # Initialize new prior
                     self.priors[model_task_key] = ReinforcementPrior(
                         model_task_key=model_task_key,
-                        success_rate_prior=reward_data['success_rate'],
-                        latency_prior_ms=reward_data['avg_latency'],
-                        quality_prior=reward_data.get('quality_score', 0.5),
-                        sample_count=reward_data['total_samples'],
+                        success_rate_prior=reward_data["success_rate"],
+                        latency_prior_ms=reward_data["avg_latency"],
+                        quality_prior=reward_data.get("quality_score", 0.5),
+                        sample_count=reward_data["total_samples"],
                         last_updated=time.time(),
-                        confidence=min(1.0, reward_data['total_samples'] / 100.0)
+                        confidence=min(1.0, reward_data["total_samples"] / 100.0),
                     )
                     updates_applied += 1  # Count new prior creation as an update
                 else:
@@ -179,7 +181,9 @@ class ReinforcementPriorManager:
             update_time = time.time() - start_time
             HIST_PRIOR_UPDATE_LATENCY.observe(update_time)
 
-            logger.info(f"Applied {updates_applied} prior updates from aggregation round {aggregated_signal.aggregation_round}")
+            logger.info(
+                f"Applied {updates_applied} prior updates from aggregation round {aggregated_signal.aggregation_round}"
+            )
             return updates_applied
 
         except Exception as e:
@@ -205,10 +209,7 @@ class ReinforcementPriorManager:
         Returns the number of priors removed.
         """
         current_time = time.time()
-        stale_keys = [
-            key for key, prior in self.priors.items()
-            if current_time - prior.last_updated > max_age_seconds
-        ]
+        stale_keys = [key for key, prior in self.priors.items() if current_time - prior.last_updated > max_age_seconds]
 
         for key in stale_keys:
             del self.priors[key]
@@ -251,24 +252,26 @@ class PriorAwareMultiObjectiveScorer(MultiObjectiveScorer):
         scored_candidates = []
 
         for candidate in candidates:
-            model_task_key = candidate.get('model_task_key')
-            objectives = candidate.get('objectives')
+            model_task_key = candidate.get("model_task_key")
+            objectives = candidate.get("objectives")
 
             if not isinstance(objectives, ObjectiveVector):
                 # Convert dict to ObjectiveVector if needed
                 objectives = ObjectiveVector(**objectives)
 
             score = self.calculate_scalar_score(objectives, model_task_key)
-            scored_candidates.append({
-                **candidate,
-                'reinforcement_score': score,
-                'adjusted_objectives': self.prior_manager.get_adjusted_objectives(
-                    model_task_key, objectives
-                ) if model_task_key else objectives
-            })
+            scored_candidates.append(
+                {
+                    **candidate,
+                    "reinforcement_score": score,
+                    "adjusted_objectives": self.prior_manager.get_adjusted_objectives(model_task_key, objectives)
+                    if model_task_key
+                    else objectives,
+                }
+            )
 
         # Sort by score (highest first)
-        scored_candidates.sort(key=lambda x: x['reinforcement_score'], reverse=True)
+        scored_candidates.sort(key=lambda x: x["reinforcement_score"], reverse=True)
         return scored_candidates
 
 

@@ -12,7 +12,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 
 from metrics import (
@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class ReembedJobStatus(Enum):
     """Status of a re-embedding job."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -38,6 +39,7 @@ class ReembedJobStatus(Enum):
 
 class ReembedJobPriority(Enum):
     """Priority levels for re-embedding jobs."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -47,6 +49,7 @@ class ReembedJobPriority(Enum):
 @dataclass
 class ReembedJob:
     """A re-embedding job configuration."""
+
     job_id: str
     namespace: str
     source_model: str
@@ -54,12 +57,12 @@ class ReembedJob:
     priority: ReembedJobPriority
     status: ReembedJobStatus
     created_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
     total_items: int = 0
     processed_items: int = 0
     failed_items: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
     metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
@@ -70,6 +73,7 @@ class ReembedJob:
 @dataclass
 class ReembedBatch:
     """A batch of items to be re-embedded."""
+
     batch_id: str
     job_id: str
     items: list[dict[str, Any]]
@@ -88,7 +92,7 @@ class ReembedJobOrchestrator:
         self.active_jobs: set[str] = set()
         self.job_queue: asyncio.Queue[ReembedJob] = asyncio.Queue()
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
     async def start(self):
         """Start the job orchestrator."""
@@ -119,7 +123,7 @@ class ReembedJobOrchestrator:
         namespace: str,
         source_model: str,
         target_model: str,
-        priority: ReembedJobPriority = ReembedJobPriority.MEDIUM
+        priority: ReembedJobPriority = ReembedJobPriority.MEDIUM,
     ) -> str:
         """Submit a new re-embedding job."""
         job_id = str(uuid4())
@@ -130,7 +134,7 @@ class ReembedJobOrchestrator:
             target_model=target_model,
             priority=priority,
             status=ReembedJobStatus.PENDING,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         self.jobs[job_id] = job
@@ -140,11 +144,11 @@ class ReembedJobOrchestrator:
         logger.info(f"Submitted re-embedding job {job_id} for namespace {namespace}: {source_model} -> {target_model}")
         return job_id
 
-    def get_job_status(self, job_id: str) -> Optional[ReembedJob]:
+    def get_job_status(self, job_id: str) -> ReembedJob | None:
         """Get the status of a job."""
         return self.jobs.get(job_id)
 
-    def list_jobs(self, status_filter: Optional[ReembedJobStatus] = None) -> list[ReembedJob]:
+    def list_jobs(self, status_filter: ReembedJobStatus | None = None) -> list[ReembedJob]:
         """List all jobs, optionally filtered by status."""
         jobs = list(self.jobs.values())
         if status_filter:
@@ -234,9 +238,9 @@ class ReembedJobOrchestrator:
         batches = []
         for i in range(0, job.total_items, self.batch_size):
             batch = ReembedBatch(
-                batch_id=f"{job.job_id}_batch_{i//self.batch_size}",
+                batch_id=f"{job.job_id}_batch_{i // self.batch_size}",
                 job_id=job.job_id,
-                items=[]  # In real implementation, populate with actual items
+                items=[],  # In real implementation, populate with actual items
             )
             batches.append(batch)
 
@@ -287,15 +291,15 @@ class ReembedJobOrchestrator:
             "failed_jobs": failed_jobs,
             "running_jobs": running_jobs,
             "active_jobs": len(self.active_jobs),
-            "queue_size": self.job_queue.qsize()
+            "queue_size": self.job_queue.qsize(),
         }
 
 
 # Global orchestrator instance
-_orchestrator: Optional[ReembedJobOrchestrator] = None
+_orchestrator: ReembedJobOrchestrator | None = None
 
 
-def get_reembed_orchestrator() -> Optional[ReembedJobOrchestrator]:
+def get_reembed_orchestrator() -> ReembedJobOrchestrator | None:
     """Get the global re-embedding orchestrator instance."""
     return _orchestrator
 

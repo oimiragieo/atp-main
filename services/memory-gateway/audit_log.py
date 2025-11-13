@@ -1,14 +1,14 @@
 import hashlib
 import hmac
 import json
-from typing import Any, Optional
+from typing import Any
 
 
 def _encode(obj: Any) -> bytes:
     return json.dumps(obj, separators=(",", ":"), sort_keys=True).encode("utf-8")
 
 
-def append_event(path: str, event: dict[str, Any], secret: bytes, prev_hash_hex: Optional[str] = None) -> str:
+def append_event(path: str, event: dict[str, Any], secret: bytes, prev_hash_hex: str | None = None) -> str:
     """Append an event with HMAC chain. Returns new hash hex.
 
     Format per line: {"event":{...},"prev":"<hex>","hmac":"<hex>","hash":"<hex>"}

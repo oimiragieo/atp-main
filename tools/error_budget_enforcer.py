@@ -7,7 +7,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -61,7 +61,7 @@ class ErrorBudgetState:
         self.error_requests += error_requests
         self.last_updated = datetime.now()
 
-    def check_violation(self, slo: SLODefinition) -> Optional[SLOViolation]:
+    def check_violation(self, slo: SLODefinition) -> SLOViolation | None:
         """Check if current measurements violate the SLO."""
         current_availability = self.availability_percentage
 
@@ -105,7 +105,7 @@ class ErrorBudgetState:
 class ErrorBudgetEnforcer:
     """Enforces error budget policies in CI/CD pipeline."""
 
-    def __init__(self, config_file: Optional[str] = None):
+    def __init__(self, config_file: str | None = None):
         self.config_file = config_file or "error_budget_config.json"
         self.slos: dict[str, SLODefinition] = {}
         self.states: dict[str, ErrorBudgetState] = {}

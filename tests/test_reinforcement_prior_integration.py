@@ -44,7 +44,7 @@ class TestReinforcementPrior:
             quality_prior=0.8,
             sample_count=100,
             last_updated=time.time(),
-            confidence=0.5
+            confidence=0.5,
         )
 
         assert prior.model_task_key == "gpt-4:chat"
@@ -63,23 +63,18 @@ class TestReinforcementPrior:
             quality_prior=0.7,
             sample_count=50,
             last_updated=time.time() - 100,
-            confidence=0.3
+            confidence=0.3,
         )
 
         # Create a signal with updated data
         reward_signals = {
-            "gpt-4:chat": {
-                "success_rate": 0.95,
-                "avg_latency": 800.0,
-                "quality_score": 0.9,
-                "total_samples": 200
-            }
+            "gpt-4:chat": {"success_rate": 0.95, "avg_latency": 800.0, "quality_score": 0.9, "total_samples": 200}
         }
         signal = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
 
         # Update the prior
@@ -103,22 +98,16 @@ class TestReinforcementPrior:
             quality_prior=0.7,
             sample_count=50,
             last_updated=time.time(),
-            confidence=0.3
+            confidence=0.3,
         )
 
         # Create a signal with different key
-        reward_signals = {
-            "claude-3:chat": {
-                "success_rate": 0.95,
-                "avg_latency": 800.0,
-                "total_samples": 200
-            }
-        }
+        reward_signals = {"claude-3:chat": {"success_rate": 0.95, "avg_latency": 800.0, "total_samples": 200}}
         signal = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
 
         # Update should fail
@@ -138,15 +127,10 @@ class TestReinforcementPrior:
             quality_prior=0.8,
             sample_count=1000,
             last_updated=time.time(),
-            confidence=0.8
+            confidence=0.8,
         )
 
-        base_objectives = ObjectiveVector(
-            cost=1.0,
-            latency=1200.0,
-            quality_score=0.7,
-            carbon_intensity=100.0
-        )
+        base_objectives = ObjectiveVector(cost=1.0, latency=1200.0, quality_score=0.7, carbon_intensity=100.0)
 
         adjusted = prior.get_adjusted_score(base_objectives)
 
@@ -171,15 +155,10 @@ class TestReinforcementPrior:
             quality_prior=0.8,
             sample_count=10,  # Low sample count = low confidence
             last_updated=time.time(),
-            confidence=0.05  # Below threshold
+            confidence=0.05,  # Below threshold
         )
 
-        base_objectives = ObjectiveVector(
-            cost=1.0,
-            latency=1200.0,
-            quality_score=0.7,
-            carbon_intensity=100.0
-        )
+        base_objectives = ObjectiveVector(cost=1.0, latency=1200.0, quality_score=0.7, carbon_intensity=100.0)
 
         adjusted = prior.get_adjusted_score(base_objectives)
 
@@ -209,23 +188,14 @@ class TestReinforcementPriorManager:
 
         # Create aggregated signal
         reward_signals = {
-            "gpt-4:chat": {
-                "success_rate": 0.9,
-                "avg_latency": 1000.0,
-                "quality_score": 0.8,
-                "total_samples": 100
-            },
-            "claude-3:code": {
-                "success_rate": 0.85,
-                "avg_latency": 1200.0,
-                "total_samples": 80
-            }
+            "gpt-4:chat": {"success_rate": 0.9, "avg_latency": 1000.0, "quality_score": 0.8, "total_samples": 100},
+            "claude-3:code": {"success_rate": 0.85, "avg_latency": 1200.0, "total_samples": 80},
         }
         signal = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=5
+            participant_count=5,
         )
 
         # Update priors
@@ -246,36 +216,24 @@ class TestReinforcementPriorManager:
     def test_update_existing_priors(self):
         """Test updating existing priors."""
         # First update
-        reward_signals = {
-            "gpt-4:chat": {
-                "success_rate": 0.8,
-                "avg_latency": 1200.0,
-                "total_samples": 50
-            }
-        }
+        reward_signals = {"gpt-4:chat": {"success_rate": 0.8, "avg_latency": 1200.0, "total_samples": 50}}
         signal1 = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         self.manager.update_from_aggregated_signal(signal1)
 
         initial_sample_count = self.manager.priors["gpt-4:chat"].sample_count
 
         # Second update with same key
-        reward_signals = {
-            "gpt-4:chat": {
-                "success_rate": 0.95,
-                "avg_latency": 800.0,
-                "total_samples": 75
-            }
-        }
+        reward_signals = {"gpt-4:chat": {"success_rate": 0.95, "avg_latency": 800.0, "total_samples": 75}}
         signal2 = FederatedRewardSignal(
             aggregation_round=2,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         updates = self.manager.update_from_aggregated_signal(signal2)
 
@@ -291,7 +249,7 @@ class TestReinforcementPriorManager:
             aggregation_round=5,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         self.manager.update_from_aggregated_signal(signal5)
 
@@ -300,7 +258,7 @@ class TestReinforcementPriorManager:
             aggregation_round=3,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         updates = self.manager.update_from_aggregated_signal(signal3)
 
@@ -315,7 +273,7 @@ class TestReinforcementPriorManager:
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         self.manager.update_from_aggregated_signal(signal)
 
@@ -336,16 +294,11 @@ class TestReinforcementPriorManager:
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         self.manager.update_from_aggregated_signal(signal)
 
-        base_objectives = ObjectiveVector(
-            cost=1.0,
-            latency=1200.0,
-            quality_score=0.7,
-            carbon_intensity=100.0
-        )
+        base_objectives = ObjectiveVector(cost=1.0, latency=1200.0, quality_score=0.7, carbon_intensity=100.0)
 
         # Get adjusted objectives
         adjusted = self.manager.get_adjusted_objectives("gpt-4:chat", base_objectives)
@@ -365,7 +318,7 @@ class TestReinforcementPriorManager:
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         self.manager.update_from_aggregated_signal(signal)
 
@@ -395,12 +348,7 @@ class TestPriorAwareMultiObjectiveScorer:
 
     def test_calculate_scalar_score_without_prior(self):
         """Test calculating score without prior."""
-        objectives = ObjectiveVector(
-            cost=1.0,
-            latency=1000.0,
-            quality_score=0.8,
-            carbon_intensity=50.0
-        )
+        objectives = ObjectiveVector(cost=1.0, latency=1000.0, quality_score=0.8, carbon_intensity=50.0)
 
         score = self.scorer.calculate_scalar_score(objectives)
         assert isinstance(score, float)
@@ -414,16 +362,11 @@ class TestPriorAwareMultiObjectiveScorer:
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         self.manager.update_from_aggregated_signal(signal)
 
-        objectives = ObjectiveVector(
-            cost=1.0,
-            latency=1200.0,
-            quality_score=0.7,
-            carbon_intensity=50.0
-        )
+        objectives = ObjectiveVector(cost=1.0, latency=1200.0, quality_score=0.7, carbon_intensity=50.0)
 
         # Score without prior
         score_without_prior = self.scorer.calculate_scalar_score(objectives)
@@ -439,13 +382,13 @@ class TestPriorAwareMultiObjectiveScorer:
         # Add priors
         reward_signals = {
             "gpt-4:chat": {"success_rate": 0.9, "avg_latency": 1000.0, "total_samples": 1000},
-            "claude-3:chat": {"success_rate": 0.8, "avg_latency": 1200.0, "total_samples": 1000}
+            "claude-3:chat": {"success_rate": 0.8, "avg_latency": 1200.0, "total_samples": 1000},
         }
         signal = FederatedRewardSignal(
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
         self.manager.update_from_aggregated_signal(signal)
 
@@ -453,13 +396,13 @@ class TestPriorAwareMultiObjectiveScorer:
             {
                 "model_task_key": "gpt-4:chat",
                 "objectives": ObjectiveVector(cost=1.0, latency=1100.0, quality_score=0.8, carbon_intensity=50.0),
-                "model": "gpt-4"
+                "model": "gpt-4",
             },
             {
                 "model_task_key": "claude-3:chat",
                 "objectives": ObjectiveVector(cost=0.8, latency=1300.0, quality_score=0.7, carbon_intensity=60.0),
-                "model": "claude-3"
-            }
+                "model": "claude-3",
+            },
         ]
 
         scored = self.scorer.score_candidates(candidates, {})
@@ -497,7 +440,7 @@ class TestGlobalFunctions:
             aggregation_round=1,
             cluster_hash="test_cluster_1234567890",
             reward_signals=reward_signals,
-            participant_count=3
+            participant_count=3,
         )
 
         updates = update_priors_from_aggregation(signal)

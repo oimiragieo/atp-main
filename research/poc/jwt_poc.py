@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import json
 import time
-from typing import Any, Optional
+from typing import Any
 
 
 def _b64url(data: bytes) -> str:
@@ -15,7 +15,7 @@ def _b64url_decode(data: str) -> bytes:
     return base64.urlsafe_b64decode(data + pad)
 
 
-def sign_jwt(claims: dict[str, Any], secret: str, header: Optional[dict[str, Any]] = None) -> str:
+def sign_jwt(claims: dict[str, Any], secret: str, header: dict[str, Any] | None = None) -> str:
     header = header or {"alg": "HS256", "typ": "JWT"}
     header_b64 = _b64url(json.dumps(header, separators=(",", ":"), sort_keys=True).encode("utf-8"))
     payload_b64 = _b64url(json.dumps(claims, separators=(",", ":"), sort_keys=True).encode("utf-8"))
@@ -28,7 +28,7 @@ class JWTError(Exception):
     pass
 
 
-def verify_jwt(token: str, secret: str, issuer: Optional[str] = None, audience: Optional[str] = None) -> dict[str, Any]:
+def verify_jwt(token: str, secret: str, issuer: str | None = None, audience: str | None = None) -> dict[str, Any]:
     try:
         header_b64, payload_b64, sig_b64 = token.split(".")
     except ValueError as err:

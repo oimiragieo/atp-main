@@ -1,2 +1,1 @@
-﻿"""Tests for GAP-230: Adapter certification workflow."""
-
+"""Tests for GAP-230: Adapter certification workflow."""

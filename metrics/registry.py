@@ -191,7 +191,9 @@ POLICY_CHANGE_REQUESTS_APPROVED_TOTAL = REGISTRY.counter("policy_change_requests
 POLICY_CHANGE_REQUESTS_REJECTED_TOTAL = REGISTRY.counter("policy_change_requests_rejected_total")
 POLICY_CHANGE_REQUESTS_EXPIRED_TOTAL = REGISTRY.counter("policy_change_requests_expired_total")
 POLICY_CHANGE_REQUESTS_PENDING = REGISTRY.gauge("policy_change_requests_pending")
-POLICY_APPROVAL_LATENCY = REGISTRY.histogram("policy_approval_latency_seconds", [3600, 7200, 14400, 28800, 604800])  # 1h, 2h, 4h, 8h, 1w
+POLICY_APPROVAL_LATENCY = REGISTRY.histogram(
+    "policy_approval_latency_seconds", [3600, 7200, 14400, 28800, 604800]
+)  # 1h, 2h, 4h, 8h, 1w
 
 # GAP-328: Access review attestation workflow metrics
 ACCESS_REVIEWS_COMPLETED_TOTAL = REGISTRY.counter("access_reviews_completed_total")
@@ -231,7 +233,9 @@ EDGE_SAVINGS_PCT = REGISTRY.gauge("edge_savings_pct")
 
 # GAP-362: Predictive prewarming scheduler metrics
 PREWARM_HITS_TOTAL = REGISTRY.counter("prewarm_hits_total")
-PREWARM_WASTE_MS = REGISTRY.histogram("prewarm_waste_ms", [1000, 5000, 10000, 30000, 60000, 300000])  # 1s, 5s, 10s, 30s, 1m, 5m
+PREWARM_WASTE_MS = REGISTRY.histogram(
+    "prewarm_waste_ms", [1000, 5000, 10000, 30000, 60000, 300000]
+)  # 1s, 5s, 10s, 30s, 1m, 5m
 
 # GAP-363: Edge cache metrics
 EDGE_CACHE_HITS_TOTAL = REGISTRY.counter("edge_cache_hits_total")
@@ -247,7 +251,9 @@ CARDINALITY_VIOLATIONS_ACTIVE = REGISTRY.gauge("cardinality_violations_active")
 
 # GAP-368: Evidence pack assembly pipeline metrics
 EVIDENCE_PACKS_GENERATED_TOTAL = REGISTRY.counter("evidence_packs_generated_total")
-EVIDENCE_PACK_GENERATION_DURATION = REGISTRY.histogram("evidence_pack_generation_duration_seconds", [30, 60, 120, 300, 600])
+EVIDENCE_PACK_GENERATION_DURATION = REGISTRY.histogram(
+    "evidence_pack_generation_duration_seconds", [30, 60, 120, 300, 600]
+)
 
 # GAP-373: Reinforcement prior update integration metrics
 PRIOR_UPDATES_APPLIED_TOTAL = REGISTRY.counter("prior_updates_applied_total")
@@ -276,8 +282,7 @@ CACHE_MISSES_TOTAL = REGISTRY.counter("cache_misses_total")
 CACHE_HIT_RATIO = REGISTRY.gauge("cache_hit_ratio")
 
 CACHE_OPERATION_DURATION_SECONDS = REGISTRY.histogram(
-    "cache_operation_duration_seconds",
-    [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0]
+    "cache_operation_duration_seconds", [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0]
 )
 
 CACHE_REDIS_CONNECTIONS_ACTIVE = REGISTRY.gauge("cache_redis_connections_active")

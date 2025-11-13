@@ -5,7 +5,7 @@ Integrates with task clustering and regret computation for optimal model selecti
 """
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import REGISTRY
 
@@ -80,7 +80,7 @@ class SpecialistSelectionService:
         quality_requirement: str = "balanced",
         max_cost_usd: float = 0.05,
         latency_slo_ms: int = 2000,
-        required_capabilities: Optional[list[str]] = None,
+        required_capabilities: list[str] | None = None,
     ) -> dict[str, Any]:
         """Select optimal specialist model with fallback chain.
 
@@ -215,7 +215,7 @@ class SpecialistSelectionService:
 
     def _build_fallback_chain(
         self, scored_candidates: list[tuple[dict[str, Any], float]]
-    ) -> tuple[Optional[str], list[str]]:
+    ) -> tuple[str | None, list[str]]:
         """Build primary model and fallback chain from scored candidates."""
         if not scored_candidates:
             return "premium-model", []  # Ultimate fallback

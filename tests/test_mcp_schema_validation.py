@@ -55,7 +55,7 @@ class TestMCPMessageValidation:
             "sequence": 1,
             "cumulative_tokens": 5,
             "is_partial": True,
-            "dp_metrics_emitted": True
+            "dp_metrics_emitted": True,
         }
         validator.validate_message(message, "toolOutput")
 
@@ -69,12 +69,7 @@ class TestMCPMessageValidation:
             "cumulative_tokens": 12,
             "final": True,
             "dp_metrics_emitted": True,
-            "metadata": {
-                "model_used": "gpt-4",
-                "latency_ms": 150,
-                "tokens_used": 12,
-                "cost_usd": 0.0024
-            }
+            "metadata": {"model_used": "gpt-4", "latency_ms": 150, "tokens_used": 12, "cost_usd": 0.0024},
         }
         validator.validate_message(message, "toolOutput")
 
@@ -88,12 +83,7 @@ class TestMCPMessageValidation:
             "cumulative_tokens": 5,
             "is_partial": True,
             "dp_metrics_emitted": True,
-            "metadata": {
-                "model_used": "claude-3",
-                "latency_ms": 200,
-                "tokens_used": 5,
-                "cost_usd": 0.001
-            }
+            "metadata": {"model_used": "claude-3", "latency_ms": 200, "tokens_used": 5, "cost_usd": 0.001},
         }
         validator.validate_message(message, "toolOutput")
 
@@ -104,21 +94,15 @@ class TestMCPMessageValidation:
             "error": {
                 "code": "INTERNAL_ERROR",
                 "message": "An unexpected error occurred",
-                "details": {"traceback": "..."}
+                "details": {"traceback": "..."},
             },
-            "toolCallId": "test-call-123"
+            "toolCallId": "test-call-123",
         }
         validator.validate_message(message, "error")
 
     def test_error_message_idle_timeout(self, validator):
         """Test validation of idle timeout error message."""
-        message = {
-            "type": "error",
-            "error": {
-                "code": "IDLE_TIMEOUT",
-                "message": "MCP session idle timeout"
-            }
-        }
+        message = {"type": "error", "error": {"code": "IDLE_TIMEOUT", "message": "MCP session idle timeout"}}
         validator.validate_message(message, "error")
 
     def test_event_message_challenger_selected(self, validator):
@@ -128,21 +112,13 @@ class TestMCPMessageValidation:
             "event": "challenger_selected",
             "model": "claude-3-haiku",
             "timestamp": "2025-09-07T20:42:00Z",
-            "data": {
-                "confidence": 0.85,
-                "reason": "cost_optimization"
-            }
+            "data": {"confidence": 0.85, "reason": "cost_optimization"},
         }
         validator.validate_message(message, "event")
 
     def test_event_message_escalate(self, validator):
         """Test validation of escalate event."""
-        message = {
-            "type": "event",
-            "event": "escalate",
-            "model": "gpt-4-turbo",
-            "timestamp": "2025-09-07T20:42:00Z"
-        }
+        message = {"type": "event", "event": "escalate", "model": "gpt-4-turbo", "timestamp": "2025-09-07T20:42:00Z"}
         validator.validate_message(message, "event")
 
     def test_plan_message_with_roles(self, validator):
@@ -157,24 +133,16 @@ class TestMCPMessageValidation:
                         "step_id": "1",
                         "description": "Analyze user intent",
                         "tool": "intent_analyzer",
-                        "estimated_tokens": 50
+                        "estimated_tokens": 50,
                     }
                 ],
                 "estimated_total_tokens": 150,
-                "model_selected": "gpt-4"
+                "model_selected": "gpt-4",
             },
             "roles": [
-                {
-                    "role": "champion",
-                    "model": "gpt-4",
-                    "confidence": 0.9
-                },
-                {
-                    "role": "challenger",
-                    "model": "claude-3",
-                    "confidence": 0.85
-                }
-            ]
+                {"role": "champion", "model": "gpt-4", "confidence": 0.9},
+                {"role": "challenger", "model": "claude-3", "confidence": 0.85},
+            ],
         }
         validator.validate_message(message, "plan")
 
@@ -188,23 +156,13 @@ class TestMCPMessageValidation:
             "total_tokens": 150,
             "latency_ms": 1200,
             "cost_usd": 0.003,
-            "metadata": {
-                "experiment_id": "exp-2025-09-07-001",
-                "winner_model": "gpt-4",
-                "quality_score": 0.92
-            }
+            "metadata": {"experiment_id": "exp-2025-09-07-001", "winner_model": "gpt-4", "quality_score": 0.92},
         }
         validator.validate_message(message, "final")
 
     def test_final_message_aborted(self, validator):
         """Test validation of aborted final message."""
-        message = {
-            "type": "final",
-            "final": True,
-            "aborted": True,
-            "error": "CANCELLED",
-            "model_used": "gpt-4"
-        }
+        message = {"type": "final", "final": True, "aborted": True, "error": "CANCELLED", "model_used": "gpt-4"}
         validator.validate_message(message, "final")
 
     def test_heartbeat_message(self, validator):
@@ -215,7 +173,7 @@ class TestMCPMessageValidation:
             "session_id": "session-123",
             "uptime_seconds": 3600,
             "active_connections": 5,
-            "memory_usage_mb": 256
+            "memory_usage_mb": 256,
         }
         validator.validate_message(message, "heartbeat")
 
@@ -224,10 +182,7 @@ class TestMCPMessageValidation:
         message = {
             "type": "listTools",
             "request_id": "req-123",
-            "filter": {
-                "category": "analysis",
-                "tags": ["nlp", "classification"]
-            }
+            "filter": {"category": "analysis", "tags": ["nlp", "classification"]},
         }
         validator.validate_message(message, "listTools")
 
@@ -237,22 +192,16 @@ class TestMCPMessageValidation:
             "type": "callTool",
             "toolCallId": "call-123",
             "tool": "text_analyzer",
-            "parameters": {
-                "text": "Hello world",
-                "analysis_type": "sentiment"
-            },
+            "parameters": {"text": "Hello world", "analysis_type": "sentiment"},
             "stream": True,
             "timeout_seconds": 60,
-            "priority": "high"
+            "priority": "high",
         }
         validator.validate_message(message, "callTool")
 
     def test_invalid_message_type(self, validator):
         """Test that invalid message types are rejected."""
-        message = {
-            "type": "invalid_type",
-            "data": "test"
-        }
+        message = {"type": "invalid_type", "data": "test"}
 
         with pytest.raises(jsonschema.ValidationError):
             jsonschema.validate(message, validator.schemas["base"])
@@ -261,7 +210,7 @@ class TestMCPMessageValidation:
         """Test that messages missing required fields are rejected."""
         message = {
             "type": "toolOutput",
-            "content": [{"type": "text", "text": "test"}]
+            "content": [{"type": "text", "text": "test"}],
             # Missing required toolCallId
         }
 
@@ -270,13 +219,7 @@ class TestMCPMessageValidation:
 
     def test_invalid_enum_value(self, validator):
         """Test that invalid enum values are rejected."""
-        message = {
-            "type": "error",
-            "error": {
-                "code": "INVALID_CODE",
-                "message": "Test error"
-            }
-        }
+        message = {"type": "error", "error": {"code": "INVALID_CODE", "message": "Test error"}}
 
         with pytest.raises(jsonschema.ValidationError):
             jsonschema.validate(message, validator.schemas["error"])
@@ -306,8 +249,15 @@ class TestSchemaConsistency:
 
         # Check that all expected schemas are referenced
         expected_schemas = [
-            "base", "toolOutput", "error", "event", "plan",
-            "final", "heartbeat", "listTools", "callTool"
+            "base",
+            "toolOutput",
+            "error",
+            "event",
+            "plan",
+            "final",
+            "heartbeat",
+            "listTools",
+            "callTool",
         ]
 
         for schema_name in expected_schemas:

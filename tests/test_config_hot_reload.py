@@ -30,7 +30,7 @@ class TestConfigHotReloader:
         self.config_data = {"test_key": "test_value", "number": 42}
 
         # Create initial config file
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             json.dump(self.config_data, f)
 
     def teardown_method(self):
@@ -60,7 +60,7 @@ class TestConfigHotReloader:
 
         # Modify file
         new_data = {"test_key": "new_value", "number": 43}
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             json.dump(new_data, f)
 
         # Should detect change
@@ -86,7 +86,8 @@ class TestConfigHotReloader:
             # Modify config
             new_data = {"test_key": "updated_value", "number": 100}
             import aiofiles
-            async with aiofiles.open(self.config_file, 'w') as f:
+
+            async with aiofiles.open(self.config_file, "w") as f:
                 await f.write(json.dumps(new_data))
 
             # Wait for detection and reload
@@ -107,7 +108,7 @@ class TestConfigHotReloader:
 
         # Modify config
         new_data = {"test_key": "force_reloaded", "number": 999}
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             json.dump(new_data, f)
 
         # Force reload
@@ -131,7 +132,7 @@ class TestConfigHotReloader:
     def test_invalid_json_config(self):
         """Test handling of invalid JSON in config file."""
         # Write invalid JSON
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             f.write("invalid json content {")
 
         callback_mock = MagicMock()
@@ -143,6 +144,7 @@ class TestConfigHotReloader:
     @pytest.mark.asyncio
     async def test_callback_exception_handling(self):
         """Test that callback exceptions don't crash the watcher."""
+
         def failing_callback(config):
             raise ValueError("Callback failed")
 
@@ -158,7 +160,8 @@ class TestConfigHotReloader:
             # Modify config (should trigger callback exception)
             new_data = {"test_key": "exception_test"}
             import aiofiles
-            async with aiofiles.open(self.config_file, 'w') as f:
+
+            async with aiofiles.open(self.config_file, "w") as f:
                 await f.write(json.dumps(new_data))
 
             # Wait for detection

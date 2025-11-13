@@ -34,7 +34,7 @@ class SimpleHomomorphicEncryption:
             else:
                 noise = secrets.randbelow(100) - 50  # ±50 noise
             value = value + noise
-        
+
         data = f"{value}".encode()
         return hmac.new(self.key, data, hashlib.sha256).hexdigest() + f":{value}"
 
@@ -147,10 +147,16 @@ class SecureAggregatorNode:
         for key, stats in self.local_stats.items():
             # Use deterministic noise for testing, non-deterministic for real DP
             noise_seed = hash(key) % 1000000
-            
-            encrypted_data[f"{key}:total_requests"] = self.encryption.encrypt_int(stats.total_requests, noise_seed, self.deterministic_noise)
-            encrypted_data[f"{key}:successful_requests"] = self.encryption.encrypt_int(stats.successful_requests, noise_seed + 1, self.deterministic_noise)
-            encrypted_data[f"{key}:total_latency_ms"] = self.encryption.encrypt_int(stats.total_latency_ms, noise_seed + 2, self.deterministic_noise)
+
+            encrypted_data[f"{key}:total_requests"] = self.encryption.encrypt_int(
+                stats.total_requests, noise_seed, self.deterministic_noise
+            )
+            encrypted_data[f"{key}:successful_requests"] = self.encryption.encrypt_int(
+                stats.successful_requests, noise_seed + 1, self.deterministic_noise
+            )
+            encrypted_data[f"{key}:total_latency_ms"] = self.encryption.encrypt_int(
+                stats.total_latency_ms, noise_seed + 2, self.deterministic_noise
+            )
             encrypted_data[f"{key}:total_cost"] = self.encryption.encrypt_int(
                 int(stats.total_cost * 100), noise_seed + 3, self.deterministic_noise
             )  # Convert to cents

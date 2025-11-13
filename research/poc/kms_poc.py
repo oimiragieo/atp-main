@@ -26,7 +26,7 @@ def keystream(key: bytes, nonce: bytes, length: int) -> bytes:
 
 
 def xor_bytes(a: bytes, b: bytes) -> bytes:
-    return bytes(x ^ y for x, y in zip(a, b))
+    return bytes(x ^ y for x, y in zip(a, b, strict=False))
 
 
 class KMS:

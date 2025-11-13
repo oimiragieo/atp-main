@@ -15,7 +15,7 @@ import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from metrics.registry import (
     EDGE_CACHE_EVICTIONS_TOTAL,
@@ -29,6 +29,7 @@ from metrics.registry import (
 @dataclass
 class CacheEntry:
     """Represents a cached item with TTL and metadata."""
+
     value: Any
     timestamp: float
     ttl_seconds: int
@@ -70,7 +71,7 @@ class EdgeCache:
         self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
         self._lock = threading.RLock()
         self._cleanup_interval = 60  # Cleanup every minute
-        self._cleanup_thread: Optional[threading.Thread] = None
+        self._cleanup_thread: threading.Thread | None = None
         self._running = False
 
         # Metrics tracking
@@ -131,7 +132,7 @@ class EdgeCache:
         serialized = json.dumps(request_data, sort_keys=True, default=str)
         return hashlib.sha256(serialized.encode()).hexdigest()
 
-    def get(self, request_data: dict[str, Any]) -> Optional[Any]:
+    def get(self, request_data: dict[str, Any]) -> Any | None:
         """
         Retrieve a value from the cache.
 
@@ -174,7 +175,7 @@ class EdgeCache:
                 EDGE_CACHE_MISSES_TOTAL.inc()
                 return None
 
-    def put(self, request_data: dict[str, Any], value: Any, ttl_seconds: Optional[int] = None):
+    def put(self, request_data: dict[str, Any], value: Any, ttl_seconds: int | None = None):
         """
         Store a value in the cache.
 
@@ -197,11 +198,7 @@ class EdgeCache:
                 EDGE_CACHE_EVICTIONS_TOTAL.inc()
 
             # Add new entry
-            entry = CacheEntry(
-                value=value,
-                timestamp=time.time(),
-                ttl_seconds=ttl
-            )
+            entry = CacheEntry(value=value, timestamp=time.time(), ttl_seconds=ttl)
             self._cache[key] = entry
             EDGE_CACHE_SIZE.set(len(self._cache))
 
@@ -245,7 +242,7 @@ class EdgeCache:
                 "total_requests": self._total_requests,
                 "total_hits": self._total_hits,
                 "total_misses": self._total_requests - self._total_hits,
-                "default_ttl_seconds": self.default_ttl_seconds
+                "default_ttl_seconds": self.default_ttl_seconds,
             }
 
 
@@ -276,12 +273,12 @@ class AsyncEdgeCache:
         """Stop the cache cleanup thread."""
         self._cache.stop()
 
-    async def get(self, request_data: dict[str, Any]) -> Optional[Any]:
+    async def get(self, request_data: dict[str, Any]) -> Any | None:
         """Async get operation."""
         loop = self._get_loop()
         return await loop.run_in_executor(None, self._cache.get, request_data)
 
-    async def put(self, request_data: dict[str, Any], value: Any, ttl_seconds: Optional[int] = None):
+    async def put(self, request_data: dict[str, Any], value: Any, ttl_seconds: int | None = None):
         """Async put operation."""
         loop = self._get_loop()
         await loop.run_in_executor(None, self._cache.put, request_data, value, ttl_seconds)

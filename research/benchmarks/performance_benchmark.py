@@ -30,7 +30,7 @@ class PerformanceBenchmark:
                 cwd=cwd,
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout
+                timeout=300,  # 5 minute timeout
             )
             return result.returncode, result.stdout, result.stderr
         except subprocess.TimeoutExpired:
@@ -44,15 +44,17 @@ class PerformanceBenchmark:
 
         # Sequential validation (simulate old approach)
         start_time = time.time()
-        components = ['memory-gateway', 'persona-adapter', 'ollama-adapter']
+        components = ["memory-gateway", "persona-adapter", "ollama-adapter"]
 
         sequential_times = []
         for component in components:
             comp_start = time.time()
-            if component == 'memory-gateway':
+            if component == "memory-gateway":
                 exit_code, _, _ = self._run_command([sys.executable, "-m", "py_compile", "memory-gateway/app.py"])
             else:
-                exit_code, _, _ = self._run_command([sys.executable, "-m", "py_compile", f"adapters/python/{component}/main.py"])
+                exit_code, _, _ = self._run_command(
+                    [sys.executable, "-m", "py_compile", f"adapters/python/{component}/main.py"]
+                )
             comp_time = time.time() - comp_start
             sequential_times.append(comp_time)
 
@@ -63,10 +65,12 @@ class PerformanceBenchmark:
 
         def validate_component(component: str) -> float:
             comp_start = time.time()
-            if component == 'memory-gateway':
+            if component == "memory-gateway":
                 exit_code, _, _ = self._run_command([sys.executable, "-m", "py_compile", "memory-gateway/app.py"])
             else:
-                exit_code, _, _ = self._run_command([sys.executable, "-m", "py_compile", f"adapters/python/{component}/main.py"])
+                exit_code, _, _ = self._run_command(
+                    [sys.executable, "-m", "py_compile", f"adapters/python/{component}/main.py"]
+                )
             return time.time() - comp_start
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
@@ -75,11 +79,11 @@ class PerformanceBenchmark:
         parallel_total = time.time() - start_time
 
         return {
-            'sequential_total': sequential_total,
-            'parallel_total': parallel_total,
-            'speedup_ratio': sequential_total / parallel_total if parallel_total > 0 else 1,
-            'sequential_times': sequential_times,
-            'parallel_times': parallel_times
+            "sequential_total": sequential_total,
+            "parallel_total": parallel_total,
+            "speedup_ratio": sequential_total / parallel_total if parallel_total > 0 else 1,
+            "sequential_times": sequential_times,
+            "parallel_times": parallel_times,
         }
 
     def benchmark_dependency_installation(self) -> dict:
@@ -94,25 +98,31 @@ class PerformanceBenchmark:
 
         if original_req.exists():
             start_time = time.time()
-            exit_code, _, _ = self._run_command([sys.executable, "-m", "pip", "install", "--dry-run", "-r", str(original_req)])
-            results['original_time'] = time.time() - start_time
-            results['original_packages'] = self._count_packages(original_req)
+            exit_code, _, _ = self._run_command(
+                [sys.executable, "-m", "pip", "install", "--dry-run", "-r", str(original_req)]
+            )
+            results["original_time"] = time.time() - start_time
+            results["original_packages"] = self._count_packages(original_req)
         else:
-            results['original_time'] = 0
-            results['original_packages'] = 0
+            results["original_time"] = 0
+            results["original_packages"] = 0
 
         if optimized_req.exists():
             start_time = time.time()
-            exit_code, _, _ = self._run_command([sys.executable, "-m", "pip", "install", "--dry-run", "-r", str(optimized_req)])
-            results['optimized_time'] = time.time() - start_time
-            results['optimized_packages'] = self._count_packages(optimized_req)
+            exit_code, _, _ = self._run_command(
+                [sys.executable, "-m", "pip", "install", "--dry-run", "-r", str(optimized_req)]
+            )
+            results["optimized_time"] = time.time() - start_time
+            results["optimized_packages"] = self._count_packages(optimized_req)
         else:
-            results['optimized_time'] = 0
-            results['optimized_packages'] = 0
+            results["optimized_time"] = 0
+            results["optimized_packages"] = 0
 
-        if results['original_time'] > 0 and results['optimized_time'] > 0:
-            results['dependency_speedup'] = results['original_time'] / results['optimized_time']
-            results['package_reduction'] = ((results['original_packages'] - results['optimized_packages']) / results['original_packages']) * 100
+        if results["original_time"] > 0 and results["optimized_time"] > 0:
+            results["dependency_speedup"] = results["original_time"] / results["optimized_time"]
+            results["package_reduction"] = (
+                (results["original_packages"] - results["optimized_packages"]) / results["original_packages"]
+            ) * 100
 
         return results
 
@@ -125,7 +135,7 @@ class PerformanceBenchmark:
         with open(req_file) as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith("#"):
                     count += 1
         return count
 
@@ -146,10 +156,10 @@ class PerformanceBenchmark:
         exit_code2, _, _ = self._run_command([sys.executable, "tools/build_validator.py"])
         second_run_time = time.time() - start_time
 
-        results['first_run_time'] = first_run_time
-        results['second_run_time'] = second_run_time
-        results['cache_speedup'] = first_run_time / second_run_time if second_run_time > 0 else 1
-        results['time_saved'] = first_run_time - second_run_time
+        results["first_run_time"] = first_run_time
+        results["second_run_time"] = second_run_time
+        results["cache_speedup"] = first_run_time / second_run_time if second_run_time > 0 else 1
+        results["time_saved"] = first_run_time - second_run_time
 
         return results
 
@@ -159,9 +169,9 @@ class PerformanceBenchmark:
         print("=" * 50)
 
         self.results = {
-            'processing_benchmark': self.benchmark_sequential_vs_parallel(),
-            'dependency_benchmark': self.benchmark_dependency_installation(),
-            'caching_benchmark': self.benchmark_caching_effectiveness()
+            "processing_benchmark": self.benchmark_sequential_vs_parallel(),
+            "dependency_benchmark": self.benchmark_dependency_installation(),
+            "caching_benchmark": self.benchmark_caching_effectiveness(),
         }
 
         return self.results
@@ -176,7 +186,7 @@ class PerformanceBenchmark:
         print("=" * 60)
 
         # Processing benchmark
-        proc = self.results.get('processing_benchmark', {})
+        proc = self.results.get("processing_benchmark", {})
         if proc:
             print("🔄 Processing Optimization:")
             print(".2f")
@@ -185,19 +195,19 @@ class PerformanceBenchmark:
             print()
 
         # Dependency benchmark
-        dep = self.results.get('dependency_benchmark', {})
+        dep = self.results.get("dependency_benchmark", {})
         if dep:
             print("📦 Dependency Optimization:")
-            if dep.get('original_packages', 0) > 0:
+            if dep.get("original_packages", 0) > 0:
                 print(f"  Original packages: {dep['original_packages']}")
                 print(f"  Optimized packages: {dep['optimized_packages']}")
                 print(".1f")
-            if 'dependency_speedup' in dep:
+            if "dependency_speedup" in dep:
                 print(".1f")
             print()
 
         # Caching benchmark
-        cache = self.results.get('caching_benchmark', {})
+        cache = self.results.get("caching_benchmark", {})
         if cache:
             print("💾 Build Caching:")
             print(".2f")

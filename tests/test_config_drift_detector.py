@@ -26,6 +26,7 @@ class TestConfigDriftDetector:
         """Clean up test fixtures."""
         # Clean up temp directory
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def create_test_config(self, name: str, content: str) -> Path:
@@ -245,7 +246,7 @@ class TestConfigDriftDetector:
         assert len(alerts) == 1
         assert alerts[0].file_path == str(config1)
 
-    @patch('tools.config_drift_detector.CONFIG_DRIFT_ALERTS_TOTAL')
+    @patch("tools.config_drift_detector.CONFIG_DRIFT_ALERTS_TOTAL")
     def test_metrics_integration(self, mock_metric):
         """Test metrics integration."""
         # Create and baseline config
@@ -273,7 +274,7 @@ class TestConfigFile:
             hash_value="abc123",
             last_modified=1234567890.0,
             file_size=1024,
-            security_level="medium"
+            security_level="medium",
         )
 
         assert config.path == "/path/to/config.json"
@@ -294,7 +295,7 @@ class TestDriftAlert:
             current_hash="new_hash",
             change_type="modified",
             security_level="high",
-            timestamp=1234567890.0
+            timestamp=1234567890.0,
         )
 
         assert alert.file_path == "/path/to/config.json"
@@ -315,6 +316,7 @@ class TestCLI:
     def teardown_method(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_cli_baseline(self, capsys):
@@ -326,7 +328,7 @@ class TestCLI:
         config.write_text('{"test": "baseline"}')
 
         # Run baseline command
-        with patch('sys.argv', ['config_drift_detector.py', 'baseline', str(self.temp_dir)]):
+        with patch("sys.argv", ["config_drift_detector.py", "baseline", str(self.temp_dir)]):
             result = main()
 
         assert result == 0
@@ -342,11 +344,11 @@ class TestCLI:
         config.write_text('{"test": "no_drift"}')
 
         # Baseline first
-        with patch('sys.argv', ['config_drift_detector.py', 'baseline', str(self.temp_dir)]):
+        with patch("sys.argv", ["config_drift_detector.py", "baseline", str(self.temp_dir)]):
             main()
 
         # Scan
-        with patch('sys.argv', ['config_drift_detector.py', 'scan', str(self.temp_dir)]):
+        with patch("sys.argv", ["config_drift_detector.py", "scan", str(self.temp_dir)]):
             result = main()
 
         assert result == 0
@@ -362,14 +364,14 @@ class TestCLI:
         config.write_text('{"test": "original"}')
 
         # Baseline first
-        with patch('sys.argv', ['config_drift_detector.py', 'baseline', str(self.temp_dir)]):
+        with patch("sys.argv", ["config_drift_detector.py", "baseline", str(self.temp_dir)]):
             main()
 
         # Modify file
         config.write_text('{"test": "modified"}')
 
         # Scan
-        with patch('sys.argv', ['config_drift_detector.py', 'scan', str(self.temp_dir)]):
+        with patch("sys.argv", ["config_drift_detector.py", "scan", str(self.temp_dir)]):
             result = main()
 
         assert result == 0
@@ -387,16 +389,16 @@ class TestCLI:
         unique_baseline = self.temp_dir / "unique_baselines.json"
 
         # Baseline first with unique store
-        with patch('sys.argv', ['config_drift_detector.py', 'baseline', str(self.temp_dir)]):
-            with patch('tools.config_drift_detector.ConfigDriftDetector') as mock_detector:
+        with patch("sys.argv", ["config_drift_detector.py", "baseline", str(self.temp_dir)]):
+            with patch("tools.config_drift_detector.ConfigDriftDetector") as mock_detector:
                 mock_instance = mock_detector.return_value
                 mock_instance.baseline_store = unique_baseline
                 mock_instance.establish_baseline.return_value = 1
                 main()
 
         # List baselines with unique store
-        with patch('sys.argv', ['config_drift_detector.py', 'list-baselines']):
-            with patch('tools.config_drift_detector.ConfigDriftDetector') as mock_detector:
+        with patch("sys.argv", ["config_drift_detector.py", "list-baselines"]):
+            with patch("tools.config_drift_detector.ConfigDriftDetector") as mock_detector:
                 mock_instance = mock_detector.return_value
                 mock_instance.baseline_store = unique_baseline
                 mock_instance.list_baselines.return_value = [
@@ -405,7 +407,7 @@ class TestCLI:
                         hash_value="testhash",
                         last_modified=1234567890.0,
                         file_size=1024,
-                        security_level="medium"
+                        security_level="medium",
                     )
                 ]
                 result = main()
@@ -424,14 +426,14 @@ class TestCLI:
         config.write_text('{"test": "alert"}')
 
         # Baseline first
-        with patch('sys.argv', ['config_drift_detector.py', 'baseline', str(self.temp_dir)]):
+        with patch("sys.argv", ["config_drift_detector.py", "baseline", str(self.temp_dir)]):
             main()
 
         # Modify file
         config.write_text('{"test": "modified"}')
 
         # Scan with alert flag
-        with patch('sys.argv', ['config_drift_detector.py', 'scan', str(self.temp_dir), '--alert']):
+        with patch("sys.argv", ["config_drift_detector.py", "scan", str(self.temp_dir), "--alert"]):
             result = main()
 
         assert result == 1  # Should return 1 for alerts

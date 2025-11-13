@@ -28,18 +28,19 @@ QUIC_LATENCY_SECONDS = REGISTRY.histogram("quic_latency_seconds", [0.001, 0.005,
 @dataclass
 class QuicConnection:
     """Represents a QUIC connection with multiple streams."""
+
     connection_id: str
-    streams: dict[int, 'QuicStream'] = field(default_factory=dict)
+    streams: dict[int, "QuicStream"] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     last_activity: float = field(default_factory=time.time)
 
-    def add_stream(self, stream_id: int) -> 'QuicStream':
+    def add_stream(self, stream_id: int) -> "QuicStream":
         """Add a new stream to this connection."""
         stream = QuicStream(stream_id, self.connection_id)
         self.streams[stream_id] = stream
         return stream
 
-    def get_stream(self, stream_id: int) -> Optional['QuicStream']:
+    def get_stream(self, stream_id: int) -> Optional["QuicStream"]:
         """Get a stream by ID."""
         return self.streams.get(stream_id)
 
@@ -55,6 +56,7 @@ class QuicConnection:
 @dataclass
 class QuicStream:
     """Represents a QUIC stream within a connection."""
+
     stream_id: int
     connection_id: str
     frames: list[Frame] = field(default_factory=list)
@@ -95,7 +97,7 @@ class QuicServer:
         self.logger.info(f"Created QUIC connection: {connection_id}")
         return connection
 
-    def get_connection(self, connection_id: str) -> Optional[QuicConnection]:
+    def get_connection(self, connection_id: str) -> QuicConnection | None:
         """Get a connection by ID."""
         return self.connections.get(connection_id)
 
@@ -106,7 +108,7 @@ class QuicServer:
             QUIC_SESSIONS_ACTIVE.dec()
             self.logger.info(f"Removed QUIC connection: {connection_id}")
 
-    def create_stream(self, connection_id: str) -> Optional[QuicStream]:
+    def create_stream(self, connection_id: str) -> QuicStream | None:
         """Create a new stream within a connection."""
         connection = self.get_connection(connection_id)
         if not connection:
@@ -124,7 +126,7 @@ class QuicServer:
         try:
             # For POC, assume frame_data is JSON (simplified)
             # In real implementation, this would use CBOR decoding
-            frame_dict = json.loads(frame_data.decode('utf-8'))
+            frame_dict = json.loads(frame_data.decode("utf-8"))
             QUIC_FRAMES_RECEIVED_TOTAL.inc()
 
             # Get or create connection and stream
@@ -147,31 +149,25 @@ class QuicServer:
                 "msg_seq": frame_dict.get("msg_seq", 0),
                 "status": "processed",
                 "quic_transport": True,
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
             processing_time = time.time() - start_time
             QUIC_LATENCY_SECONDS.observe(processing_time)
 
-            return json.dumps(response_frame).encode('utf-8')
+            return json.dumps(response_frame).encode("utf-8")
 
         except Exception as e:
             self.logger.error(f"Error handling QUIC frame: {e}")
             # Return error frame
-            error_frame = {
-                "error": str(e),
-                "timestamp": time.time()
-            }
-            return json.dumps(error_frame).encode('utf-8')
+            error_frame = {"error": str(e), "timestamp": time.time()}
+            return json.dumps(error_frame).encode("utf-8")
 
     async def cleanup_expired_connections(self):
         """Clean up expired connections."""
         while True:
             await asyncio.sleep(60)  # Check every minute
-            expired = [
-                conn_id for conn_id, conn in self.connections.items()
-                if conn.is_expired()
-            ]
+            expired = [conn_id for conn_id, conn in self.connections.items() if conn.is_expired()]
             for conn_id in expired:
                 self.remove_connection(conn_id)
                 self.logger.info(f"Cleaned up expired connection: {conn_id}")
@@ -187,10 +183,10 @@ class QuicServer:
                     "id": conn.connection_id,
                     "streams": len(conn.streams),
                     "age_seconds": time.time() - conn.created_at,
-                    "last_activity_seconds": time.time() - conn.last_activity
+                    "last_activity_seconds": time.time() - conn.last_activity,
                 }
                 for conn in self.connections.values()
-            ]
+            ],
         }
 
 
@@ -200,31 +196,23 @@ class HttpQuicAdapter:
     def __init__(self, quic_server: QuicServer):
         self.quic_server = quic_server
         self.app = web.Application()
-        self.app.router.add_post('/quic/frame', self.handle_frame)
-        self.app.router.add_get('/quic/stats', self.handle_stats)
+        self.app.router.add_post("/quic/frame", self.handle_frame)
+        self.app.router.add_get("/quic/stats", self.handle_stats)
 
     async def handle_frame(self, request: web.Request) -> web.Response:
         """Handle frame over HTTP (simulating QUIC)."""
         try:
             data = await request.json()
-            connection_id = data.get('connection_id', 'default')
-            stream_id = data.get('stream_id', 1)
-            frame_data = bytes.fromhex(data['frame_hex'])
+            connection_id = data.get("connection_id", "default")
+            stream_id = data.get("stream_id", 1)
+            frame_data = bytes.fromhex(data["frame_hex"])
 
-            response_data = await self.quic_server.handle_frame(
-                connection_id, stream_id, frame_data
-            )
+            response_data = await self.quic_server.handle_frame(connection_id, stream_id, frame_data)
 
-            return web.json_response({
-                'response_hex': response_data.hex(),
-                'status': 'ok'
-            })
+            return web.json_response({"response_hex": response_data.hex(), "status": "ok"})
 
         except Exception as e:
-            return web.json_response({
-                'error': str(e),
-                'status': 'error'
-            }, status=400)
+            return web.json_response({"error": str(e), "status": "error"}, status=400)
 
     async def handle_stats(self, request: web.Request) -> web.Response:
         """Get QUIC server statistics."""

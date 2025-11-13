@@ -1,14 +1,13 @@
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
 class Entry:
     key: str
     size: int
-    ttl_s: Optional[int]
+    ttl_s: int | None
     ts: float = field(default_factory=lambda: time.time())
 
     def expired(self, now: float) -> bool:
@@ -18,6 +17,7 @@ class Entry:
 @dataclass
 class SlidingWindowBucket:
     """Sliding window for tracking requests over time."""
+
     window_size_s: float
     max_requests: int
     requests: deque = field(default_factory=deque)
@@ -37,6 +37,7 @@ class SlidingWindowBucket:
 @dataclass
 class TokenBucket:
     """Token bucket for burst allowance."""
+
     rate_per_s: float
     burst: int
     tokens: float = field(init=False)
@@ -60,9 +61,14 @@ class TokenBucket:
 class HybridQuotaManager:
     """Hybrid quota manager combining sliding window and token bucket."""
 
-    def __init__(self, max_items: int, max_bytes: int,
-                 window_size_s: float = 60.0, sustained_rps: float = 10.0,
-                 burst_rps: float = 50.0):
+    def __init__(
+        self,
+        max_items: int,
+        max_bytes: int,
+        window_size_s: float = 60.0,
+        sustained_rps: float = 10.0,
+        burst_rps: float = 50.0,
+    ):
         self.max_items = max_items
         self.max_bytes = max_bytes
         self.window_size_s = window_size_s
@@ -79,8 +85,7 @@ class HybridQuotaManager:
     def _get_window(self, ns: str) -> SlidingWindowBucket:
         if ns not in self.sliding_windows:
             self.sliding_windows[ns] = SlidingWindowBucket(
-                window_size_s=self.window_size_s,
-                max_requests=int(self.sustained_rps * self.window_size_s)
+                window_size_s=self.window_size_s, max_requests=int(self.sustained_rps * self.window_size_s)
             )
         return self.sliding_windows[ns]
 
@@ -88,7 +93,7 @@ class HybridQuotaManager:
         if ns not in self.token_buckets:
             self.token_buckets[ns] = TokenBucket(
                 rate_per_s=self.sustained_rps,
-                burst=int(self.burst_rps * 5)  # 5 second burst allowance
+                burst=int(self.burst_rps * 5),  # 5 second burst allowance
             )
         return self.token_buckets[ns]
 
@@ -116,8 +121,7 @@ class HybridQuotaManager:
             evicted += 1
         return evicted
 
-    def put(self, ns: str, key: str, size: int, ttl_s: Optional[int],
-            now: Optional[float] = None) -> tuple[bool, int, str]:
+    def put(self, ns: str, key: str, size: int, ttl_s: int | None, now: float | None = None) -> tuple[bool, int, str]:
         """
         Put an item with hybrid rate limiting.
 
@@ -179,8 +183,7 @@ class QuotaManager:
             evicted += 1
         return evicted
 
-    def put(self, ns: str, key: str, size: int, ttl_s: Optional[int],
-            now: Optional[float] = None) -> tuple[bool, int]:
+    def put(self, ns: str, key: str, size: int, ttl_s: int | None, now: float | None = None) -> tuple[bool, int]:
         now = now or time.time()
         d = self.ns.setdefault(ns, {})
         d[key] = Entry(key=key, size=size, ttl_s=ttl_s, ts=now)

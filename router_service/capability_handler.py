@@ -32,18 +32,12 @@ class CapabilityAdvertisementHandler:
         try:
             # Validate frame type
             if not isinstance(frame.payload, Payload):
-                return {
-                    "success": False,
-                    "error": "Invalid payload type for capability frame"
-                }
+                return {"success": False, "error": "Invalid payload type for capability frame"}
 
             # Extract capability data from payload content
             capability_data = frame.payload.content
             if not isinstance(capability_data, dict):
-                return {
-                    "success": False,
-                    "error": "Invalid capability data format"
-                }
+                return {"success": False, "error": "Invalid capability data format"}
 
             # Register the capability
             success = self.registry.register_capability(capability_data)
@@ -55,20 +49,14 @@ class CapabilityAdvertisementHandler:
                     "success": True,
                     "message": f"Successfully registered adapter {adapter_id}",
                     "adapter_id": adapter_id,
-                    "adapter_type": adapter_type
+                    "adapter_type": adapter_type,
                 }
             else:
-                return {
-                    "success": False,
-                    "error": "Failed to register adapter capability"
-                }
+                return {"success": False, "error": "Failed to register adapter capability"}
 
         except Exception as e:
             logger.error(f"Error processing capability frame: {e}")
-            return {
-                "success": False,
-                "error": f"Internal error: {str(e)}"
-            }
+            return {"success": False, "error": f"Internal error: {str(e)}"}
 
     def process_heartbeat_frame(self, frame: Frame) -> dict[str, Any]:
         """Process a heartbeat frame from an adapter.
@@ -87,35 +75,23 @@ class CapabilityAdvertisementHandler:
                 adapter_id = frame.payload.content.get("adapter_id")
 
             # Also check meta as fallback
-            if not adapter_id and hasattr(frame, 'meta') and frame.meta:
-                adapter_id = getattr(frame.meta, 'adapter_id', None)
+            if not adapter_id and hasattr(frame, "meta") and frame.meta:
+                adapter_id = getattr(frame.meta, "adapter_id", None)
 
             if not adapter_id:
-                return {
-                    "success": False,
-                    "error": "Missing adapter_id in heartbeat frame"
-                }
+                return {"success": False, "error": "Missing adapter_id in heartbeat frame"}
 
             # Update heartbeat
             success = self.registry.heartbeat(adapter_id)
 
             if success:
-                return {
-                    "success": True,
-                    "message": f"Heartbeat received from adapter {adapter_id}"
-                }
+                return {"success": True, "message": f"Heartbeat received from adapter {adapter_id}"}
             else:
-                return {
-                    "success": False,
-                    "error": f"Unknown adapter: {adapter_id}"
-                }
+                return {"success": False, "error": f"Unknown adapter: {adapter_id}"}
 
         except Exception as e:
             logger.error(f"Error processing heartbeat frame: {e}")
-            return {
-                "success": False,
-                "error": f"Internal error: {str(e)}"
-            }
+            return {"success": False, "error": f"Internal error: {str(e)}"}
 
     def process_health_frame(self, frame: Frame) -> dict[str, Any]:
         """Process a health status frame from an adapter.
@@ -129,25 +105,16 @@ class CapabilityAdvertisementHandler:
         try:
             # Validate frame type
             if not isinstance(frame.payload, Payload):
-                return {
-                    "success": False,
-                    "error": "Invalid payload type for health frame"
-                }
+                return {"success": False, "error": "Invalid payload type for health frame"}
 
             # Extract health data from payload content
             health_data = frame.payload.content
             if not isinstance(health_data, dict):
-                return {
-                    "success": False,
-                    "error": "Invalid health data format"
-                }
+                return {"success": False, "error": "Invalid health data format"}
 
             adapter_id = health_data.get("adapter_id")
             if not adapter_id:
-                return {
-                    "success": False,
-                    "error": "Missing adapter_id in health frame"
-                }
+                return {"success": False, "error": "Missing adapter_id in health frame"}
 
             # Update adapter health status in registry
             success = self.registry.update_health_telemetry(adapter_id, health_data)
@@ -158,6 +125,7 @@ class CapabilityAdvertisementHandler:
 
                 # Update metrics
                 from metrics.registry import ADAPTER_HEALTH_UPDATES
+
                 ADAPTER_HEALTH_UPDATES.inc()
 
                 # Store health telemetry data (could be extended to store in registry)
@@ -169,20 +137,14 @@ class CapabilityAdvertisementHandler:
                     "message": f"Health update received from adapter {adapter_id}",
                     "adapter_id": adapter_id,
                     "status": health_status,
-                    "p95_latency_ms": p95_latency
+                    "p95_latency_ms": p95_latency,
                 }
             else:
-                return {
-                    "success": False,
-                    "error": f"Unknown adapter: {adapter_id}"
-                }
+                return {"success": False, "error": f"Unknown adapter: {adapter_id}"}
 
         except Exception as e:
             logger.error(f"Error processing health frame: {e}")
-            return {
-                "success": False,
-                "error": f"Internal error: {str(e)}"
-            }
+            return {"success": False, "error": f"Internal error: {str(e)}"}
 
     def get_registered_adapters(self) -> dict[str, Any]:
         """Get information about all registered adapters.
@@ -216,10 +178,10 @@ class CapabilityAdvertisementHandler:
                     "memory_usage_mb": adapter.memory_usage_mb,
                     "cpu_usage_percent": adapter.cpu_usage_percent,
                     "uptime_seconds": adapter.uptime_seconds,
-                    "last_health_update": adapter.last_health_update
+                    "last_health_update": adapter.last_health_update,
                 }
                 for adapter in adapters
-            ]
+            ],
         }
 
     def cleanup_stale_adapters(self, timeout_seconds: int = 300) -> dict[str, Any]:
@@ -236,7 +198,7 @@ class CapabilityAdvertisementHandler:
         return {
             "success": True,
             "removed_adapters": removed_count,
-            "remaining_adapters": len(self.registry.get_all_adapters())
+            "remaining_adapters": len(self.registry.get_all_adapters()),
         }
 
 
@@ -256,7 +218,7 @@ def generate_tool_descriptors() -> list[dict[str, Any]]:
         List of MCP tool descriptor dictionaries
     """
     from metrics.registry import TOOLS_EXPOSED_TOTAL
-    
+
     handler = get_capability_handler()
     adapters = handler.registry.get_all_adapters()
 
@@ -275,23 +237,19 @@ def generate_tool_descriptors() -> list[dict[str, Any]]:
                     "type": "string",
                     "enum": ["fast", "balanced", "high"],
                     "default": "balanced",
-                    "description": "Quality target for completion"
+                    "description": "Quality target for completion",
                 },
-                "max_cost_usd": {
-                    "type": "number",
-                    "default": 0.05,
-                    "description": "Maximum cost budget in USD"
-                },
+                "max_cost_usd": {"type": "number", "default": 0.05, "description": "Maximum cost budget in USD"},
                 "latency_slo_ms": {
                     "type": "integer",
                     "default": 2000,
-                    "description": "Latency service level objective in milliseconds"
+                    "description": "Latency service level objective in milliseconds",
                 },
                 "adapter_type": {
                     "type": "string",
                     "enum": list({adapter.adapter_type for adapter in adapters}),
-                    "description": "Specific adapter type to use (optional)"
-                }
+                    "description": "Specific adapter type to use (optional)",
+                },
             },
         },
     }
@@ -311,14 +269,14 @@ def generate_tool_descriptors() -> list[dict[str, Any]]:
                         "max_tokens": {
                             "type": "integer",
                             "default": adapter.max_tokens or 512,
-                            "description": "Maximum tokens to generate"
+                            "description": "Maximum tokens to generate",
                         },
                         "model": {
                             "type": "string",
                             "enum": adapter.models,
                             "default": adapter.models[0] if adapter.models else None,
-                            "description": "Specific model to use"
-                        }
+                            "description": "Specific model to use",
+                        },
                     },
                 },
             }
@@ -326,5 +284,5 @@ def generate_tool_descriptors() -> list[dict[str, Any]]:
 
     # Update metrics
     TOOLS_EXPOSED_TOTAL.set(len(tools))
-    
+
     return tools

@@ -34,10 +34,10 @@ import sys
 import threading
 import time
 from collections import defaultdict, deque
-from collections.abc import AsyncIterator, Awaitable
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal, TypedDict
+from typing import Any, Literal, TypedDict
 
 sys.path.insert(0, _os.path.abspath(_os.path.join(_os.path.dirname(__file__), "..", "memory-gateway")))
 
@@ -278,6 +278,7 @@ app = FastAPI(
 # Import and include authentication router
 try:
     from .auth_endpoints import auth_router
+
     app.include_router(auth_router)
     logger.info("Enterprise authentication system enabled")
 except ImportError as e:
@@ -288,6 +289,7 @@ except Exception as e:
 # Import and include policy management router
 try:
     from .policy_api import policy_router
+
     app.include_router(policy_router)
     logger.info("Policy management API enabled")
 except ImportError as e:
@@ -298,18 +300,18 @@ except Exception as e:
 # Add tenant isolation middleware
 try:
     from .tenant_isolation import TenantIsolationMiddleware, create_default_policies
-    
+
     # Add middleware (only if ABAC is enabled)
     enable_abac = os.getenv("ENABLE_ABAC", "true").lower() in ("true", "1", "yes")
     if enable_abac:
         app.add_middleware(TenantIsolationMiddleware, enforce_abac=True)
         logger.info("ABAC tenant isolation middleware enabled")
-        
+
         # Create default policies on startup
         create_default_policies()
     else:
         logger.info("ABAC tenant isolation disabled")
-        
+
 except ImportError as e:
     logger.warning(f"Tenant isolation middleware not available: {e}")
 except Exception as e:
@@ -318,6 +320,7 @@ except Exception as e:
 # Import and include compliance management router
 try:
     from .compliance_api import compliance_router
+
     app.include_router(compliance_router)
     logger.info("Compliance management API enabled")
 except ImportError as e:
@@ -328,12 +331,14 @@ except Exception as e:
 # Import and include database management router
 try:
     from .database_api import database_router
+
     app.include_router(database_router)
     logger.info("Database management API enabled")
 except ImportError as e:
     logger.warning(f"Database management API not available: {e}")
 except Exception as e:
     logger.error(f"Failed to initialize database management API: {e}")
+
 
 # Initialize database on startup
 @app.on_event("startup")
@@ -342,17 +347,18 @@ async def startup_event():
     try:
         from .database import init_database
         from .database_backup import start_backup_scheduler
-        
+
         # Initialize database
         await init_database()
         logger.info("Database initialization completed")
-        
+
         # Start backup scheduler if enabled
         await start_backup_scheduler()
-        
+
     except Exception as e:
         logger.error(f"Startup initialization failed: {e}")
         raise
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -360,14 +366,14 @@ async def shutdown_event():
     try:
         from .database import close_database
         from .database_backup import stop_backup_scheduler
-        
+
         # Stop backup scheduler
         await stop_backup_scheduler()
-        
+
         # Close database connections
         await close_database()
         logger.info("Database connections closed")
-        
+
     except Exception as e:
         logger.error(f"Shutdown cleanup failed: {e}")
 
@@ -569,6 +575,7 @@ class FairScheduler:
         boosted_weight = base_weight * self._starvation_boost_factor
         self._boosted_sessions[session] = (boosted_weight, time.time())
         self._starvation_events_ctr.inc()
+
     # No return; starvation boost only updates internal state and metrics
 
     async def acquire(self, session: str, window_allowed: int, timeout: float = 0.0) -> bool:
@@ -969,28 +976,20 @@ async def middleware(request: Request, call_next: Callable[[Request], Awaitable[
 @app.get("/healthz")
 def health() -> dict[str, Any]:
     """Comprehensive health check with dependency validation."""
-    health_status: dict[str, Any] = {
-        "status": "healthy",
-        "service": "router",
-        "timestamp": time.time(),
-        "checks": {}
-    }
+    health_status: dict[str, Any] = {"status": "healthy", "service": "router", "timestamp": time.time(), "checks": {}}
 
     # Check model registry
     registry_healthy = bool(_MODEL_REGISTRY)
     health_status["checks"]["model_registry"] = {
         "status": "healthy" if registry_healthy else "unhealthy",
-        "details": f"{len(_MODEL_REGISTRY)} models loaded" if registry_healthy else "No models loaded"
+        "details": f"{len(_MODEL_REGISTRY)} models loaded" if registry_healthy else "No models loaded",
     }
 
     # Check memory usage
     process = psutil.Process()
     memory_mb = process.memory_info().rss / 1024 / 1024
     memory_healthy = memory_mb < 1000  # Less than 1GB
-    health_status["checks"]["memory_usage"] = {
-        "status": "healthy" if memory_healthy else "degraded",
-        "details": ".1f"
-    }
+    health_status["checks"]["memory_usage"] = {"status": "healthy" if memory_healthy else "degraded", "details": ".1f"}
 
     # Check service dependencies
     try:
@@ -1000,19 +999,21 @@ def health() -> dict[str, Any]:
         _services.get("continuous_improvement_pipeline")
         health_status["checks"]["service_dependencies"] = {
             "status": "healthy",
-            "details": "All core services initialized"
+            "details": "All core services initialized",
         }
     except Exception as e:
         health_status["checks"]["service_dependencies"] = {
             "status": "unhealthy",
-            "details": f"Service initialization error: {e}"
+            "details": f"Service initialization error: {e}",
         }
 
     # Check data directory
     data_dir_exists = os.path.exists(_DATA_DIR)
     health_status["checks"]["data_directory"] = {
         "status": "healthy" if data_dir_exists else "unhealthy",
-        "details": f"Data directory accessible: {_DATA_DIR}" if data_dir_exists else f"Data directory missing: {_DATA_DIR}"
+        "details": f"Data directory accessible: {_DATA_DIR}"
+        if data_dir_exists
+        else f"Data directory missing: {_DATA_DIR}",
     }
 
     # Determine overall status
@@ -1029,10 +1030,7 @@ def health() -> dict[str, Any]:
 @app.get("/readyz")
 def ready() -> dict[str, Any]:
     """Readiness check - ensures service is ready to handle requests."""
-    readiness_status: dict[str, Any] = {
-        "ready": True,
-        "checks": {}
-    }
+    readiness_status: dict[str, Any] = {"ready": True, "checks": {}}
 
     # Check model registry is loaded
     registry_ready = bool(_MODEL_REGISTRY)
@@ -1743,6 +1741,10 @@ async def mcp_websocket(websocket: WebSocket) -> None:
     """
     await websocket.accept()
 
+    # Register with shutdown coordinator for graceful shutdown
+    if hasattr(app.state, "shutdown_coordinator"):
+        app.state.shutdown_coordinator.add_connection(websocket)
+
     # MCP session state
     mcp_session_active = REGISTRY.gauge("mcp_sessions_active")
     mcp_heartbeats_tx = REGISTRY.counter("mcp_heartbeats_tx")
@@ -1967,6 +1969,9 @@ async def mcp_websocket(websocket: WebSocket) -> None:
     except WebSocketDisconnect:
         pass
     finally:
+        # Unregister from shutdown coordinator
+        if hasattr(app.state, "shutdown_coordinator"):
+            app.state.shutdown_coordinator.remove_connection(websocket)
         mcp_session_active.dec(1)
 
 
@@ -2251,7 +2256,7 @@ if settings.enable_metrics:
         # Latency buckets (legacy path)
         if settings.enable_latency_histogram and _LAT_BUCKET_COUNTS:
             cumulative = 0
-            for b, count in zip(_LATENCY_BUCKETS, _LAT_BUCKET_COUNTS[:-1]):
+            for b, count in zip(_LATENCY_BUCKETS, _LAT_BUCKET_COUNTS[:-1], strict=False):
                 cumulative += count
                 lines.append(f'request_latency_ms_bucket{{le="{b}"}} {cumulative}')
             cumulative += _LAT_BUCKET_COUNTS[-1]
@@ -2266,7 +2271,7 @@ if settings.enable_metrics:
             buckets = hdata["buckets"]
             counts = hdata["counts"]
             cumulative = 0
-            for b, c in zip(buckets, counts[:-1]):
+            for b, c in zip(buckets, counts[:-1], strict=False):
                 cumulative += c
                 lines.append(f'{hname}_bucket{{le="{b}"}} {cumulative}')
             cumulative += counts[-1]
@@ -2282,7 +2287,7 @@ if settings.enable_metrics:
                 }
                 running = 0
                 emitted = set()
-                for b, c in zip(buckets + ["+Inf"], counts):
+                for b, c in zip(buckets + ["+Inf"], counts, strict=False):
                     running += c
                     for label, thr in list(targets.items()):
                         if label not in emitted and running >= thr:
@@ -2880,6 +2885,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         if os.getenv("ROUTER_MODEL_REGISTRY_WATCH", "0") == "1":
             from .config_hot_reload import ConfigHotReloader
+
             registry_path = os.path.join(os.path.dirname(__file__), "model_registry.json")
 
             def _reload_registry(cfg: dict[str, Any]) -> None:

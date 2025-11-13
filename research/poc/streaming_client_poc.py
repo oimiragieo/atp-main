@@ -6,7 +6,8 @@ Simulates a flaky transport.
 import random
 import time
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class TransportError(Exception):
