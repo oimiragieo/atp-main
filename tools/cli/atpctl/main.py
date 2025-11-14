@@ -24,11 +24,12 @@ import typer
 # Add the parent directory to the path to import other modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
-from .commands import cluster, config, policies, providers, system
+from .commands import chat, cluster, config, policies, providers, system
 
 app = typer.Typer(name="atpctl", help="ATP Control - Enterprise AI Text Processing Platform CLI", no_args_is_help=True)
 
 # Add command groups
+app.add_typer(chat.app, name="chat", help="Interactive AI chat and REPL")
 app.add_typer(cluster.app, name="cluster", help="Cluster management commands")
 app.add_typer(providers.app, name="providers", help="Provider management commands")
 app.add_typer(policies.app, name="policies", help="Policy management commands")

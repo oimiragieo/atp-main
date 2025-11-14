@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -119,10 +120,16 @@ def create_app(title: str = "ATP Router Service", version: str = "2.0.0", debug:
     """
     app = FastAPI(title=title, version=version, debug=debug, lifespan=lifespan)
 
-    # Configure CORS
+    # Configure CORS from environment variable for security
+    # Default to localhost for development, but should be explicitly set in production
+    cors_origins_str = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080")
+    allowed_origins = [origin.strip() for origin in cors_origins_str.split(",")]
+
+    logger.info("Configuring CORS", allowed_origins=allowed_origins)
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # TODO: Configure from settings
+        allow_origins=allowed_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
