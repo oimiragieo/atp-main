@@ -47,7 +47,8 @@ docker-compose -f deploy/docker/docker-compose.prod.yml up -d
 
 ### 4. Verify Deployment
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:7443/healthz  # Router health check
+curl http://localhost:8080/healthz  # Memory Gateway health check
 ```
 
 ## Production Deployment - Google Cloud Platform
@@ -248,8 +249,11 @@ kubectl get secrets -n atp-system -o yaml > atp-secrets-backup.yaml
 
 ### Disaster Recovery Testing
 ```bash
-# Test failover procedures
-./scripts/test-disaster-recovery.sh
+# Test database restore from backup
+gcloud sql backups restore BACKUP_ID --backup-instance=atp-postgres
+
+# Verify service recovery
+python scripts/validate_installation.py --verbose
 ```
 
 ## Troubleshooting
@@ -282,13 +286,13 @@ docker stats
 ### Health Checks
 ```bash
 # Service health
-curl https://your-domain/health
+curl https://your-domain/healthz
 
-# Database health
-curl https://your-domain/health/database
+# Router metrics
+curl https://your-domain/metrics
 
-# Redis health
-curl https://your-domain/health/redis
+# Memory Gateway health
+curl https://your-domain:8080/healthz
 ```
 
 ## Maintenance
@@ -325,10 +329,10 @@ helm upgrade atp deploy/helm/atp/
 ## Support and Documentation
 
 ### Additional Resources
-- [API Documentation](docs/api/)
 - [Architecture Guide](docs/architecture/)
-- [Security Guide](SECURITY_CLEANUP_SUMMARY.md)
-- [Troubleshooting Guide](docs/troubleshooting/)
+- [Security Guide](docs/security/SECURITY_CLEANUP_SUMMARY.md)
+- [ATP Specification](docs/01_ATP.md)
+- [MCP Integration](docs/14_MCP_Integration.md)
 
 ### Getting Help
 - GitHub Issues: [Repository Issues](https://github.com/your-org/atp/issues)

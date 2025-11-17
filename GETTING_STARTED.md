@@ -2,6 +2,8 @@
 
 **Complete step-by-step guide for new users**
 
+> **⚡ In a hurry?** Check out the [Quick Start Guide](QUICK_START.md) to get running in 5 minutes.
+
 ---
 
 ## Table of Contents
@@ -14,6 +16,13 @@
 6. [Understanding the Architecture](#understanding-the-architecture)
 7. [Common Use Cases](#common-use-cases)
 8. [Troubleshooting](#troubleshooting)
+
+## Related Documentation
+
+- **[Quick Start](QUICK_START.md)** - Get ATP running in 5 minutes
+- **[Environment Variables](ENVIRONMENT_VARIABLES.md)** - Complete configuration reference
+- **[Production Deployment](PRODUCTION_DEPLOYMENT_GUIDE.md)** - Production setup guide
+- **[CLI Status](tools/cli/CLI_STATUS.md)** - CLI command availability
 
 ---
 
@@ -53,7 +62,21 @@ git clone <repository-url>
 cd atp-main
 ```
 
-### 2. Start Everything with Docker Compose
+### 2. Configure Required Environment Variables
+
+**IMPORTANT**: Set `ROUTER_ADMIN_API_KEY` before starting:
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Quick setup for local development
+echo "ROUTER_ADMIN_API_KEY=dev-local-testing-key-12345678901234567890" >> .env
+```
+
+> **Note**: The router will NOT start without this key. See [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for all configuration options.
+
+### 3. Start Everything with Docker Compose
 ```bash
 # Build and start all services
 docker compose build
@@ -69,23 +92,25 @@ This starts:
 - **OPA** (port 8181)
 - **OpenTelemetry Collector** (ports 4317, 4318)
 
-### 3. Verify Services are Running
+### 4. Verify Services are Running
 ```bash
 # Check all containers
 docker compose ps
 
-# Install client dependencies (one-time setup)
-pip install -r client/requirements.txt
+# Automated validation (recommended)
+pip install requests  # Install dependency if needed
+python scripts/validate_installation.py
 
-# Health checks
-python client/health_check.py
-
-# Or using curl
+# Or manual health checks
 curl http://localhost:7443/healthz  # Router
 curl http://localhost:8080/healthz  # Memory Gateway
 ```
 
-### 4. Try Your First Memory Operation
+### 5. Try Your First Memory Operation
+```bash
+# Install client dependencies if not already done
+pip install -r client/requirements.txt
+```
 ```bash
 python client/memory_put_get.py
 ```
@@ -125,8 +150,13 @@ docker compose down
 Create a `.env` file in the root directory:
 ```bash
 cp .env.example .env
-# Edit .env with your settings
+# Edit .env with your settings (REQUIRED: ROUTER_ADMIN_API_KEY)
 ```
+
+**REQUIRED Variable**:
+- `ROUTER_ADMIN_API_KEY` - Admin API key (minimum 32 characters)
+
+See [ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md) for complete configuration reference.
 
 ---
 
