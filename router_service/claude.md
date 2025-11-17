@@ -411,6 +411,41 @@ make coverage
 2. threading.Lock in async code - Documented for future refactor
 3. Bash tool requires sandboxing - Disabled by default
 
+**TODO: Core Routing Implementation**
+
+The core routing endpoints currently return placeholder responses instead of calling actual adapters. Implementation required:
+
+**1. Adapter Integration in /v1/ask endpoint** (`api/v1/router.py:134`)
+- **Current**: Returns placeholder text `[Response from {model_id}]`
+- **Required**: Integrate with adapter registry to make gRPC calls
+- **Implementation Path**:
+  1. Lookup adapter from `AdapterRegistry` using model_id
+  2. Establish gRPC connection to adapter service
+  3. Call `adapter.Complete()` with prompt and parameters
+  4. Handle streaming responses if `request.stream=True`
+  5. Parse adapter response and extract actual completion
+- **Dependencies**:
+  - `router_service/adapter_registry.py` - Registry lookup
+  - `tools/adapter_pb2.py` and `adapter_pb2_grpc.py` - Protocol definitions
+  - Production-ready adapters: Anthropic, OpenAI (see `ADAPTER_STATUS.md`)
+- **Status**: Critical for production - currently all /ask requests return mock data
+
+**2. Adapter-Specific Routing** (`service.py:1801`)
+- **Current**: `adapter_type` parameter extracted but not used
+- **Required**: Allow users to specify which adapter to route to
+- **Implementation Path**:
+  1. Extract `adapter_type` from tool arguments
+  2. Filter adapter selection to only match specified type
+  3. Pass constraint to `routing_service.select_model()`
+  4. Update model selection logic to respect adapter_type filter
+- **Use Case**: Force routing to specific provider (e.g., only Anthropic adapters)
+- **Status**: Enhancement - optional feature for advanced routing
+
+**References**:
+- Adapter implementation guide: `/home/user/atp-main/ADAPTER_STATUS.md`
+- Adapter registry: `/home/user/atp-main/router_service/adapter_registry.py`
+- gRPC protocol: `/home/user/atp-main/tools/adapter_pb2.py`
+
 **New Environment Variables:**
 - `ROUTER_REQUIRE_AUTH` - Enable auth middleware (default: 0)
 - `ROUTER_ENABLE_BASH_TOOL` - Enable bash tool (default: 0)

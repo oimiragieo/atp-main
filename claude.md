@@ -332,10 +332,35 @@ atpctl chat repl
    - Disabled by default - requires `ROUTER_ENABLE_BASH_TOOL=1`
    - Defense-in-depth with pattern matching and length limits
 
+#### Phase 3: Testing & Production Readiness
+6. **Automated Security Testing** (`scripts/security_tests.py` - NEW)
+   - Automated OWASP Top 10 testing suite
+   - Tests authentication, input validation, CORS, DoS prevention
+   - Run with: `python3 scripts/security_tests.py --auth-key $ROUTER_ADMIN_API_KEY`
+   - Complements manual testing in `SECURITY_TESTING_CHECKLIST.md`
+
+7. **Production Deployment Validation** (`scripts/validate_production_deployment.py` - NEW)
+   - Comprehensive pre-deployment validation script
+   - Validates environment variables, authentication, security settings
+   - Run before deploying: `python3 scripts/validate_production_deployment.py`
+   - Exit code 0 = ready for production, 1 = critical issues found
+
+8. **PostgreSQL Migration Guide** (`POSTGRESQL_MIGRATION_GUIDE.md` - NEW)
+   - Complete guide for migrating from SQLite to PostgreSQL
+   - Includes schema definitions, migration scripts, performance tuning
+   - Production-ready async implementation with SQLAlchemy + asyncpg
+   - Rollback plan and troubleshooting guide
+
+9. **Core Routing Documentation** (`router_service/claude.md`)
+   - Documented TODO for adapter integration in /v1/ask endpoint
+   - Implementation path for connecting to production adapters
+   - References to adapter registry and gRPC protocol
+
 #### Known Limitations
-- SQLite used for stats (migrate to PostgreSQL for production)
-- threading.Lock in async codebase (documented for future migration)
+- SQLite used for stats (migrate to PostgreSQL for production - see `POSTGRESQL_MIGRATION_GUIDE.md`)
+- threading.Lock in async codebase (documented for future migration to asyncio.Lock)
 - Bash tool requires sandboxed environment for production use
+- Core routing returns placeholder responses (adapter integration pending - see `router_service/claude.md`)
 
 **See `SECURITY.md` and `AUDIT_REPORT.md` for comprehensive details**
 
