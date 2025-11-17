@@ -2,6 +2,14 @@
 
 ![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)
 
+## 📚 Documentation
+
+- **[Getting Started Guide](GETTING_STARTED.md)** - Complete step-by-step onboarding for new users
+- **[Adapter Status](ADAPTER_STATUS.md)** - Which adapters are production-ready vs. stubs
+- **[Production Deployment](PRODUCTION_DEPLOYMENT_GUIDE.md)** - Production deployment guide
+- **[Contributing](CONTRIBUTING.md)** - Development and contribution guidelines
+- **[CLI Documentation](tools/cli/README.md)** - Interactive CLI and management tools
+
 ## Installation
 
 ### Prerequisites
@@ -53,10 +61,26 @@ curl http://localhost:8080/healthz  # Memory Gateway
 
 ### Memory Operations
 ```bash
+# Basic memory operations using the memory gateway
+python client/memory_put_get.py
 
-# MCP CLI usage
+# Or use curl directly
+curl -X PUT http://localhost:8080/v1/memory/tenant/acme/session/s1 \
+  -H "Content-Type: application/json" \
+  -d '{"object": {"type": "task.plan.v1", "steps": ["analyze", "generate", "test"]}}'
+
+curl http://localhost:8080/v1/memory/tenant/acme/session/s1
+
+# Search memory
+curl -X POST http://localhost:8080/v1/memory/search \
+  -H "Content-Type: application/json" \
+  -d '{"q": "generate"}'
+```
+
+### Monitoring & Observability
 - **Grafana**: http://localhost:3000 (admin/admin)
 - **Router Metrics**: http://localhost:7443/metrics
+- **Prometheus**: http://localhost:9090
 
 ## Deployment
 
@@ -71,10 +95,16 @@ ROUTER_RPS_LIMIT=100 docker compose up -d
 
  
 ### Kubernetes
- 
+
 ```bash
-# Deploy to Kubernetes
-kubectl apply -f deploy/kubernetes/
+# Deploy to Kubernetes (using raw manifests)
+kubectl apply -f deploy/k8s/
+
+# Or use Kustomize
+kubectl apply -k deploy/kustomize/
+
+# Or use Helm
+helm install atp deploy/helm/atp-router/
 
 # Check deployment status
 kubectl get pods
@@ -190,14 +220,11 @@ await client.send_frame(capability_frame)
 config := atpsdk.SDKConfig{
     BaseURL:   "http://localhost:8000",
     WSURL:     "ws://localhost:8000",
+}
 client := atpsdk.NewATPClient(config)
 err := client.Connect()
 if err != nil {
     log.Fatal(err)
-## Examples
-
-- Admin Aggregator (read-only monitoring backend): see `admin_aggregator/README.md`
-- Next.js POC dashboard: `client/nextjs_poc/pages/admin.js` (set `NEXT_PUBLIC_AGGREGATOR_URL`)
 }
 
 capability := atpsdk.CapabilityAdvertisement{
@@ -211,6 +238,11 @@ capability := atpsdk.CapabilityAdvertisement{
 
 err = client.AdvertiseCapabilities(context.Background(), capability)
 ```
+
+## Examples
+
+- Admin Aggregator (read-only monitoring backend): see `ui/admin-aggregator/README.md`
+- Next.js POC dashboard: `client/nextjs_poc/pages/admin.js` (set `NEXT_PUBLIC_AGGREGATOR_URL`)
 
 ### Metrics
 - `adapters_registered`: Gauge tracking the number of currently registered adapters
