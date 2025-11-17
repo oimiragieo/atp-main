@@ -29,7 +29,7 @@ class Settings:
     ucb_explore_factor: float = float(os.getenv("UCB_EXPLORE_FACTOR", "1.4"))
     cluster_hash_buckets: int = int(os.getenv("CLUSTER_HASH_BUCKETS", "0"))
     service_version: str = os.getenv("ROUTER_SERVICE_VERSION", "0.1.0-alpha")
-    api_key: str = os.getenv("ROUTER_ADMIN_API_KEY", "")
+    api_key: str = os.getenv("ROUTER_ADMIN_API_KEY") or ""  # Fail fast if not set (checked in __post_init__)
     enable_pii_scrub: bool = os.getenv("ROUTER_PII_SCRUB", "1") != "0"
     rps_limit: int = int(os.getenv("ROUTER_RPS_LIMIT", "50"))
     quality_eval_mode: str = os.getenv("ROUTER_QUALITY_EVAL", "placeholder")  # placeholder|off

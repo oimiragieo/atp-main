@@ -131,7 +131,7 @@ def create_app(title: str = "ATP Router Service", version: str = "2.0.0", debug:
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],  # Restrict to safe methods only
         allow_headers=["*"],
     )
 
@@ -162,10 +162,26 @@ def _register_routers(app: FastAPI) -> None:
 
 def _add_middleware(app: FastAPI) -> None:
     """Add application middleware."""
-    # TODO: Add middleware once implemented
-    # from ..middleware import CorrelationIDMiddleware, TracingMiddleware
+    from ..config import settings
+    from ..middleware import AuthenticationMiddleware
 
+    # Add authentication middleware (validates API keys on protected endpoints)
+    # Disabled by default for development - set ROUTER_REQUIRE_AUTH=1 to enable
+    require_auth = os.getenv("ROUTER_REQUIRE_AUTH", "0") == "1"
+    app.add_middleware(
+        AuthenticationMiddleware,
+        admin_api_key=settings.api_key,
+        require_auth=require_auth,
+    )
+
+    if require_auth:
+        logger.info("Authentication middleware enabled")
+    else:
+        logger.warning("Authentication middleware disabled (set ROUTER_REQUIRE_AUTH=1 to enable)")
+
+    # TODO: Add additional middleware once implemented
+    # from ..middleware import CorrelationIDMiddleware, TracingMiddleware
     # app.add_middleware(CorrelationIDMiddleware)
     # app.add_middleware(TracingMiddleware)
 
-    logger.debug("Middleware added")
+    logger.debug("Middleware configuration complete")

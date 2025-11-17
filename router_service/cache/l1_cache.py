@@ -2,6 +2,7 @@
 
 import asyncio
 import builtins
+import logging
 import sys
 import threading
 import time
@@ -10,6 +11,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from .cache_metrics import get_cache_metrics
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -83,7 +86,7 @@ class L1Cache:
                 break
             except Exception as e:
                 # Log error but continue cleanup loop
-                print(f"L1 cache cleanup error: {e}", file=sys.stderr)
+                logger.error("L1 cache cleanup error", exc_info=e)
 
     def _cleanup_expired(self) -> int:
         """Remove expired entries and return count removed."""

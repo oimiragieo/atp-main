@@ -7,11 +7,13 @@ switching as a POC until RL training (GAP-183) is complete.
 
 from __future__ import annotations
 
+import logging
 import time
 from dataclasses import dataclass
 
 from metrics.registry import REGISTRY
 
+logger = logging.getLogger(__name__)
 _CTR_STRATEGY_SWITCHES = REGISTRY.counter("agp_reconciliation_strategy_switches_total")
 
 
@@ -179,11 +181,15 @@ class AdaptiveReconciliationSwitcher:
         self.last_switch_time = time.time()
         _CTR_STRATEGY_SWITCHES.inc()
 
-        # In production, this would log detailed switching context
-        print(
-            f"Strategy switch: {old_strategy} -> {new_strategy} "
-            f"(time_pressure={context.time_pressure}, "
-            f"quality_req={context.quality_requirement:.2f})"
+        # Log detailed switching context for observability
+        logger.info(
+            "Strategy switch",
+            extra={
+                "old_strategy": old_strategy,
+                "new_strategy": new_strategy,
+                "time_pressure": context.time_pressure,
+                "quality_requirement": context.quality_requirement,
+            },
         )
 
 
