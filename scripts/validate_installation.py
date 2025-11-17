@@ -116,9 +116,7 @@ class Validator:
             self.print_failure(f"{name} error", str(e))
             return False
 
-    def check_http_endpoint(
-        self, url: str, name: str, expected_status: int = 200, timeout: int = 5
-    ) -> bool:
+    def check_http_endpoint(self, url: str, name: str, expected_status: int = 200, timeout: int = 5) -> bool:
         """Check if HTTP endpoint is accessible.
 
         Args:
@@ -342,17 +340,11 @@ class Validator:
 
         if self.checks_failed == 0:
             if self.checks_warned == 0:
-                print(
-                    f"\n{Colors.GREEN}{Colors.BOLD}🎉 All checks passed! ATP is ready to use.{Colors.END}"
-                )
+                print(f"\n{Colors.GREEN}{Colors.BOLD}🎉 All checks passed! ATP is ready to use.{Colors.END}")
             else:
-                print(
-                    f"\n{Colors.YELLOW}{Colors.BOLD}⚠️  Installation is functional but has warnings.{Colors.END}"
-                )
+                print(f"\n{Colors.YELLOW}{Colors.BOLD}⚠️  Installation is functional but has warnings.{Colors.END}")
         else:
-            print(
-                f"\n{Colors.RED}{Colors.BOLD}❌ Installation has issues. Please review failures above.{Colors.END}"
-            )
+            print(f"\n{Colors.RED}{Colors.BOLD}❌ Installation has issues. Please review failures above.{Colors.END}")
 
         print(f"\n{Colors.BLUE}Next steps:{Colors.END}")
         print("  • Read GETTING_STARTED.md for usage guide")

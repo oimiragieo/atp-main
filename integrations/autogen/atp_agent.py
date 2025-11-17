@@ -25,7 +25,9 @@ import aiohttp
 try:
     from autogen import ConversableAgent
 except ImportError:
-    raise ImportError("AutoGen is required for ATP AutoGen integration. Install it with: pip install pyautogen") from None
+    raise ImportError(
+        "AutoGen is required for ATP AutoGen integration. Install it with: pip install pyautogen"
+    ) from None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

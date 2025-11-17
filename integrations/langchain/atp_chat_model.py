@@ -39,7 +39,9 @@ try:
     )
     from langchain.schema.output import ChatGenerationChunk
 except ImportError:
-    raise ImportError("LangChain is required for ATP LangChain integration. Install it with: pip install langchain") from None
+    raise ImportError(
+        "LangChain is required for ATP LangChain integration. Install it with: pip install langchain"
+    ) from None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -23,7 +23,9 @@ from typing import Any
 try:
     from autogen import GroupChat, GroupChatManager
 except ImportError:
-    raise ImportError("AutoGen is required for ATP AutoGen integration. Install it with: pip install pyautogen") from None
+    raise ImportError(
+        "AutoGen is required for ATP AutoGen integration. Install it with: pip install pyautogen"
+    ) from None
 
 from .atp_agent import ATPAutoGenAgent
 

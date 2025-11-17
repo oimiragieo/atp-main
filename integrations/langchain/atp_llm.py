@@ -31,7 +31,9 @@ try:
     from langchain.schema import Generation, LLMResult
     from langchain.schema.output import GenerationChunk
 except ImportError:
-    raise ImportError("LangChain is required for ATP LangChain integration. Install it with: pip install langchain") from None
+    raise ImportError(
+        "LangChain is required for ATP LangChain integration. Install it with: pip install langchain"
+    ) from None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
