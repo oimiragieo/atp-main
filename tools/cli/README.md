@@ -2,6 +2,8 @@
 
 World-class enterprise command-line interface for managing the ATP (Adaptive Text Processing) platform.
 
+**📋 [CLI Status](CLI_STATUS.md)** - See which commands are functional vs. in development
+
 ## Features
 
 ### 🚀 **Interactive AI Chat & REPL**

@@ -4,11 +4,18 @@
 
 ## 📚 Documentation
 
+> **📖 [Complete Documentation Index](DOCUMENTATION_INDEX.md)** - Navigate all ATP documentation
+
+### Quick Links
+
+- **[Quick Start Guide](QUICK_START.md)** ⚡ - Get ATP running in 5 minutes
 - **[Getting Started Guide](GETTING_STARTED.md)** - Complete step-by-step onboarding for new users
+- **[Environment Variables](ENVIRONMENT_VARIABLES.md)** 🔧 - Complete reference for all environment variables
 - **[Adapter Status](ADAPTER_STATUS.md)** - Which adapters are production-ready vs. stubs
 - **[Production Deployment](PRODUCTION_DEPLOYMENT_GUIDE.md)** - Production deployment guide
-- **[Contributing](CONTRIBUTING.md)** - Development and contribution guidelines
 - **[CLI Documentation](tools/cli/README.md)** - Interactive CLI and management tools
+- **[CLI Status](tools/cli/CLI_STATUS.md)** 📋 - Which CLI commands are functional
+- **[Contributing](CONTRIBUTING.md)** - Development and contribution guidelines
 
 ## Installation
 
@@ -104,7 +111,7 @@ kubectl apply -f deploy/k8s/
 kubectl apply -k deploy/kustomize/
 
 # Or use Helm
-helm install atp deploy/helm/atp-router/
+helm install atp deploy/helm/atp/
 
 # Check deployment status
 kubectl get pods
@@ -188,13 +195,13 @@ Adapters can advertise their capabilities to the ATP Router via WebSocket frames
 
  
 ### Python SDK Usage
- 
+
 ```python
 from tools.atp_sdk import ATPWebSocketClient, SDKConfig
 
 config = SDKConfig(
-    base_url="http://localhost:8000",
-    ws_url="ws://localhost:8000",
+    base_url="http://localhost:7443",
+    ws_url="ws://localhost:7443",
     tenant_id="my-tenant"
 )
 
@@ -218,8 +225,8 @@ await client.send_frame(capability_frame)
 ### Go SDK Usage
 ```go
 config := atpsdk.SDKConfig{
-    BaseURL:   "http://localhost:8000",
-    WSURL:     "ws://localhost:8000",
+    BaseURL:   "http://localhost:7443",
+    WSURL:     "ws://localhost:7443",
 }
 client := atpsdk.NewATPClient(config)
 err := client.Connect()
@@ -293,7 +300,7 @@ ATP Router supports the Model Context Protocol (MCP) for standardized tool disco
 
 ```javascript
 // Connect to MCP endpoint
-const ws = new WebSocket('ws://localhost:8000/mcp');
+const ws = new WebSocket('ws://localhost:7443/mcp');
 
 // List available tools
 ws.send(JSON.stringify({ type: 'listTools' }));

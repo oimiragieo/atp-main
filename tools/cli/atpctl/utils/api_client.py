@@ -55,7 +55,7 @@ class ATPAPIClient:
         config_file = ctx.obj.get("config_file") if ctx.obj else None
 
         # For now, use environment variables or defaults
-        base_url = os.getenv("ATP_API_URL", "http://localhost:8000")
+        base_url = os.getenv("ATP_API_URL", "http://localhost:7443")
         api_key = os.getenv("ATP_API_KEY")
 
         return cls(base_url=base_url, api_key=api_key)
