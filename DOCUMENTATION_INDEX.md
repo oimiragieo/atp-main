@@ -13,6 +13,7 @@ Perfect for new users looking to get ATP running quickly.
 | [QUICK_START.md](QUICK_START.md) | Get ATP running in 5 minutes | **Start here** if you want to try ATP immediately |
 | [GETTING_STARTED.md](GETTING_STARTED.md) | Complete step-by-step onboarding | Read after quick start for full understanding |
 | [README.md](README.md) | Project overview and features | Reference for capabilities and examples |
+| [AI_ASSISTANT_GUIDE.md](AI_ASSISTANT_GUIDE.md) | **Guide for AI assistants** helping users | **For AIs/bots** - Critical gotchas and decision trees |
 
 ---
 
@@ -107,6 +108,9 @@ Guides for developers contributing to ATP.
 
 Resources for debugging and getting help.
 
+### Primary Troubleshooting Guide
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - **Comprehensive troubleshooting guide** with common issues, error messages, and fixes
+
 ### Validation & Testing
 ```bash
 # Automated installation validation
@@ -117,11 +121,10 @@ curl http://localhost:7443/healthz
 curl http://localhost:8080/healthz
 ```
 
-### Troubleshooting Sections
+### Additional Troubleshooting Sections
 - **[QUICK_START.md](QUICK_START.md#common-issues)** - Common startup issues
 - **[GETTING_STARTED.md](GETTING_STARTED.md#troubleshooting)** - Detailed troubleshooting
 - **[PRODUCTION_DEPLOYMENT_GUIDE.md](PRODUCTION_DEPLOYMENT_GUIDE.md#troubleshooting)** - Production issues
-- **[ENVIRONMENT_VARIABLES.md](ENVIRONMENT_VARIABLES.md#troubleshooting)** - Configuration issues
 
 ### Key Troubleshooting Files
 - [scripts/validate_installation.py](scripts/validate_installation.py) - Comprehensive validation
@@ -244,8 +247,16 @@ atp-main/
 
 ---
 
-## 🆕 Recently Added Documentation (2025-01-17)
+## 🆕 Recently Added Documentation
 
+### 2025-01-17 (Deep Dive Review Updates)
+- ⭐ **TROUBLESHOOTING.md** - **NEW**: Comprehensive troubleshooting guide with common issues and fixes
+- ⭐ **AI_ASSISTANT_GUIDE.md** - **NEW**: Critical guide for AI assistants helping users
+- ⭐ **.env file** - **ADDED**: Now included in repository (was missing)
+- 🔧 **QUICK_START.md** - Added critical warning about stub adapters
+- 🔧 **Helm chart paths** - Fixed incorrect paths in GETTING_STARTED.md and DEEP_DIVE_REVIEW.md
+
+### 2025-01-17 (Initial Documentation Improvements)
 - ⭐ **QUICK_START.md** - New 5-minute quick start guide
 - ⭐ **ENVIRONMENT_VARIABLES.md** - Complete environment variable reference
 - ⭐ **DOCUMENTATION_INDEX.md** - This navigation guide

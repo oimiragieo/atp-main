@@ -89,7 +89,7 @@ kubectl apply -f deploy/kubernetes/  # ❌ Path doesn't exist
 # After (fixed with options)
 kubectl apply -f deploy/k8s/         # ✅ Raw manifests
 kubectl apply -k deploy/kustomize/   # ✅ Kustomize
-helm install atp deploy/helm/atp-router/  # ✅ Helm
+helm install atp deploy/helm/atp/  # ✅ Helm
 ```
 
 **File:** `README.md:89-104`

@@ -10,11 +10,13 @@
 
 - **[Quick Start Guide](QUICK_START.md)** ⚡ - Get ATP running in 5 minutes
 - **[Getting Started Guide](GETTING_STARTED.md)** - Complete step-by-step onboarding for new users
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** 🔧 - Common issues and fixes
 - **[Environment Variables](ENVIRONMENT_VARIABLES.md)** 🔧 - Complete reference for all environment variables
 - **[Adapter Status](ADAPTER_STATUS.md)** - Which adapters are production-ready vs. stubs
 - **[Production Deployment](PRODUCTION_DEPLOYMENT_GUIDE.md)** - Production deployment guide
 - **[CLI Documentation](tools/cli/README.md)** - Interactive CLI and management tools
 - **[CLI Status](tools/cli/CLI_STATUS.md)** 📋 - Which CLI commands are functional
+- **[AI Assistant Guide](AI_ASSISTANT_GUIDE.md)** 🤖 - For AI assistants helping users
 - **[Contributing](CONTRIBUTING.md)** - Development and contribution guidelines
 
 ## Installation
