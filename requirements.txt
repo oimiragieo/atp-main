@@ -41,3 +41,9 @@ typing-extensions==4.14.1
 
 # System Monitoring
 psutil==6.0.0
+
+# CLI Tools (for atpctl)
+typer==0.15.2
+rich==14.0.0
+prompt-toolkit==3.0.48
+pyyaml==6.0.2
