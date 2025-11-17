@@ -4,10 +4,14 @@ A command-line interface for interacting with MCP (Model Context Protocol) serve
 
 ## Installation
 
-The MCP CLI is part of the ATP Router project. Make sure you have the required dependencies:
+The MCP CLI is part of the ATP Router project. Install the required dependencies:
 
 ```bash
-pip install websockets
+# Install all client dependencies
+pip install -r client/requirements.txt
+
+# Or install individually
+pip install requests websockets
 ```
 
 ## Usage

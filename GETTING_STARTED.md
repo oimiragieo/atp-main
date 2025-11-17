@@ -74,6 +74,9 @@ This starts:
 # Check all containers
 docker compose ps
 
+# Install client dependencies (one-time setup)
+pip install -r client/requirements.txt
+
 # Health checks
 python client/health_check.py
 
@@ -195,6 +198,26 @@ See [PRODUCTION_DEPLOYMENT_GUIDE.md](PRODUCTION_DEPLOYMENT_GUIDE.md) for detaile
 ---
 
 ## Verify Installation
+
+### Automated Validation (Recommended)
+```bash
+# Run comprehensive validation
+python3 scripts/validate_installation.py
+
+# Quick validation (skips health checks)
+python3 scripts/validate_installation.py --quick
+
+# Verbose output
+python3 scripts/validate_installation.py --verbose
+```
+
+The validation script checks:
+- Prerequisites (Docker, Python, Git)
+- File structure completeness
+- Docker services status
+- Service health endpoints
+- Python dependencies
+- Documentation availability
 
 ### 1. Check Service Health
 ```bash
