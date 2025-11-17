@@ -6,6 +6,7 @@ and churn rate analysis.
 """
 
 import hashlib
+import logging
 import time
 from collections import defaultdict
 from typing import Any
@@ -18,6 +19,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import StandardScaler
 
 from .embedding_cluster_classifier import EmbeddingService, MockEmbeddingService
+
+logger = logging.getLogger(__name__)
 
 
 class TaskClusteringPipeline:
@@ -154,7 +157,7 @@ class TaskClusteringPipeline:
             self._update_cluster_tracking(prompt_hashes, labels)
 
         except Exception as e:
-            print(f"Task clustering training failed: {e}")
+            logger.error("Task clustering training failed", exc_info=e)
             self.is_trained = False
 
     def classify_task(self, prompt: str) -> str | None:
@@ -175,7 +178,7 @@ class TaskClusteringPipeline:
             return f"task_cluster_{cluster_id}"
 
         except Exception as e:
-            print(f"Task clustering classification failed: {e}")
+            logger.error("Task clustering classification failed", exc_info=e)
             return None
 
     def incremental_update(self, new_prompts: list[str]) -> None:

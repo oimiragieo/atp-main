@@ -304,6 +304,7 @@ atpctl chat repl
 
 ### Recent Security Improvements (2025-11-17)
 
+#### Phase 1: Core Security Fixes
 1. **CORS Hardening** (`router_service/core/app.py:134`)
    - Restricted `allow_methods` from wildcard to `["GET", "POST", "OPTIONS"]`
    - Prevents unauthorized PUT, DELETE, PATCH requests
@@ -313,13 +314,28 @@ atpctl chat repl
    - Constrained `quality` to `Literal["fast", "balanced", "high"]`
    - Added range validation to `max_cost_usd` (0-100) and `latency_slo_ms` (0-300000)
 
-3. **Logging Security** (`router_service/event_emitter.py`)
-   - Replaced `print()` statements with proper `logger.warning()` calls
+3. **Logging Security** (Multiple files)
+   - Replaced ALL `print()` statements with proper structured logging
+   - Files: `event_emitter.py`, `adaptive_reconciliation.py`, `cache/l1_cache.py`, `task_clustering_pipeline.py`
    - Prevents information leakage through stdout
 
-4. **Known Limitations** - See `AUDIT_REPORT.md` for full details
-   - SQLite used for stats (migrate to PostgreSQL for production)
-   - threading.Lock in async codebase (documented for future migration)
+#### Phase 2: Authentication & Tool Security
+4. **Authentication Middleware** (`router_service/middleware/auth.py` - NEW)
+   - API key authentication with constant-time comparison
+   - Protects all endpoints except public ones (/healthz, /metrics, /docs)
+   - Configure via `ROUTER_REQUIRE_AUTH=1` to enable
+   - Logs authentication failures for monitoring
+
+5. **Bash Tool Hardening** (`router_service/tools/builtin/bash.py`)
+   - Command validation against dangerous patterns
+   - Blocks: rm -rf /, dd, sudo, fork bombs, eval, exec
+   - Disabled by default - requires `ROUTER_ENABLE_BASH_TOOL=1`
+   - Defense-in-depth with pattern matching and length limits
+
+#### Known Limitations
+- SQLite used for stats (migrate to PostgreSQL for production)
+- threading.Lock in async codebase (documented for future migration)
+- Bash tool requires sandboxed environment for production use
 
 **See `SECURITY.md` and `AUDIT_REPORT.md` for comprehensive details**
 

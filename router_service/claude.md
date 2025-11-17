@@ -387,16 +387,33 @@ make coverage
 
 ### Security Audit Findings (2025-11-17)
 
-**Fixed Issues:**
+**Phase 1 Fixes:**
 1. CORS misconfiguration - Restricted to safe methods only
 2. Input validation gaps - Added constraints to all request models
-3. Logging security - Removed print() statements
+3. Logging security - Removed ALL print() statements
 4. API key validation - Enforced at config initialization
+
+**Phase 2 Improvements:**
+5. Authentication middleware - NEW comprehensive API key system
+6. Bash tool hardening - Command validation and safety checks
+7. Structured logging - All production code uses logger
+
+**Files Modified (Phase 1 + 2):**
+- `core/app.py` - CORS + authentication middleware
+- `config.py` - API key enforcement
+- `api/v1/router.py` - Input validation
+- `event_emitter.py`, `adaptive_reconciliation.py`, `cache/l1_cache.py`, `task_clustering_pipeline.py` - Logging
+- `middleware/auth.py` - NEW authentication system
+- `tools/builtin/bash.py` - Security hardening
 
 **Known Limitations:**
 1. SQLite for production stats - Should migrate to PostgreSQL
 2. threading.Lock in async code - Documented for future refactor
-3. Command injection risk in tools/builtin/bash.py - Use with caution
+3. Bash tool requires sandboxing - Disabled by default
+
+**New Environment Variables:**
+- `ROUTER_REQUIRE_AUTH` - Enable auth middleware (default: 0)
+- `ROUTER_ENABLE_BASH_TOOL` - Enable bash tool (default: 0)
 
 See `/home/user/atp-main/AUDIT_REPORT.md` for comprehensive audit results
 

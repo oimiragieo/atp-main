@@ -19,6 +19,87 @@ from router_service.tools.core.schema import ToolDefinition, ToolResult
 
 logger = logging.getLogger(__name__)
 
+# Security configuration - restrict dangerous commands
+DANGEROUS_COMMANDS = {
+    "rm -rf /",
+    "dd if=",
+    "mkfs",
+    ":(){ :|:& };:",  # Fork bomb
+    "chmod 777",
+    "chown root",
+    "sudo",
+    "su -",
+    "passwd",
+}
+
+# Dangerous patterns to block (case-insensitive)
+DANGEROUS_PATTERNS = [
+    r"\brm\s+-rf\s+/",  # rm -rf /
+    r"\bdd\s+if=",  # dd if=
+    r">\s*/dev/sd",  # Write to disk device
+    r"chmod\s+777",  # Overly permissive chmod
+    r"eval\s+",  # eval (code injection risk)
+    r"exec\s+",  # exec (code execution)
+    r"\$\(.*curl.*\|.*sh\)",  # curl | sh pattern
+    r"wget.*\|.*sh",  # wget | sh pattern
+]
+
+
+def validate_command_safety(command: str) -> tuple[bool, str]:
+    """Validate command for basic safety checks.
+
+    This implements defense-in-depth against command injection and destructive operations.
+    Not a complete security solution - should be combined with proper sandboxing.
+
+    Args:
+        command: The command to validate
+
+    Returns:
+        (is_safe, reason) - True if safe, False with reason if blocked
+
+    Security Notes:
+        - This is a defense-in-depth measure, NOT a complete solution
+        - Commands should still run in a sandboxed environment
+        - Allowlist approach is more secure than blocklist
+        - See SECURITY.md for production deployment guidelines
+    """
+    import re
+
+    # Check length to prevent DoS
+    if len(command) > 10000:
+        return False, "Command too long (max 10000 characters)"
+
+    # Check for null bytes (injection attempt)
+    if "\x00" in command:
+        return False, "Null bytes not allowed in commands"
+
+    # Check exact matches against dangerous commands
+    command_lower = command.lower().strip()
+    for dangerous in DANGEROUS_COMMANDS:
+        if dangerous.lower() in command_lower:
+            return False, f"Dangerous command detected: {dangerous}"
+
+    # Check regex patterns
+    for pattern in DANGEROUS_PATTERNS:
+        if re.search(pattern, command, re.IGNORECASE):
+            return False, f"Command matches dangerous pattern: {pattern}"
+
+    # Warn about sudo/su usage
+    if re.search(r"\b(sudo|su)\b", command, re.IGNORECASE):
+        return False, "Privilege escalation commands (sudo/su) are not allowed"
+
+    # Check for attempts to access sensitive files
+    sensitive_paths = ["/etc/shadow", "/etc/passwd", "/root/", "/var/run/secrets"]
+    for path in sensitive_paths:
+        if path in command:
+            logger.warning(
+                "Command attempts to access sensitive path",
+                extra={"path": path, "command": command[:100]},
+            )
+            # Allow but log - might be legitimate (e.g., checking /etc/passwd for user info)
+
+    return True, "Command validated"
+
 
 class BashSession:
     """Persistent bash session for stateful command execution."""
@@ -61,7 +142,19 @@ class BashSession:
 
         Returns:
             (output, return_code)
+
+        Raises:
+            ValueError: If command fails safety validation
         """
+        # Validate command safety before execution
+        is_safe, reason = validate_command_safety(command)
+        if not is_safe:
+            logger.warning(
+                "Blocked unsafe command",
+                extra={"reason": reason, "command": command[:100]},
+            )
+            raise ValueError(f"Command blocked: {reason}")
+
         if not self.process:
             await self.start()
 
@@ -156,9 +249,24 @@ async def bash_tool_handler(args: dict[str, Any], context: dict[str, Any]) -> To
 
     Returns:
         ToolResult with command output
+
+    Security Notes:
+        - Commands are validated against dangerous patterns before execution
+        - Output is truncated to prevent memory exhaustion
+        - Timeouts prevent hung processes
+        - This is defense-in-depth - deploy in sandboxed environment for production
     """
     command = args.get("command")
     restart = args.get("restart", False)
+
+    # Check if bash tool is enabled (default: disabled in production)
+    bash_enabled = os.getenv("ROUTER_ENABLE_BASH_TOOL", "0") == "1"
+    if not bash_enabled and not context.get("allow_bash", False):
+        return ToolResult(
+            tool_use_id=context.get("tool_use_id", ""),
+            content="Error: Bash tool is disabled. Set ROUTER_ENABLE_BASH_TOOL=1 to enable (NOT recommended in production without sandboxing)",
+            is_error=True,
+        )
 
     # Get or create session
     session_id = context.get("session_id", "default")
@@ -198,6 +306,14 @@ async def bash_tool_handler(args: dict[str, Any], context: dict[str, Any]) -> To
             is_error=return_code != 0,
         )
 
+    except ValueError as e:
+        # Command validation failure
+        logger.warning(f"Command validation failed: {e}")
+        return ToolResult(
+            tool_use_id=context.get("tool_use_id", ""),
+            content=f"Command blocked for security reasons: {e}",
+            is_error=True,
+        )
     except Exception as e:
         logger.exception(f"Bash execution error: {command[:100]}")
         return ToolResult(
@@ -230,9 +346,15 @@ Important limitations:
 - Output is truncated if it exceeds 50KB
 
 Security considerations:
+- Disabled by default (set ROUTER_ENABLE_BASH_TOOL=1 to enable)
+- Commands are validated against dangerous patterns before execution
 - All commands run in the context of the API service
-- Be cautious with destructive operations (rm, dd, etc.)
-- Validate file paths and command parameters""",
+- Deploy in sandboxed environment (Docker/Kubernetes) for production
+- Dangerous commands (rm -rf /, dd, sudo, etc.) are blocked
+- See SECURITY.md and AUDIT_REPORT.md for deployment guidelines
+
+⚠️ WARNING: This tool allows arbitrary command execution.
+   Only enable in trusted, sandboxed environments.""",
     input_schema={
         "type": "object",
         "properties": {
