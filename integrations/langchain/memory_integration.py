@@ -29,7 +29,9 @@ try:
     from langchain.memory.utils import get_buffer_string
     from langchain.schema import AIMessage, BaseMessage, HumanMessage, SystemMessage
 except ImportError:
-    raise ImportError("LangChain is required for ATP LangChain integration. Install it with: pip install langchain") from None
+    raise ImportError(
+        "LangChain is required for ATP LangChain integration. Install it with: pip install langchain"
+    ) from None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

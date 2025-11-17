@@ -901,9 +901,7 @@ class TestRequestSignature:
 
     def test_signature_with_none_user_id(self):
         """Signature should handle None user_id."""
-        sig = RequestSignature(
-            content_hash="hash1", endpoint="/test", method="POST", tenant_id="tenant1", user_id=None
-        )
+        sig = RequestSignature(content_hash="hash1", endpoint="/test", method="POST", tenant_id="tenant1", user_id=None)
 
         assert sig.user_id is None
         assert hash(sig)  # Should be hashable

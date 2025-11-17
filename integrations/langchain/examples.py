@@ -303,7 +303,7 @@ def fibonacci(n):
                     raise ValueError(f"Unsafe node type: {type(node).__name__}")
 
             try:
-                node = ast.parse(expression, mode='eval')
+                node = ast.parse(expression, mode="eval")
                 result = safe_eval_node(node.body)
                 return f"The result is: {result}"
             except Exception as e:

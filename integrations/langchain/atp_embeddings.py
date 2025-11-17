@@ -25,7 +25,9 @@ from pydantic import Field, validator
 try:
     from langchain.embeddings.base import Embeddings
 except ImportError:
-    raise ImportError("LangChain is required for ATP LangChain integration. Install it with: pip install langchain") from None
+    raise ImportError(
+        "LangChain is required for ATP LangChain integration. Install it with: pip install langchain"
+    ) from None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

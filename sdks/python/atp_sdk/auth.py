@@ -75,6 +75,7 @@ class AuthManager:
         except (jwt.InvalidTokenError, ValueError, AttributeError, KeyError) as e:
             # Log debug info for troubleshooting
             import logging
+
             logging.getLogger(__name__).debug(f"Token validation failed: {e}")
             return False
 
@@ -152,6 +153,7 @@ class AuthManager:
         except (jwt.InvalidTokenError, ValueError, AttributeError, KeyError) as e:
             # Log debug info for troubleshooting
             import logging
+
             logging.getLogger(__name__).debug(f"Token validation failed: {e}")
             return False
 

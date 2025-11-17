@@ -507,8 +507,9 @@ class DatabaseReplication:
 
             # Create replication slot
             import re
+
             # Validate replica_region to prevent SQL injection
-            if not re.match(r'^[a-z0-9_-]+$', replica_region):
+            if not re.match(r"^[a-z0-9_-]+$", replica_region):
                 raise ValueError(f"Invalid replica region format: {replica_region}")
             slot_name = f"atp_replica_{replica_region}"
             # Use parameterized query to prevent SQL injection
