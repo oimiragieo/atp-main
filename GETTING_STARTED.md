@@ -218,7 +218,7 @@ kubectl apply -k deploy/kustomize/
 
 #### Option C: Helm
 ```bash
-helm install atp deploy/helm/atp-router/ \
+helm install atp deploy/helm/atp/ \
   --set router.replicas=3 \
   --set redis.enabled=true
 ```

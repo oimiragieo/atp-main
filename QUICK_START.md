@@ -51,6 +51,16 @@ docker compose up -d
 
 Wait 30 seconds for all services to start.
 
+> **⚠️ IMPORTANT: Default Adapters are STUBS**
+>
+> The default docker-compose.yml uses **stub adapters** (Ollama, Persona) that return **mock/hardcoded responses**. They do NOT connect to real AI models.
+>
+> **For real AI responses**, you must configure production adapters:
+> - **Anthropic** (Claude): Set `ANTHROPIC_API_KEY` in `.env` and add anthropic_adapter to docker-compose.yml
+> - **OpenAI** (GPT): Set `OPENAI_API_KEY` in `.env` and add openai_adapter to docker-compose.yml
+>
+> See [ADAPTER_STATUS.md](ADAPTER_STATUS.md) for details on which adapters work vs. which are stubs.
+
 ---
 
 ## 4. Verify Installation
