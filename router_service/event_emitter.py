@@ -20,11 +20,14 @@ providing structured observability for AI agent decision-making processes.
 
 from __future__ import annotations
 
+import logging
 import time
 from enum import Enum
 from typing import Any
 
 from metrics.registry import REGISTRY
+
+logger = logging.getLogger(__name__)
 
 
 class RejectionReason(Enum):
@@ -161,7 +164,7 @@ class EventEmitter:
                 handler(event_dict)
             except Exception as e:
                 # Don't let handler failures break the main flow
-                print(f"Warning: Event handler failed: {e}")  # TODO: Replace with proper logging
+                logger.warning("Event handler failed", exc_info=e)
 
     def emit_speculative(self, event: SpeculativeEvent) -> None:  # noqa: S110
         """Emit a speculative sampling event.
@@ -175,7 +178,7 @@ class EventEmitter:
                 handler(event_dict)
             except Exception as e:
                 # Don't let handler failures break the main flow
-                print(f"Warning: Event handler failed: {e}")  # TODO: Replace with proper logging
+                logger.warning("Event handler failed", exc_info=e)
 
 
 # Global event emitter instance

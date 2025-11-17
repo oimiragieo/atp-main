@@ -21,6 +21,11 @@ class HasName(Protocol):
 
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "router_stats.sqlite")
+# NOTE: Using threading.Lock for SQLite synchronization. This is a known limitation
+# as the codebase uses async patterns elsewhere. This should be migrated to:
+# 1. asyncio.Lock when functions are converted to async
+# 2. PostgreSQL with async SQLAlchemy for production use
+# See SECURITY.md for migration plan (tracked in technical debt)
 _LOCK = threading.Lock()
 
 

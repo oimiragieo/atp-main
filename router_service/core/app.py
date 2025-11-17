@@ -131,7 +131,7 @@ def create_app(title: str = "ATP Router Service", version: str = "2.0.0", debug:
         CORSMiddleware,
         allow_origins=allowed_origins,
         allow_credentials=True,
-        allow_methods=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],  # Restrict to safe methods only
         allow_headers=["*"],
     )
 

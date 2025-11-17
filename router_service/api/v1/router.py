@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -23,10 +23,16 @@ router = APIRouter()
 class AskRequest(BaseModel):
     """Request model for /v1/ask endpoint."""
 
-    prompt: str = Field(..., description="The prompt to process")
-    quality: str = Field(default="balanced", description="Quality target (fast/balanced/high)")
-    max_cost_usd: float | None = Field(default=None, description="Maximum cost in USD")
-    latency_slo_ms: int | None = Field(default=None, description="Latency SLO in milliseconds")
+    prompt: str = Field(..., min_length=1, max_length=100000, description="The prompt to process")
+    quality: Literal["fast", "balanced", "high"] = Field(
+        default="balanced", description="Quality target (fast/balanced/high)"
+    )
+    max_cost_usd: float | None = Field(
+        default=None, gt=0, le=100, description="Maximum cost in USD (must be > 0 and <= 100)"
+    )
+    latency_slo_ms: int | None = Field(
+        default=None, gt=0, le=300000, description="Latency SLO in milliseconds (must be > 0 and <= 5min)"
+    )
     stream: bool = Field(default=False, description="Enable streaming response")
 
 
@@ -43,10 +49,10 @@ class AskResponse(BaseModel):
 class PlanRequest(BaseModel):
     """Request model for /v1/plan endpoint."""
 
-    prompt: str
-    quality: str = "balanced"
-    max_cost_usd: float | None = None
-    latency_slo_ms: int | None = None
+    prompt: str = Field(..., min_length=1, max_length=100000)
+    quality: Literal["fast", "balanced", "high"] = "balanced"
+    max_cost_usd: float | None = Field(default=None, gt=0, le=100)
+    latency_slo_ms: int | None = Field(default=None, gt=0, le=300000)
 
 
 class PlanResponse(BaseModel):

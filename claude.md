@@ -294,13 +294,34 @@ atpctl chat repl
 ## Security Considerations
 
 - **No hardcoded secrets** - All via environment variables
-- **API key management** - Admin keys with RBAC
+- **API key management** - Admin keys with RBAC (enforced at startup)
 - **PII scrubbing** - Automatic redaction (see `pii.py`)
 - **WAF** - Web application firewall (see `waf.py`)
 - **Rate limiting** - Configurable RPS limits
 - **Audit logging** - All admin actions logged
+- **CORS security** - Restricted to safe HTTP methods (GET, POST, OPTIONS)
+- **Input validation** - All API endpoints enforce length and type constraints
 
-**See `SECURITY.md` for details**
+### Recent Security Improvements (2025-11-17)
+
+1. **CORS Hardening** (`router_service/core/app.py:134`)
+   - Restricted `allow_methods` from wildcard to `["GET", "POST", "OPTIONS"]`
+   - Prevents unauthorized PUT, DELETE, PATCH requests
+
+2. **Input Validation** (`router_service/api/v1/router.py`)
+   - Added `max_length=100000` to prompt fields
+   - Constrained `quality` to `Literal["fast", "balanced", "high"]`
+   - Added range validation to `max_cost_usd` (0-100) and `latency_slo_ms` (0-300000)
+
+3. **Logging Security** (`router_service/event_emitter.py`)
+   - Replaced `print()` statements with proper `logger.warning()` calls
+   - Prevents information leakage through stdout
+
+4. **Known Limitations** - See `AUDIT_REPORT.md` for full details
+   - SQLite used for stats (migrate to PostgreSQL for production)
+   - threading.Lock in async codebase (documented for future migration)
+
+**See `SECURITY.md` and `AUDIT_REPORT.md` for comprehensive details**
 
 ## Testing Strategy
 
