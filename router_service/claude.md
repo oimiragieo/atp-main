@@ -432,36 +432,51 @@ make coverage
 
 The core routing endpoints currently return placeholder responses instead of calling actual adapters. Implementation required:
 
-**1. Adapter Integration in /v1/ask endpoint** (`api/v1/router.py:134`)
-- **Current**: Returns placeholder text `[Response from {model_id}]`
+**📚 Comprehensive Integration Guide**: See [`ADAPTER_INTEGRATION_GUIDE.md`](/home/user/atp-main/ADAPTER_INTEGRATION_GUIDE.md) for complete step-by-step implementation instructions.
+
+**1. Adapter Integration in /v1/ask endpoint** (`service.py:1408-1449`)
+- **Current**: Returns placeholder text `phrase = "lorem" if generated < target_tokens else "done"`
 - **Required**: Integrate with adapter registry to make gRPC calls
 - **Implementation Path**:
-  1. Lookup adapter from `AdapterRegistry` using model_id
-  2. Establish gRPC connection to adapter service
-  3. Call `adapter.Complete()` with prompt and parameters
-  4. Handle streaming responses if `request.stream=True`
-  5. Parse adapter response and extract actual completion
+  1. Create AdapterClient infrastructure (`router_service/adapters/client.py`)
+  2. Load dynamic model catalog from adapter capabilities
+  3. Replace synthetic generation loop with real adapter.Stream() calls
+  4. Handle streaming responses and track real metrics
+  5. Parse adapter response chunks and emit to client
 - **Dependencies**:
   - `router_service/adapter_registry.py` - Registry lookup
   - `tools/adapter_pb2.py` and `adapter_pb2_grpc.py` - Protocol definitions
   - Production-ready adapters: Anthropic, OpenAI (see `ADAPTER_STATUS.md`)
-- **Status**: Critical for production - currently all /ask requests return mock data
+- **Estimated Effort**: 2-3 days for core integration
+- **Status**: Critical for production - currently all /ask requests return synthetic data
+- **Detailed Guide**: See Phase 3 in `ADAPTER_INTEGRATION_GUIDE.md`
 
-**2. Adapter-Specific Routing** (`service.py:1801`)
+**2. Dynamic Model Catalog** (`routing_constants.py:16-22`)
+- **Current**: Hardcoded CATALOG with 4 fake models
+- **Required**: Load models dynamically from registered adapters
+- **Implementation**: See Phase 2 in `ADAPTER_INTEGRATION_GUIDE.md`
+- **Estimated Effort**: 1-2 days
+- **Status**: Required for real model discovery
+
+**3. Adapter-Specific Routing** (`service.py:1801`)
 - **Current**: `adapter_type` parameter extracted but not used
 - **Required**: Allow users to specify which adapter to route to
 - **Implementation Path**:
-  1. Extract `adapter_type` from tool arguments
-  2. Filter adapter selection to only match specified type
-  3. Pass constraint to `routing_service.select_model()`
-  4. Update model selection logic to respect adapter_type filter
+  1. Extract `adapter_type` from request
+  2. Filter model catalog to only match specified type
+  3. Pass constraint to routing logic
+  4. Update model selection to respect adapter_type filter
 - **Use Case**: Force routing to specific provider (e.g., only Anthropic adapters)
 - **Status**: Enhancement - optional feature for advanced routing
 
-**References**:
-- Adapter implementation guide: `/home/user/atp-main/ADAPTER_STATUS.md`
-- Adapter registry: `/home/user/atp-main/router_service/adapter_registry.py`
-- gRPC protocol: `/home/user/atp-main/tools/adapter_pb2.py`
+**Implementation Resources**:
+- **Integration Guide**: [`ADAPTER_INTEGRATION_GUIDE.md`](/home/user/atp-main/ADAPTER_INTEGRATION_GUIDE.md) - Complete implementation guide with code examples
+- **Adapter Status**: [`ADAPTER_STATUS.md`](/home/user/atp-main/ADAPTER_STATUS.md) - Which adapters are production-ready
+- **Adapter Registry**: [`router_service/adapter_registry.py`](/home/user/atp-main/router_service/adapter_registry.py) - Registry implementation
+- **gRPC Protocol**: [`tools/adapter_pb2.py`](/home/user/atp-main/tools/adapter_pb2.py) - Protocol definitions
+- **Production Adapters**:
+  - [`adapters/python/anthropic_adapter/`](/home/user/atp-main/adapters/python/anthropic_adapter/) - Anthropic implementation
+  - [`adapters/python/openai_adapter/`](/home/user/atp-main/adapters/python/openai_adapter/) - OpenAI implementation
 
 **New Environment Variables:**
 - `ROUTER_REQUIRE_AUTH` - Enable auth middleware (default: 0)
