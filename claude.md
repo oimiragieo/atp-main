@@ -2,9 +2,26 @@
 
 ## Project Overview
 
-**ATP (Adaptive Transformer Platform)** is an enterprise-grade intelligent routing system for Large Language Models (LLMs). It's a sophisticated load balancer and cost-optimizer that routes AI requests to optimal providers.
+**ATP (Adaptive Transformer Platform)** is an enterprise-grade intelligent routing system for Large Language Models (LLMs). It's a sophisticated load balancer and cost-optimizer designed to route AI requests to optimal providers.
 
 **Critical: ATP is NOT an LLM itself** - it's middleware that routes to providers (Anthropic, OpenAI, etc.)
+
+### 🚨 **CURRENT IMPLEMENTATION STATUS**
+
+**The router currently generates synthetic/demo responses instead of calling real LLM APIs.**
+
+**What this means:**
+- Responses are placeholder "lorem" text, not real AI completions
+- Model selection algorithms work correctly but operate on fake models
+- Cost and quality metrics are calculated but based on simulated data
+- Production-ready adapters exist (Anthropic, OpenAI) but are not integrated into main flow
+
+**Why this matters:**
+- System is excellent for testing routing algorithms, cost optimization, and observability
+- NOT ready for production use cases requiring real LLM responses
+- Integration work needed to connect adapters to main routing flow (see `router_service/claude.md`)
+
+**For details:** See "Architecture" section below and `ATP_EXECUTION_FLOW_ANALYSIS.md`
 
 ## Quick Reference
 
@@ -83,6 +100,10 @@ atp-main/
 
 ## Architecture
 
+### **🚨 CRITICAL: Current Implementation Status**
+
+**The router currently generates synthetic responses for demonstration purposes.**
+
 ```
 Client Request
     ↓
@@ -90,21 +111,37 @@ Router Service (:7443)
     ↓
 [Model Selection: Bandit Algorithm (UCB/Thompson)]
     ↓
-Adapter Registry
-    ↓
-LLM Adapters (Anthropic/OpenAI/etc.)
-    ↓
-Real LLM Provider API
+⚠️ SYNTHETIC RESPONSE GENERATION ⚠️
+    ├── Selects from hardcoded models (cheap-model, mid-model, premium-model)
+    ├── Generates "lorem" placeholder text
+    ├── Simulates latency with asyncio.sleep()
+    ├── Calculates fake costs and quality scores
+    └── Records synthetic observations
     ↓
 Response (streaming)
     ↓
 Client
 ```
 
+**What Actually Happens** (see `router_service/service.py:1408-1449`):
+- Router selects from 4 hardcoded fake models defined in `routing_constants.py`
+- Generates synthetic "lorem" text chunks (not real AI)
+- Simulates latency based on model parameters
+- Quality scores are random: `random.uniform(0.7, 0.9)`
+- Costs calculated from fake model pricing
+- **No adapters are called** in the main request flow
+
+**Production Adapters Exist But Are Not Integrated:**
+- ✅ Anthropic adapter (`adapters/python/anthropic_adapter/`) - Production-ready, real API
+- ✅ OpenAI adapter (`adapters/python/openai_adapter/`) - Production-ready, real API
+- ⚠️ 5 other adapters - Stub implementations with mock responses
+
+**Integration Gap:** See `router_service/claude.md` "TODO: Core Routing Implementation" section for details on connecting adapters to the main routing flow.
+
 **Key Components:**
-- **Router**: FastAPI service, intelligent routing, cost optimization
+- **Router**: FastAPI service, intelligent routing logic, cost optimization algorithms
 - **Memory Gateway**: Redis-backed KV store for session state
-- **Adapters**: gRPC services connecting to LLM providers
+- **Adapters**: gRPC services (exist but not called by router)
 - **Observability**: Prometheus metrics, Grafana dashboards, OpenTelemetry tracing
 
 ## Development Setup
@@ -449,6 +486,15 @@ helm install atp deploy/helm/atp/
 
 ---
 
-**Project Status**: Production-ready core with 84% code coverage
-**Last Updated**: 2025-11-17
+**Project Status**:
+- **Routing Algorithms**: Production-ready (bandit selection, cost optimization, observability)
+- **Code Quality**: 84% test coverage, comprehensive test suite
+- **Adapter Integration**: In development - synthetic responses currently used
+- **Production Readiness**: Ready for algorithm testing; adapter integration required for real LLM use
+**Last Updated**: 2025-11-18
 **Version**: See `CHANGELOG.md`
+
+**Key Files for Understanding Current State:**
+- `ATP_EXECUTION_FLOW_ANALYSIS.md` - Comprehensive execution flow analysis
+- `ANALYSIS_SUMMARY.md` - Quick reference of implementation status
+- `router_service/claude.md` - Router implementation details and TODOs

@@ -8,6 +8,23 @@ The router service is the **core of ATP** - a FastAPI application that implement
 **Main Entry**: `service.py` (3,045 lines)
 **Module Count**: 136+ Python files
 
+### 🚨 **CRITICAL IMPLEMENTATION NOTES**
+
+**The router currently generates SYNTHETIC responses for demonstration/testing purposes.**
+
+**What `/v1/ask` endpoint actually does** (`service.py:1408-1449`):
+1. Runs bandit model selection algorithms (works correctly)
+2. Selects from 4 hardcoded fake models in `routing_constants.py`
+3. **Generates synthetic "lorem" text chunks** instead of calling adapters
+4. Simulates latency with `asyncio.sleep()`
+5. Assigns random quality scores: `random.uniform(0.7, 0.9)`
+6. Calculates fake costs from hardcoded model pricing
+7. Records synthetic observations for future routing decisions
+
+**Result**: Beautiful architecture with sophisticated algorithms, but **responses are not real AI completions**.
+
+**See "TODO: Core Routing Implementation" section below for integration path.**
+
 ## Key Components
 
 ### Core Files
