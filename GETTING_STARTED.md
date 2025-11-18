@@ -6,6 +6,33 @@
 
 ---
 
+## 🚨 **Important: Current Implementation Status**
+
+> **The router currently operates in DEMONSTRATION MODE - it generates synthetic responses for testing/development purposes.**
+
+**Before you begin, understand what's currently working:**
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Router Service** | ✅ Functional | Sophisticated routing algorithms working |
+| **Model Selection** | ✅ Production-Ready | Bandit algorithms (UCB, Thompson sampling) |
+| **Cost Optimization** | ✅ Production-Ready | Cost tracking and optimization logic |
+| **Observability** | ✅ Production-Ready | Metrics, tracing, dashboards |
+| **LLM Integration** | ⚠️ **Synthetic Mode** | **Generates "lorem" placeholder text** |
+| **Production Adapters** | ⚠️ Not Connected | Anthropic & OpenAI adapters exist but not integrated |
+
+**What this means for you:**
+- ✅ You can test routing algorithms, cost optimization, and observability
+- ✅ All health checks will pass and system will appear working
+- ⚠️ **API responses will be synthetic "lorem" text, not real AI completions**
+- ⚠️ Quality scores and costs are calculated but based on simulated data
+
+**For production use:** Adapter integration work is required (see [CODEBASE_AUDIT_REPORT.md](CODEBASE_AUDIT_REPORT.md) for roadmap).
+
+**For detailed technical analysis:** See [ATP_EXECUTION_FLOW_ANALYSIS.md](ATP_EXECUTION_FLOW_ANALYSIS.md)
+
+---
+
 ## Table of Contents
 
 1. [Prerequisites](#prerequisites)
@@ -23,6 +50,7 @@
 - **[Environment Variables](ENVIRONMENT_VARIABLES.md)** - Complete configuration reference
 - **[Production Deployment](PRODUCTION_DEPLOYMENT_GUIDE.md)** - Production setup guide
 - **[CLI Status](tools/cli/CLI_STATUS.md)** - CLI command availability
+- **[Adapter Status](ADAPTER_STATUS.md)** - Which adapters are production-ready
 
 ---
 

@@ -51,15 +51,36 @@ docker compose up -d
 
 Wait 30 seconds for all services to start.
 
-> **⚠️ IMPORTANT: Default Adapters are STUBS**
+> **🚨 CRITICAL: Router Currently in DEMONSTRATION MODE**
 >
-> The default docker-compose.yml uses **stub adapters** (Ollama, Persona) that return **mock/hardcoded responses**. They do NOT connect to real AI models.
+> **The router generates synthetic "lorem" responses for testing/development purposes.**
 >
-> **For real AI responses**, you must configure production adapters:
-> - **Anthropic** (Claude): Set `ANTHROPIC_API_KEY` in `.env` and add anthropic_adapter to docker-compose.yml
-> - **OpenAI** (GPT): Set `OPENAI_API_KEY` in `.env` and add openai_adapter to docker-compose.yml
+> **What this means:**
+> - ✅ Routing algorithms work correctly (bandit selection, cost optimization)
+> - ✅ Health checks pass, services are functional
+> - ✅ Metrics and observability are operational
+> - ⚠️ **API responses are placeholder text ("lorem"), NOT real AI completions**
+> - ⚠️ **No adapters are called** - even production-ready Anthropic/OpenAI adapters
 >
-> See [ADAPTER_STATUS.md](ADAPTER_STATUS.md) for details on which adapters work vs. which are stubs.
+> **Current Status:**
+> - Router selects from 4 hardcoded fake models (`service.py:1408-1449`)
+> - Quality scores are random: `random.uniform(0.7, 0.9)`
+> - Costs calculated from fake model pricing
+> - Adapters exist but not integrated into main routing flow
+>
+> **Use Cases:**
+> - ✅ Testing routing algorithms and cost optimization
+> - ✅ Development and observability testing
+> - ❌ **NOT for production LLM request routing**
+>
+> **Production Adapters Available (Not Connected):**
+> - Anthropic (Claude) - `/adapters/python/anthropic_adapter/` (production-ready)
+> - OpenAI (GPT) - `/adapters/python/openai_adapter/` (production-ready)
+> - 5 other adapters - Stub implementations
+>
+> **Next Steps:** See [CODEBASE_AUDIT_REPORT.md](CODEBASE_AUDIT_REPORT.md) for adapter integration roadmap.
+>
+> **Technical Details:** See [ATP_EXECUTION_FLOW_ANALYSIS.md](ATP_EXECUTION_FLOW_ANALYSIS.md) for complete execution flow analysis.
 
 ---
 

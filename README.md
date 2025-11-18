@@ -2,6 +2,32 @@
 
 ![Coverage](https://img.shields.io/badge/coverage-84%25-brightgreen)
 
+## 🚨 **Current Implementation Status**
+
+> **IMPORTANT: The router currently generates synthetic/demo responses instead of calling real LLM APIs.**
+
+**What this means:**
+- ✅ **Routing algorithms are production-ready** (bandit selection, cost optimization, observability)
+- ✅ **Code quality is excellent** (84% test coverage, comprehensive testing)
+- ✅ **Production adapters exist** (Anthropic and OpenAI are fully implemented)
+- ⚠️ **Responses are synthetic** - Router generates placeholder "lorem" text for testing/demo purposes
+- ⚠️ **Adapters are not integrated** - Main routing flow doesn't call real LLM APIs yet
+
+**Current Use Cases:**
+- ✅ Testing and validating routing algorithms
+- ✅ Cost optimization algorithm development
+- ✅ Observability and metrics testing
+- ❌ **NOT suitable for production LLM request routing** (requires adapter integration)
+
+**Next Steps:** See [CODEBASE_AUDIT_REPORT.md](CODEBASE_AUDIT_REPORT.md) for integration roadmap.
+
+For detailed technical analysis, see:
+- [ATP_EXECUTION_FLOW_ANALYSIS.md](ATP_EXECUTION_FLOW_ANALYSIS.md) - Complete execution flow breakdown
+- [ANALYSIS_SUMMARY.md](ANALYSIS_SUMMARY.md) - Quick reference of current status
+- [claude.md](claude.md) - Claude Code guide with architecture details
+
+---
+
 ## 📚 Documentation
 
 > **📖 [Complete Documentation Index](DOCUMENTATION_INDEX.md)** - Navigate all ATP documentation
