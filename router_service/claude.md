@@ -10,20 +10,30 @@ The router service is the **core of ATP** - a FastAPI application that implement
 
 ### 🚨 **CRITICAL IMPLEMENTATION NOTES**
 
-**The router currently generates SYNTHETIC responses for demonstration/testing purposes.**
+**✅ ADAPTER INTEGRATION COMPLETE** (as of 2025-11-19)
 
-**What `/v1/ask` endpoint actually does** (`service.py:1408-1449`):
+The router now supports **real LLM adapter integration** via gRPC, with feature flags for safe rollout.
+
+**What `/v1/ask` endpoint does** (`service.py:1408-1533`):
 1. Runs bandit model selection algorithms (works correctly)
-2. Selects from 4 hardcoded fake models in `routing_constants.py`
-3. **Generates synthetic "lorem" text chunks** instead of calling adapters
-4. Simulates latency with `asyncio.sleep()`
-5. Assigns random quality scores: `random.uniform(0.7, 0.9)`
-6. Calculates fake costs from hardcoded model pricing
-7. Records synthetic observations for future routing decisions
+2. Loads model catalog dynamically from registered adapters (Phase 2 ✅)
+3. **Checks feature flags** to determine mode:
+   - `USE_REAL_ADAPTERS=1` OR `ADAPTER_ROLLOUT_PERCENT > 0`: Uses real adapter streaming
+   - Otherwise: Falls back to synthetic mode for testing
+4. **Real Adapter Mode** (when enabled):
+   - Streams responses from actual LLM adapters via gRPC
+   - Tracks real tokens, costs, and latency
+   - Gracefully falls back to synthetic on errors
+5. **Synthetic Mode** (default for safe rollout):
+   - Generates synthetic "lorem" text chunks for testing
+   - Simulates latency with `asyncio.sleep()`
+   - Assigns random quality scores
 
-**Result**: Beautiful architecture with sophisticated algorithms, but **responses are not real AI completions**.
+**Current Status**: Adapter integration is **IMPLEMENTED** but **DISABLED BY DEFAULT** for gradual rollout.
 
-**See "TODO: Core Routing Implementation" section below for integration path.**
+**To enable real LLM calls**: Set `USE_REAL_ADAPTERS=1` or `ADAPTER_ROLLOUT_PERCENT=10` (for 10% traffic)
+
+**See "Adapter Integration Status" section below for implementation details.**
 
 ## Key Components
 
@@ -428,46 +438,60 @@ make coverage
 2. threading.Lock in async code - Documented for future refactor
 3. Bash tool requires sandboxing - Disabled by default
 
-**TODO: Core Routing Implementation**
+**✅ Adapter Integration Status** (Updated 2025-11-19)
 
-The core routing endpoints currently return placeholder responses instead of calling actual adapters. Implementation required:
+All three phases of adapter integration are now complete:
 
-**📚 Comprehensive Integration Guide**: See [`ADAPTER_INTEGRATION_GUIDE.md`](/home/user/atp-main/ADAPTER_INTEGRATION_GUIDE.md) for complete step-by-step implementation instructions.
+**📚 Comprehensive Integration Guide**: See [`ADAPTER_INTEGRATION_GUIDE.md`](/home/user/atp-main/ADAPTER_INTEGRATION_GUIDE.md) for complete implementation details.
 
-**1. Adapter Integration in /v1/ask endpoint** (`service.py:1408-1449`)
-- **Current**: Returns placeholder text `phrase = "lorem" if generated < target_tokens else "done"`
-- **Required**: Integrate with adapter registry to make gRPC calls
+**✅ Phase 1: AdapterClient Infrastructure** (COMPLETED)
+- **Implementation**: `router_service/adapters/client.py` (250+ lines)
+- **Features**:
+  - `AdapterClient` - Async gRPC client for adapter communication
+  - `AdapterClientPool` - Connection pooling for efficiency
+  - Methods: `estimate()`, `stream()`, `health()`
+- **Status**: ✅ Implemented, tested, and committed
+- **Commit**: feat: implement Phase 1 - AdapterClient infrastructure
+
+**✅ Phase 2: Dynamic Model Catalog** (COMPLETED)
+- **Implementation**: `router_service/routing_constants.py` (lines 36-129)
+- **Features**:
+  - `load_catalog_from_adapters()` - Loads models from registry
+  - `refresh_catalog()` - Updates catalog periodically
+  - Graceful fallback to static catalog if no adapters available
+  - Enhanced `Candidate` dataclass with adapter metadata
+- **Status**: ✅ Implemented, tested, and committed
+- **Commit**: feat: implement Phase 2 - dynamic model catalog
+
+**✅ Phase 3: Main Integration** (COMPLETED)
+- **Implementation**: `router_service/service.py` (lines 1408-1533)
+- **Features**:
+  - Feature flag support: `USE_REAL_ADAPTERS` environment variable
+  - Gradual rollout: `ADAPTER_ROLLOUT_PERCENT` for A/B testing (0-100%)
+  - Real adapter streaming when enabled (via gRPC)
+  - Graceful fallback to synthetic mode on errors
+  - Comprehensive error handling and logging
+  - Global `_ADAPTER_POOL` for connection management
+  - Shutdown handler for cleanup
+- **Configuration**:
+  - `USE_REAL_ADAPTERS=1` - Enable real adapter calls
+  - `ADAPTER_ROLLOUT_PERCENT=10` - 10% gradual rollout
+  - `ADAPTER_TIMEOUT=30.0` - Request timeout in seconds
+- **Status**: ✅ Implemented, tested, validated, and committed
+- **Commit**: feat: implement Phase 3 - main adapter integration
+- **Validation**: `validate_phase3.py` confirms all core functionality works
+
+**🔄 Future Enhancement: Adapter-Specific Routing** (`service.py:1801`)
+- **Current**: `adapter_type` parameter extracted but not actively used in routing decisions
+- **Goal**: Allow users to specify which adapter provider to route to
 - **Implementation Path**:
-  1. Create AdapterClient infrastructure (`router_service/adapters/client.py`)
-  2. Load dynamic model catalog from adapter capabilities
-  3. Replace synthetic generation loop with real adapter.Stream() calls
-  4. Handle streaming responses and track real metrics
-  5. Parse adapter response chunks and emit to client
-- **Dependencies**:
-  - `router_service/adapter_registry.py` - Registry lookup
-  - `tools/adapter_pb2.py` and `adapter_pb2_grpc.py` - Protocol definitions
-  - Production-ready adapters: Anthropic, OpenAI (see `ADAPTER_STATUS.md`)
-- **Estimated Effort**: 2-3 days for core integration
-- **Status**: Critical for production - currently all /ask requests return synthetic data
-- **Detailed Guide**: See Phase 3 in `ADAPTER_INTEGRATION_GUIDE.md`
-
-**2. Dynamic Model Catalog** (`routing_constants.py:16-22`)
-- **Current**: Hardcoded CATALOG with 4 fake models
-- **Required**: Load models dynamically from registered adapters
-- **Implementation**: See Phase 2 in `ADAPTER_INTEGRATION_GUIDE.md`
-- **Estimated Effort**: 1-2 days
-- **Status**: Required for real model discovery
-
-**3. Adapter-Specific Routing** (`service.py:1801`)
-- **Current**: `adapter_type` parameter extracted but not used
-- **Required**: Allow users to specify which adapter to route to
-- **Implementation Path**:
-  1. Extract `adapter_type` from request
+  1. Extract `adapter_type` from request (already done)
   2. Filter model catalog to only match specified type
   3. Pass constraint to routing logic
   4. Update model selection to respect adapter_type filter
 - **Use Case**: Force routing to specific provider (e.g., only Anthropic adapters)
-- **Status**: Enhancement - optional feature for advanced routing
+- **Priority**: Optional enhancement - core adapter integration is complete
+- **Status**: Not blocking for production deployment
 
 **Implementation Resources**:
 - **Integration Guide**: [`ADAPTER_INTEGRATION_GUIDE.md`](/home/user/atp-main/ADAPTER_INTEGRATION_GUIDE.md) - Complete implementation guide with code examples
