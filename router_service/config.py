@@ -44,6 +44,16 @@ class Settings:
     state_backend: str = os.getenv("ROUTER_STATE_BACKEND", "memory").lower()  # memory|redis
     redis_url: str = os.getenv("ROUTER_REDIS_URL", "redis://localhost:6379/0")
 
+    # Adapter integration settings
+    use_real_adapters: bool = os.getenv("USE_REAL_ADAPTERS", "0") == "1"
+    adapter_timeout: float = float(os.getenv("ADAPTER_TIMEOUT", "30.0"))
+    adapter_health_check_interval: int = int(os.getenv("ADAPTER_HEALTH_CHECK_INTERVAL", "60"))
+    adapter_rollout_percent: int = int(os.getenv("ADAPTER_ROLLOUT_PERCENT", "0"))
+
+    # Adapter endpoints (can be overridden per adapter type)
+    anthropic_adapter_url: str = os.getenv("ANTHROPIC_ADAPTER_URL", "localhost:7073")
+    openai_adapter_url: str = os.getenv("OPENAI_ADAPTER_URL", "localhost:7074")
+
     def __post_init__(self):
         if not self.api_key:
             raise ValueError("ROUTER_ADMIN_API_KEY environment variable must be set")
@@ -80,6 +90,25 @@ class Settings:
                 continue
 
         return {"tenant_sampling_policies": tenant_config} if tenant_config else {}
+
+    def get_adapter_endpoint(self, adapter_type: str) -> str:
+        """Get adapter endpoint URL for the specified adapter type.
+
+        Args:
+            adapter_type: Adapter type (e.g., "anthropic", "openai")
+
+        Returns:
+            Adapter endpoint URL (e.g., "localhost:7073")
+        """
+        adapter_type = adapter_type.lower()
+        if adapter_type == "anthropic":
+            return self.anthropic_adapter_url
+        elif adapter_type == "openai":
+            return self.openai_adapter_url
+        else:
+            # Fallback: Try environment variable ADAPTER_TYPE_URL
+            env_var = f"{adapter_type.upper()}_ADAPTER_URL"
+            return os.getenv(env_var, "localhost:7070")
 
 
 settings = Settings()

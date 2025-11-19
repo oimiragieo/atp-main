@@ -8,6 +8,20 @@ Comprehensive test suite for ATP platform with **2,079+ tests** and **84% code c
 **Framework**: pytest
 **Coverage**: 84% minimum (enforced in CI)
 
+### 📝 **Test Coverage Note**
+
+**Current test suite validates routing algorithms and system behavior using synthetic data.**
+
+The tests comprehensively validate:
+- ✅ Model selection algorithms (bandit strategies, UCB, Thompson sampling)
+- ✅ Cost optimization logic
+- ✅ Quality-aware routing decisions
+- ✅ API endpoint functionality and error handling
+- ✅ Security controls (auth, WAF, PII scrubbing)
+- ✅ System integration and workflows
+
+**Important**: Tests operate on synthetic responses since adapters are not integrated. Test coverage of 84% validates the routing logic, but not real LLM API integration. Adapter integration tests exist in adapter-specific test files (`test_anthropic_adapter.py`, `test_openai_adapter.py`) which test the adapters in isolation.
+
 ## Running Tests
 
 ### Quick Commands

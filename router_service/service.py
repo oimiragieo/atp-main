@@ -50,6 +50,9 @@ from metrics.registry import EXPERIMENT_FRAMES_TOTAL, REGISTRY
 # Import PII redaction module for GAP-218
 from . import admin_keys
 from .ack_logic import AckTracker
+
+# Phase 3: Adapter integration
+from .adapters.client import AdapterClientPool
 from .adaptive_stats import compute_ucb_scores, fetch_all_clusters, thompson_select, ucb_select, update_stat
 from .capability_handler import generate_tool_descriptors
 from .carbon_energy_attribution import carbon_attribution
@@ -116,6 +119,9 @@ try:
 except Exception as e:
     _logging.error(f"Failed to build state backends: {e}")
     raise ConfigurationError(f"State backend initialization failed: {e}") from e
+
+# Phase 3: Initialize adapter client pool
+_ADAPTER_POOL = AdapterClientPool()
 
 # ACK tracker for sequencing
 
@@ -365,6 +371,10 @@ async def shutdown_event():
     try:
         from .database import close_database
         from .database_backup import stop_backup_scheduler
+
+        # Phase 3: Close adapter connections
+        await _ADAPTER_POOL.close_all()
+        logger.info("Adapter pool closed")
 
         # Stop backup scheduler
         await stop_backup_scheduler()
@@ -1405,28 +1415,121 @@ async def ask(req: AskRequest, request: Request) -> StreamingResponse:  # Stream
         adapter_cm = tracer.start_as_current_span("adapter.stream") if tracer else None
         if adapter_cm:
             adapter_cm.__enter__()
-        while generated < target_tokens:
-            elapsed = time.time() - start
-            if not escalation_used and escalation and elapsed * 1000 > req.latency_slo_ms * 0.6:
-                escalation_used = True
-                yield json.dumps({"type": "event", "event": "escalate", "model": escalation.name}) + "\n"
-            # hard timeout safeguard (extended to 4x SLO to reduce premature cancellations in tests)
-            if elapsed * 1000 > req.latency_slo_ms * 4:
-                cancelled = True
-                break
-            chunk = min(12, target_tokens - generated)
-            generated += chunk
-            await asyncio.sleep(chunk / primary_speed)
-            # cancellation / disconnect check
+
+        # Phase 3: Determine if we should use real adapters
+        use_adapter = False
+        rollout_pct = settings.adapter_rollout_percent
+
+        if settings.use_real_adapters or rollout_pct > 0:
+            # Gradual rollout: randomly decide based on percentage
+            if rollout_pct >= 100 or (rollout_pct > 0 and random.randint(1, 100) <= rollout_pct):
+                use_adapter = True
+
+        adapter_error = None
+        if use_adapter and hasattr(primary, "adapter_endpoint") and primary.adapter_endpoint:
+            # Phase 3: Use real adapter
             try:
-                if await request.is_disconnected():
+                # Extract endpoint from model (e.g., "http://localhost:7073/health" -> "localhost:7073")
+                import re
+
+                match = re.search(r"([a-zA-Z0-9.-]+:\d+)", primary.adapter_endpoint)
+                if match:
+                    adapter_endpoint = match.group(1)
+                elif hasattr(primary, "adapter_type") and primary.adapter_type:
+                    # Fallback to config-based endpoint
+                    adapter_endpoint = settings.get_adapter_endpoint(primary.adapter_type)
+                else:
+                    adapter_endpoint = None
+
+                if adapter_endpoint:
+                    # Get adapter client from pool
+                    adapter_client = _ADAPTER_POOL.get_client(adapter_endpoint, timeout=settings.adapter_timeout)
+
+                    # Prepare prompt JSON
+                    prompt_json = json.dumps(
+                        {
+                            "messages": [{"role": "user", "content": prompt_in}],
+                            "model": primary.name,
+                            "max_tokens": target_tokens,
+                            "temperature": 0.7,
+                        }
+                    )
+
+                    # Stream from real adapter
+                    logger.info(f"Streaming from adapter: {adapter_endpoint} (model: {primary.name})")
+                    async for chunk in adapter_client.stream(prompt_json, stream_id=sess_id):
+                        chunk_type = chunk.get("type", "text")
+                        content_json = chunk.get("content_json", "")
+
+                        # Parse content
+                        try:
+                            content = json.loads(content_json) if content_json else {}
+                        except json.JSONDecodeError:
+                            content = {"text": content_json}
+
+                        if chunk_type == "text":
+                            text_content = content.get("text", "")
+                            if text_content:
+                                # Emit to client
+                                async for out in emit(primary.name, text_content):
+                                    yield out
+
+                        # Track tokens and cost from adapter
+                        generated = chunk.get("partial_out_tokens", generated)
+
+                        # Check for completion
+                        if not chunk.get("more", True):
+                            break
+
+                        # Client disconnection check
+                        try:
+                            if await request.is_disconnected():
+                                cancelled = True
+                                logger.info(f"Client disconnected: {sess_id}")
+                                break
+                        except Exception as err:  # noqa: S110 -- disconnect check best-effort
+                            _logging.debug("disconnect check failed: %s", err)
+
+                    # Success - adapter streaming completed
+                    logger.info(f"Adapter streaming completed: {generated} tokens generated")
+                else:
+                    logger.warning(f"No adapter endpoint found for model {primary.name}, falling back to synthetic")
+                    use_adapter = False
+            except Exception as e:
+                adapter_error = str(e)
+                logger.error(f"Adapter streaming failed: {e}", exc_info=True)
+                logger.warning("Falling back to synthetic response generation")
+                use_adapter = False
+
+        # Fallback to synthetic mode if adapter not used or failed
+        if not use_adapter:
+            if adapter_error:
+                # Emit adapter error event
+                yield json.dumps({"type": "event", "event": "adapter_fallback", "reason": adapter_error}) + "\n"
+
+            # Original synthetic generation loop
+            while generated < target_tokens:
+                elapsed = time.time() - start
+                if not escalation_used and escalation and elapsed * 1000 > req.latency_slo_ms * 0.6:
+                    escalation_used = True
+                    yield json.dumps({"type": "event", "event": "escalate", "model": escalation.name}) + "\n"
+                # hard timeout safeguard (extended to 4x SLO to reduce premature cancellations in tests)
+                if elapsed * 1000 > req.latency_slo_ms * 4:
                     cancelled = True
                     break
-            except Exception as err:  # noqa: S110 -- disconnect check best-effort
-                _logging.debug("disconnect check failed: %s", err)
-            phrase = "lorem" if generated < target_tokens else "done"
-            async for out in emit(primary.name, phrase):
-                yield out
+                chunk = min(12, target_tokens - generated)
+                generated += chunk
+                await asyncio.sleep(chunk / primary_speed)
+                # cancellation / disconnect check
+                try:
+                    if await request.is_disconnected():
+                        cancelled = True
+                        break
+                except Exception as err:  # noqa: S110 -- disconnect check best-effort
+                    _logging.debug("disconnect check failed: %s", err)
+                phrase = "lorem" if generated < target_tokens else "done"
+                async for out in emit(primary.name, phrase):
+                    yield out
 
         quality = (
             _evaluate_quality(" ".join(text_parts)) if settings.quality_eval_mode != "off" else random.uniform(0.7, 0.9)
@@ -2898,8 +3001,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
             async def _wait_reloader():
                 try:
-                    while True:
-                        await asyncio.sleep(3600)
+                    # Wait indefinitely until cancelled
+                    await asyncio.Event().wait()
                 except asyncio.CancelledError:
                     await reloader.stop()
 
