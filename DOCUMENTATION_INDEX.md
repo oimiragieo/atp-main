@@ -247,12 +247,25 @@ atp-main/
 
 ---
 
-## 🆕 Recently Added Documentation
+## 🆕 Recently Updated Documentation
+
+### 2025-11-20 (Documentation Cleanup & Adapter Integration Update)
+- ✅ **README.md** - Updated to reflect completed adapter integration (disabled by default)
+- ✅ **ADAPTER_STATUS.md** - Added integration status section with feature flag documentation
+- ✅ **claude.md** - Updated project status to show completed adapter integration
+- 📦 **Archived old audit docs** - Moved to `docs/archive/`:
+  - `ADAPTER_INTEGRATION_GUIDE.md` - Integration complete, guide archived
+  - `ANALYSIS_SUMMARY.md` - Outdated audit analysis
+  - `ATP_EXECUTION_FLOW_ANALYSIS.md` - Outdated technical analysis
+  - `AUDIT_REPORT.md` - Old audit report
+  - `CODEBASE_AUDIT_REPORT.md` - Old audit report
+  - `DEEP_DIVE_REVIEW_2025-01-17.md` - Duplicate deep dive
+- 🗑️ **Removed obsolete files** - `validate_phase3.py`, `EXECUTION_FLOW_DIAGRAM.txt`
 
 ### 2025-01-17 (Deep Dive Review Updates)
-- ⭐ **TROUBLESHOOTING.md** - **NEW**: Comprehensive troubleshooting guide with common issues and fixes
-- ⭐ **AI_ASSISTANT_GUIDE.md** - **NEW**: Critical guide for AI assistants helping users
-- ⭐ **.env file** - **ADDED**: Now included in repository (was missing)
+- ⭐ **TROUBLESHOOTING.md** - Comprehensive troubleshooting guide with common issues and fixes
+- ⭐ **AI_ASSISTANT_GUIDE.md** - Critical guide for AI assistants helping users
+- ⭐ **.env file** - Added to repository
 - 🔧 **QUICK_START.md** - Added critical warning about stub adapters
 - 🔧 **Helm chart paths** - Fixed incorrect paths in GETTING_STARTED.md and DEEP_DIVE_REVIEW.md
 
@@ -298,7 +311,19 @@ atp-main/
 
 ---
 
-**Last Updated**: 2025-01-17
+## 📦 Archived Documentation
+
+Older audit and analysis documents have been moved to `docs/archive/` for reference:
+- `ADAPTER_INTEGRATION_GUIDE.md` - Integration guide (now complete)
+- `ANALYSIS_SUMMARY.md` - Historical audit analysis
+- `ATP_EXECUTION_FLOW_ANALYSIS.md` - Historical technical analysis
+- `AUDIT_REPORT.md` - Historical audit report
+- `CODEBASE_AUDIT_REPORT.md` - Historical audit report
+- `DEEP_DIVE_REVIEW_2025-01-17.md` - Duplicate deep dive review
+
+---
+
+**Last Updated**: 2025-11-20
 
 **Maintained by**: ATP Documentation Team
 

@@ -1,7 +1,33 @@
 # ATP Adapter Implementation Status
 
-**Last Updated:** 2025-01-17
+**Last Updated:** 2025-11-20
 **Purpose:** Transparent documentation of which adapters are production-ready vs. proof-of-concept stubs
+
+---
+
+## 🎉 **Adapter Integration Status**
+
+**Router integration is COMPLETE** (as of 2025-11-19) but **disabled by default** for safe gradual rollout.
+
+**Integration Phases:**
+- ✅ **Phase 1**: AdapterClient infrastructure with gRPC connection pooling
+- ✅ **Phase 2**: Dynamic model catalog from adapter capabilities
+- ✅ **Phase 3**: Main integration in `/v1/ask` endpoint with streaming support
+
+**Current Mode:**
+- **Default**: Synthetic mode (`USE_REAL_ADAPTERS=0`) - Safe for testing routing algorithms
+- **Production**: Real adapter mode (`USE_REAL_ADAPTERS=1`) - Streams from actual LLM providers
+
+**Enable Real Adapters:**
+```bash
+# Full activation
+export USE_REAL_ADAPTERS=1
+
+# Gradual rollout (10% traffic)
+export ADAPTER_ROLLOUT_PERCENT=10
+```
+
+See [README.md](README.md) for complete configuration details.
 
 ---
 

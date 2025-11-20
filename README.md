@@ -4,27 +4,41 @@
 
 ## 🚨 **Current Implementation Status**
 
-> **IMPORTANT: The router currently generates synthetic/demo responses instead of calling real LLM APIs.**
+> **IMPORTANT: Adapter integration is COMPLETE but DISABLED BY DEFAULT for safe gradual rollout.**
 
 **What this means:**
-- ✅ **Routing algorithms are production-ready** (bandit selection, cost optimization, observability)
-- ✅ **Code quality is excellent** (84% test coverage, comprehensive testing)
-- ✅ **Production adapters exist** (Anthropic and OpenAI are fully implemented)
-- ⚠️ **Responses are synthetic** - Router generates placeholder "lorem" text for testing/demo purposes
-- ⚠️ **Adapters are not integrated** - Main routing flow doesn't call real LLM APIs yet
+- ✅ **Adapter integration complete** - Full gRPC integration with real LLM providers (Phases 1-3 done)
+- ✅ **Routing algorithms production-ready** (bandit selection, cost optimization, observability)
+- ✅ **Code quality excellent** (84% test coverage, comprehensive testing)
+- ✅ **Production adapters ready** (Anthropic and OpenAI fully implemented and tested)
+- ⚠️ **Disabled by default** - Currently in synthetic mode for safe rollout (`USE_REAL_ADAPTERS=0`)
+- ✅ **Feature flags available** - Enable real adapters via environment variables
+
+**Current Behavior:**
+- **Default mode** (`USE_REAL_ADAPTERS=0`): Generates synthetic "lorem" text for testing
+- **Real adapter mode** (`USE_REAL_ADAPTERS=1`): Streams from actual LLM providers via gRPC
+- **Gradual rollout** (`ADAPTER_ROLLOUT_PERCENT=10`): 10% real traffic, 90% synthetic
+
+**To Enable Real LLM Calls:**
+```bash
+# Option 1: Full activation
+export USE_REAL_ADAPTERS=1
+
+# Option 2: Gradual rollout (recommended for production)
+export ADAPTER_ROLLOUT_PERCENT=10
+```
 
 **Current Use Cases:**
-- ✅ Testing and validating routing algorithms
-- ✅ Cost optimization algorithm development
-- ✅ Observability and metrics testing
-- ❌ **NOT suitable for production LLM request routing** (requires adapter integration)
+- ✅ Testing and validating routing algorithms (synthetic mode)
+- ✅ Production LLM request routing (enable with `USE_REAL_ADAPTERS=1`)
+- ✅ Cost optimization with real providers
+- ✅ A/B testing different models
+- ✅ Observability and metrics tracking
 
-**Next Steps:** See [CODEBASE_AUDIT_REPORT.md](CODEBASE_AUDIT_REPORT.md) for integration roadmap.
-
-For detailed technical analysis, see:
-- [ATP_EXECUTION_FLOW_ANALYSIS.md](ATP_EXECUTION_FLOW_ANALYSIS.md) - Complete execution flow breakdown
-- [ANALYSIS_SUMMARY.md](ANALYSIS_SUMMARY.md) - Quick reference of current status
+For technical details, see:
+- [ADAPTER_STATUS.md](ADAPTER_STATUS.md) - Which adapters are production-ready
 - [claude.md](claude.md) - Claude Code guide with architecture details
+- [GETTING_STARTED.md](GETTING_STARTED.md) - Complete setup guide
 
 ---
 
