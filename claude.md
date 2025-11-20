@@ -505,12 +505,12 @@ helm install atp deploy/helm/atp/
 **Project Status**:
 - **Routing Algorithms**: Production-ready (bandit selection, cost optimization, observability)
 - **Code Quality**: 84% test coverage, comprehensive test suite
-- **Adapter Integration**: In development - synthetic responses currently used
-- **Production Readiness**: Ready for algorithm testing; adapter integration required for real LLM use
-**Last Updated**: 2025-11-18
+- **Adapter Integration**: ✅ COMPLETE (Phases 1-3 done, disabled by default for safe rollout)
+- **Production Readiness**: Ready for production use with real LLM providers (set `USE_REAL_ADAPTERS=1`)
+**Last Updated**: 2025-11-20
 **Version**: See `CHANGELOG.md`
 
 **Key Files for Understanding Current State:**
-- `ATP_EXECUTION_FLOW_ANALYSIS.md` - Comprehensive execution flow analysis
-- `ANALYSIS_SUMMARY.md` - Quick reference of implementation status
-- `router_service/claude.md` - Router implementation details and TODOs
+- `README.md` - Project overview and current status
+- `ADAPTER_STATUS.md` - Adapter implementation status
+- `router_service/claude.md` - Router implementation details
