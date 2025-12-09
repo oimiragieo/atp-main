@@ -1,6 +1,6 @@
 grpcio==1.64.0
 grpcio-tools==1.64.0
-protobuf==5.27.2
+protobuf==5.29.5
 uvloop==0.20.0
 orjson==3.10.7
 fastapi==0.115.0
